@@ -1,16 +1,33 @@
-node_modules/
-.expo/
-.expo-shared/
-dist/
-build/
-*.jks
-*.p8
-*.p12
-*.key
-*.mobileprovision
-*.orig.*
-web-build/
+.DS_Store
 .env
 .env.local
-.DS_Store
+
+# Android
+build/
+.idea
+.gradle
+local.properties
+*.iml
+*.hprof
+.cxx/
+*.keystore
+!debug.keystore
+.kotlin/
+
+# Node
+node_modules/
+npm-debug.log
+
+# Bundles
+*.jsbundle
+dist/
+
+# Metro
+.metro-health-check*
+
+# Testing
+/coverage
+
+# Local assistant notes
 CLAUDE.md
+.claude/

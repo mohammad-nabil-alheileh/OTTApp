@@ -1,32 +1,38 @@
-import React, { useState, useEffect } from 'react';
-import {
-  View,
-  Text,
-  SafeAreaView,
-  ScrollView,
-} from 'react-native';
+import React, { useCallback, useEffect, useState } from 'react';
+import { View, Text, ScrollView } from 'react-native';
 import { VODList } from './components/VODList/VODList';
-import { mockVODData } from './services/mockData';
+import { LiveChannelList } from './components/LiveChannelList/LiveChannelList';
+import { VideoPlayer } from './components/VideoPlayer/VideoPlayer';
+import { mockVODData, mockLiveChannels } from './services/mockData';
 import { VODItem } from './types/vod';
+import { LiveChannel } from './types/live';
+import { SelectedContent } from './App.types';
 import { styles } from './App.styles';
 
 export default function App() {
   const [vodList, setVodList] = useState<VODItem[]>([]);
+  const [channels, setChannels] = useState<LiveChannel[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [selected, setSelected] = useState<SelectedContent>(null);
 
   useEffect(() => {
-    setTimeout(() => {
+    // Simulates network latency; swap for a real fetch when an API exists.
+    const timer = setTimeout(() => {
       setVodList(mockVODData);
+      setChannels(mockLiveChannels);
       setIsLoading(false);
     }, 500);
+    return () => clearTimeout(timer);
   }, []);
 
-  const handleSelectVOD = (vod: VODItem) => {
-    console.log('Selected VOD:', vod.title);
-  };
+  const handleBack = useCallback(() => setSelected(null), []);
+
+  if (selected) {
+    return <VideoPlayer item={selected} onBack={handleBack} />;
+  }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.title}>OTT TV App</Text>
         <Text style={styles.subtitle}>Videos & Live Channels</Text>
@@ -35,10 +41,17 @@ export default function App() {
       <ScrollView showsVerticalScrollIndicator={false}>
         <VODList
           vodList={vodList}
-          onSelectVOD={handleSelectVOD}
           isLoading={isLoading}
+          onSelectVOD={vod => setSelected({ title: vod.title, url: vod.url, isLive: false })}
+        />
+        <LiveChannelList
+          channels={channels}
+          isLoading={isLoading}
+          onSelectChannel={channel =>
+            setSelected({ title: channel.name, url: channel.streamUrl, isLive: channel.isLive })
+          }
         />
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }

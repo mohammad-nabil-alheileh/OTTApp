@@ -1,6 +1,4 @@
 {
-  "name": "OTT TV App",
-  "displayName": "OTT TV App",
-  "version": "1.0.0",
-  "description": "Simple OTT streaming app for Android TV and LG TV"
+  "name": "OTTTVApp",
+  "displayName": "OTTTVApp"
 }

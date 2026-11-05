@@ -1,5 +1,5 @@
 import { StyleSheet } from 'react-native';
-import { colors, spacing, borderRadius, typography } from './styles/theme';
+import { colors, spacing, typography } from './styles/theme';
 
 export const styles = StyleSheet.create({
   container: {
@@ -7,18 +7,17 @@ export const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
   header: {
-    paddingVertical: spacing.lg,
-    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.xl,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
   },
   title: {
     ...typography.title,
     color: colors.text,
-    marginBottom: spacing.sm,
   },
   subtitle: {
-    ...typography.caption,
+    ...typography.body,
     color: colors.textSecondary,
   },
 });

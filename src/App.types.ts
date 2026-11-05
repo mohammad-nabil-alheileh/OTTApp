@@ -1,6 +1,3 @@
-import { VODItem } from './types/vod';
+import { Playable } from './types/playable';
 
-export interface AppState {
-  vodList: VODItem[];
-  isLoading: boolean;
-}
+export type SelectedContent = Playable | null;

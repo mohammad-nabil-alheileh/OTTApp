@@ -1,19 +1,19 @@
-import React from 'react';
-import {
-  View,
-  Text,
-  Image,
-  TouchableOpacity,
-  FlatList,
-} from 'react-native';
+import React, { useEffect, useRef } from 'react';
+import { View, Text, Image, Pressable, FlatList, ListRenderItem, Platform } from 'react-native';
+import { VODItem } from '../../types/vod';
 import { styles } from './VODList.styles';
 import { VODListProps } from './VODList.types';
 
-export const VODList: React.FC<VODListProps> = ({
-  vodList,
-  onSelectVOD,
-  isLoading,
-}) => {
+export const VODList: React.FC<VODListProps> = ({ vodList, onSelectVOD, isLoading }) => {
+  const firstItemRef = useRef<View>(null);
+
+  // hasTVPreferredFocus is native-only, so the web needs an explicit focus.
+  useEffect(() => {
+    if (Platform.OS === 'web' && !isLoading) {
+      firstItemRef.current?.focus();
+    }
+  }, [isLoading]);
+
   if (isLoading) {
     return (
       <View style={styles.loadingContainer}>
@@ -22,27 +22,24 @@ export const VODList: React.FC<VODListProps> = ({
     );
   }
 
-  const renderVODItem = ({ item }: any) => (
-    <TouchableOpacity
-      style={styles.vodItem}
+  const renderVODItem: ListRenderItem<VODItem> = ({ item, index }) => (
+    <Pressable
+      ref={index === 0 ? firstItemRef : undefined}
+      hasTVPreferredFocus={index === 0}
       onPress={() => onSelectVOD(item)}
-      activeOpacity={0.7}
+      style={({ focused }) => [styles.vodItem, focused && styles.vodItemFocused]}
     >
-      <Image
-        source={{ uri: item.thumbnail }}
-        style={styles.thumbnail}
-        resizeMode="cover"
-      />
+      <Image source={{ uri: item.thumbnail }} style={styles.thumbnail} resizeMode="cover" />
       <View style={styles.vodInfo}>
-        <Text style={styles.title} numberOfLines={2}>
+        <Text style={styles.title} numberOfLines={1}>
           {item.title}
         </Text>
-        <Text style={styles.rating}>⭐ {item.rating}</Text>
+        <Text style={styles.rating}>★ {item.rating}</Text>
         <Text style={styles.duration}>
-          {Math.floor(item.duration / 60)} min
+          {item.duration < 60 ? `${item.duration} sec` : `${Math.round(item.duration / 60)} min`}
         </Text>
       </View>
-    </TouchableOpacity>
+    </Pressable>
   );
 
   return (

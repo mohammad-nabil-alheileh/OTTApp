@@ -1,69 +1,46 @@
 import { Dimensions } from 'react-native';
 
-const screenWidth = Dimensions.get('window').width;
-const screenHeight = Dimensions.get('window').height;
-const diagonal = Math.sqrt(screenWidth ** 2 + screenHeight ** 2);
+// Designs are made for 1920x1080. Android TV reports width in dp (960 on a
+// 1080p TV), so scaling by width works for both dp and CSS pixels.
+const DESIGN_WIDTH = 1920;
 
-// Scale factor based on screen size (1080p = 1.0)
-const scale = diagonal / 1920;
+const { width, height } = Dimensions.get('window');
+const scale = width / DESIGN_WIDTH;
 
-const scaleSize = (size: number): number => Math.round(size * scale);
+export const scaleSize = (size: number): number => Math.round(size * scale);
+
+export const screen = { width, height, scale };
 
 export const colors = {
-  primary: '#e74c3c',
+  primary: '#e50914',
   background: '#000',
   cardBackground: '#1a1a1a',
   text: '#fff',
   textSecondary: '#999',
   border: '#333',
-  success: '#27ae60',
-  warning: '#f39c12',
-  error: '#e74c3c',
+  focus: '#fff',
   gold: '#ffd700',
 };
 
 export const spacing = {
-  xs: scaleSize(4),
-  sm: scaleSize(8),
-  md: scaleSize(12),
-  lg: scaleSize(16),
-  xl: scaleSize(20),
-  xxl: scaleSize(24),
+  xs: scaleSize(8),
+  sm: scaleSize(16),
+  md: scaleSize(24),
+  lg: scaleSize(32),
+  xl: scaleSize(48),
+  xxl: scaleSize(64),
 };
 
 export const borderRadius = {
   sm: scaleSize(4),
   md: scaleSize(8),
-  lg: scaleSize(12),
-  full: 9999,
+  lg: scaleSize(16),
 };
 
 export const typography = {
-  title: {
-    fontSize: scaleSize(24),
-    fontWeight: 'bold' as const,
-  },
-  heading: {
-    fontSize: scaleSize(18),
-    fontWeight: 'bold' as const,
-  },
-  subheading: {
-    fontSize: scaleSize(16),
-    fontWeight: '600' as const,
-  },
-  body: {
-    fontSize: scaleSize(14),
-    fontWeight: '400' as const,
-  },
-  caption: {
-    fontSize: scaleSize(12),
-    fontWeight: '400' as const,
-  },
-};
-
-// Screen dimensions for responsive layout
-export const screen = {
-  width: screenWidth,
-  height: screenHeight,
-  scale,
+  title: { fontSize: scaleSize(48), fontWeight: 'bold' as const },
+  heading: { fontSize: scaleSize(36), fontWeight: 'bold' as const },
+  subheading: { fontSize: scaleSize(28), fontWeight: '600' as const },
+  body: { fontSize: scaleSize(24), fontWeight: '400' as const },
+  caption: { fontSize: scaleSize(20), fontWeight: '400' as const },
 };

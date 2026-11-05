@@ -1,163 +1,63 @@
 # OTT TV App
 
-A simple Over-The-Top (OTT) streaming application built with **React Native** for TV platforms (Android TV, LG TV). The app demonstrates VOD (Video On Demand) and Live streaming UI patterns.
+A simple OTT (Over-The-Top) streaming app for learning how TV apps are built. One TypeScript codebase runs on:
 
-## 🎯 Purpose
+- **Android TV**: [react-native-tvos](https://github.com/react-native-tvos/react-native-tvos) (React Native fork with D-pad focus support)
+- **LG webOS TV**: [react-native-web](https://necolas.github.io/react-native-web/) bundled with webpack
 
-This is a **training project** designed to teach:
-- React Native development for TV applications
-- Component organization and best practices
-- Responsive design for multiple screen resolutions
-- TypeScript in React Native
-- VOD and Live streaming UI patterns
+It has a VOD row, a Live channels row, and a full-screen player. All content comes from mock data with public test streams. There is no backend.
 
-## 📱 Features
+## Run it
 
-- **VOD Library**: Browse and watch on-demand videos
-- **Live Channels**: View and watch live streaming channels
-- **Responsive Design**: Optimized for 1080p, scales to other resolutions
-- **TV Navigation**: Remote-friendly controls (D-pad, Enter, Back)
-- **Mock Data**: Pre-configured with sample content for learning
-
-## 🏗️ Project Structure
-
-```
-src/
-├── components/              # Reusable UI components
-│   ├── VODList/
-│   │   ├── VODList.tsx
-│   │   ├── VODList.types.ts
-│   │   └── VODList.styles.ts
-│   └── LiveChannelList/
-│       ├── LiveChannelList.tsx
-│       ├── LiveChannelList.types.ts
-│       └── LiveChannelList.styles.ts
-├── screens/                 # Screen containers
-│   ├── HomeScreen.tsx
-│   ├── VODScreen.tsx
-│   └── LiveScreen.tsx
-├── services/
-│   └── mockData.ts         # Mock VOD and Live channel data
-├── types/                  # Shared TypeScript interfaces
-│   ├── vod.ts
-│   └── live.ts
-├── styles/
-│   └── theme.ts            # Shared theme, colors, spacing, typography
-├── navigation/
-│   └── index.ts            # Navigation setup
-├── App.tsx                 # Main app component
-├── App.types.ts
-└── App.styles.ts
-```
-
-## 🎨 Styling Architecture
-
-- **Unified Theme**: All colors, spacing, and typography defined in `src/styles/theme.ts`
-- **Component Styles**: Each component has its own `ComponentName.styles.ts`
-- **Responsive Scaling**: Automatically scales based on screen diagonal (1920px = 1.0)
-
-## 🚀 Getting Started
-
-### Install Dependencies
 ```bash
 npm install
+
+npm run web        # browser / LG build in dev mode: http://localhost:8080
+npm run web:build  # production bundle for LG in dist/
+
+npm start          # Metro bundler for Android TV
+npm run android    # build + install on an Android TV emulator/device
 ```
 
-### Run on Web (for testing)
-```bash
-npm start -- --web
+On web, use the arrow keys to move focus, **Enter** to open or play/pause, and **Escape** to go back. The LG remote's Back key also works.
+
+## Project structure
+
+```
+index.ts                 Android TV entry
+index.web.ts             Web/LG entry (loads the arrow-key navigation polyfill)
+webpack.config.js        Web bundler config (Chrome 68 target for older webOS)
+android/                 Native Android TV project
+web/index.html           Web page template
+src/
+├── App.tsx / App.types.ts / App.styles.ts
+├── components/
+│   ├── VODList/         VODList.tsx, VODList.types.ts, VODList.styles.ts
+│   ├── LiveChannelList/ LiveChannelList.tsx, .types.ts, .styles.ts
+│   └── VideoPlayer/     VideoPlayer.tsx (native), VideoPlayer.web.tsx (web), .types.ts, .styles.ts
+├── services/mockData.ts Mock VOD + live channels
+├── types/               Shared types (vod.ts, live.ts, playable.ts)
+└── styles/theme.ts      Shared colors, spacing, typography, scaling
 ```
 
-### Run on Android TV
-```bash
-npm run android
-```
+## Conventions
 
-### Run Development Server
-```bash
-npm start
-```
+- Each component has its own folder with `Name.tsx`, `Name.types.ts`, and `Name.styles.ts`.
+- Types used by more than one component go in `src/types/`.
+- Styles use the shared theme. Sizes are designed for 1920x1080 and scaled with `scaleSize()`, so the same layout fits any resolution. Android TV reports 960dp width on a 1080p screen, and scaling by width handles that too.
+- Platform-specific code uses file extensions. webpack picks `*.web.tsx`; Metro (Android) picks `*.tsx`.
 
-## 📝 Development Guidelines
+## How the TV parts work
 
-### Creating New Components
+| Concern | Android TV | LG webOS / browser |
+|---|---|---|
+| Focus movement | Native D-pad focus engine | `spatial-navigation-polyfill` (arrow keys) |
+| Initial focus | `hasTVPreferredFocus` | `ref.focus()` on mount |
+| Video | `react-native-video` (ExoPlayer) | `<video>` + `hls.js` (native HLS fallback) |
+| Back key | `BackHandler` | `keydown` keyCode 461, Escape, Backspace |
 
-1. Create a folder: `src/components/MyComponent/`
-2. Create three files:
-   - `MyComponent.tsx` - Component logic
-   - `MyComponent.types.ts` - TypeScript interfaces
-   - `MyComponent.styles.ts` - StyleSheet definitions
+## Next steps (ideas)
 
-3. Example:
-```typescript
-// MyComponent.types.ts
-export interface MyComponentProps {
-  title: string;
-  onPress: () => void;
-}
-
-// MyComponent.styles.ts
-import { StyleSheet } from 'react-native';
-import { colors, spacing } from '../../styles/theme';
-
-export const styles = StyleSheet.create({
-  container: {
-    padding: spacing.md,
-    backgroundColor: colors.cardBackground,
-  },
-});
-
-// MyComponent.tsx
-import React from 'react';
-import { View, Text } from 'react-native';
-import { styles } from './MyComponent.styles';
-import { MyComponentProps } from './MyComponent.types';
-
-export const MyComponent: React.FC<MyComponentProps> = ({
-  title,
-  onPress,
-}) => (
-  <View style={styles.container}>
-    <Text>{title}</Text>
-  </View>
-);
-```
-
-### Using Theme
-
-All styling values are imported from `src/styles/theme.ts`:
-
-```typescript
-import { colors, spacing, typography, borderRadius } from '../../styles/theme';
-
-// Use in styles
-export const styles = StyleSheet.create({
-  text: {
-    ...typography.body,
-    color: colors.text,
-    marginBottom: spacing.md,
-  },
-});
-```
-
-## 📚 Learning Resources
-
-- [React Native Docs](https://reactnative.dev)
-- [Android TV Development](https://developer.android.com/training/tv)
-- [React Native TV Support](https://reactnative.dev/docs/tvos)
-
-## 🔗 Next Steps
-
-1. Connect to real VOD/Live APIs
-2. Implement video playback
-3. Add user authentication
-4. Create navigation screens
-5. Implement playback tracking
-
-## 📄 License
-
-Training project - Free to use and modify
-
----
-
-**Built with ❤️ for learning**
+- Package `dist/` as a webOS `.ipk` (`appinfo.json`, icon, `ares-package`)
+- Seek controls and a progress bar in the player
+- Replace `mockData.ts` with a real API
