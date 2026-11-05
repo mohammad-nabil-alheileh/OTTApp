@@ -1,5 +1,5 @@
 import { StyleSheet } from 'react-native';
-import { colors, spacing, borderRadius, typography, scaleSize } from '../../styles/theme';
+import { colors, spacing, borderRadius, typography } from '../../styles/theme';
 
 export const styles = StyleSheet.create({
   container: {
@@ -23,18 +23,6 @@ export const styles = StyleSheet.create({
     ...typography.heading,
     color: colors.text,
     flexShrink: 1,
-  },
-  liveBadge: {
-    marginLeft: spacing.sm,
-    paddingHorizontal: spacing.xs,
-    paddingVertical: scaleSize(4),
-    borderRadius: borderRadius.sm,
-    backgroundColor: colors.primary,
-  },
-  liveText: {
-    ...typography.caption,
-    fontWeight: 'bold',
-    color: colors.text,
   },
   center: {
     flex: 1,

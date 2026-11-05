@@ -3,6 +3,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Text, View } from 'react-native';
 import Hls from 'hls.js';
 import { PlayerControls } from '../PlayerControls/PlayerControls';
+import { useLiveState } from '../../hooks/useLiveState';
 import { styles, webVideoStyle } from './VideoPlayer.styles';
 import { VideoPlayerProps } from './VideoPlayer.types';
 
@@ -14,6 +15,10 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({ item, onBack }) => {
   const [paused, setPaused] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
+  const [liveEdge, setLiveEdge] = useState(0);
+  const [dvrWindowLength, setDvrWindowLength] = useState(0);
+  // Bumping this re-runs the setup effect below, which starts the stream at live.
+  const [reloadKey, setReloadKey] = useState(0);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -45,7 +50,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({ item, onBack }) => {
       video.removeAttribute('src');
       video.load();
     };
-  }, [item.url]);
+  }, [item.url, reloadKey]);
 
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
@@ -58,12 +63,33 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({ item, onBack }) => {
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [onBack]);
 
+  // Polled rather than read in onTimeUpdate, which stops firing while paused,
+  // and the live edge keeps moving during a pause.
+  useEffect(() => {
+    if (!item.isLive) {
+      return;
+    }
+    const timer = setInterval(() => {
+      const seekable = videoRef.current?.seekable;
+      if (seekable && seekable.length > 0) {
+        const end = seekable.end(seekable.length - 1);
+        setLiveEdge(end);
+        setDvrWindowLength(end - seekable.start(0));
+      }
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [item.isLive]);
+
+  const liveState = useLiveState(currentTime, liveEdge, dvrWindowLength);
+
   const togglePlay = () => {
     const video = videoRef.current;
     if (!video) {
       return;
     }
-    if (video.paused) {
+    if (video.paused && item.isLive && liveState.hasLeftDvrWindow) {
+      setReloadKey(k => k + 1);
+    } else if (video.paused) {
       video.play().catch(() => setPaused(true));
     } else {
       video.pause();
@@ -76,6 +102,11 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({ item, onBack }) => {
       video.currentTime = time;
       setCurrentTime(time);
     }
+  };
+
+  const goLive = () => {
+    seek(liveState.livePosition);
+    videoRef.current?.play().catch(() => setPaused(true));
   };
 
   return (
@@ -99,11 +130,6 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({ item, onBack }) => {
           <Text style={styles.title} numberOfLines={1}>
             {item.title}
           </Text>
-          {item.isLive && (
-            <View style={styles.liveBadge}>
-              <Text style={styles.liveText}>● LIVE</Text>
-            </View>
-          )}
         </View>
         <View style={styles.center}>
           {error ? (
@@ -117,8 +143,10 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({ item, onBack }) => {
           paused={paused}
           currentTime={currentTime}
           duration={duration}
+          liveState={liveState}
           onTogglePlay={togglePlay}
           onSeek={seek}
+          onGoLive={goLive}
         />
       </View>
     </View>

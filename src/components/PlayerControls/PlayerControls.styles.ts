@@ -33,4 +33,14 @@ export const styles = StyleSheet.create({
     ...typography.subheading,
     color: colors.text,
   },
+  liveDot: {
+    color: colors.primary,
+  },
+  liveDotBehind: {
+    color: colors.textSecondary,
+  },
+  // A focused button is red, so a red dot would disappear.
+  liveDotFocused: {
+    color: colors.text,
+  },
 });

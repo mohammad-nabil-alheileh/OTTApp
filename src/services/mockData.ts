@@ -5,7 +5,6 @@ const image = (seed: string, w: number, h: number) =>
   `https://picsum.photos/seed/${seed}/${w}/${h}`;
 
 // Public test streams. VODs mix HLS (.m3u8) and a plain MP4 on purpose.
-// Only 'Live Demo' is a true live stream; the other channels loop VOD streams.
 export const mockVODData: VODItem[] = [
   {
     id: 'vod-1',
@@ -53,6 +52,7 @@ export const mockVODData: VODItem[] = [
   },
 ];
 
+// Real live streams with a 10 minute DVR window, so pause/timeshift works.
 export const mockLiveChannels: LiveChannel[] = [
   {
     id: 'live-1',
@@ -66,23 +66,22 @@ export const mockLiveChannels: LiveChannel[] = [
   },
   {
     id: 'live-2',
-    name: 'Bip Bop',
-    description: 'Apple HLS example stream (looped as a channel)',
+    name: 'Live Ads',
+    description: 'Unified Streaming live HLS with SCTE-35 ad markers',
     icon: image('music', 160, 160),
     banner: image('music', 640, 360),
-    streamUrl:
-      'https://devstreaming-cdn.apple.com/videos/streaming/examples/img_bipbop_adv_example_fmp4/master.m3u8',
+    streamUrl: 'https://demo.unified-streaming.com/k8s/live/stable/scte35.isml/.m3u8',
     isLive: true,
     category: 'Music',
   },
   {
     id: 'live-3',
-    name: 'Bunny TV',
-    description: 'Mux HLS test stream (looped as a channel)',
+    name: 'Live Trunk',
+    description: 'Unified Streaming live HLS (development build)',
     icon: image('sports', 160, 160),
     banner: image('sports', 640, 360),
-    streamUrl: 'https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8',
+    streamUrl: 'https://demo.unified-streaming.com/k8s/live/trunk/live.isml/.m3u8',
     isLive: true,
-    category: 'Kids',
+    category: 'Sports',
   },
 ];

@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { Platform, Pressable, Text, View } from 'react-native';
 import { ProgressBar } from '../ProgressBar/ProgressBar';
-import { clamp } from '../../utils/time';
+import { clamp, formatTime } from '../../utils/time';
 import { styles } from './PlayerControls.styles';
 import { PlayerControlsProps } from './PlayerControls.types';
 
@@ -12,8 +12,10 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
   paused,
   currentTime,
   duration,
+  liveState,
   onTogglePlay,
   onSeek,
+  onGoLive,
 }) => {
   const playButtonRef = useRef<View>(null);
 
@@ -56,6 +58,28 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
             onPress={() => skip(SKIP_SECONDS)}
           >
             <Text style={styles.buttonText}>+10s</Text>
+          </Pressable>
+        )}
+        {isLive && (
+          <Pressable
+            style={({ focused }) => [styles.button, focused && styles.buttonFocused]}
+            onPress={onGoLive}
+          >
+            {({ focused }) => (
+              <Text style={styles.buttonText}>
+                <Text
+                  style={[
+                    liveState.isBehindLive ? styles.liveDotBehind : styles.liveDot,
+                    focused && styles.liveDotFocused,
+                  ]}
+                >
+                  ●{' '}
+                </Text>
+                {liveState.isBehindLive
+                  ? `Go LIVE  −${formatTime(liveState.secondsBehindLive)}`
+                  : 'LIVE'}
+              </Text>
+            )}
           </Pressable>
         )}
       </View>
