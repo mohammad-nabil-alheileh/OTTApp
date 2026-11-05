@@ -3,6 +3,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Text, View } from 'react-native';
 import Hls from 'hls.js';
 import { PlayerControls } from '../PlayerControls/PlayerControls';
+import { PlayerStatus } from '../PlayerStatus/PlayerStatus';
 import { useLiveState } from '../../hooks/useLiveState';
 import { styles, webVideoStyle } from './VideoPlayer.styles';
 import { VideoPlayerProps } from './VideoPlayer.types';
@@ -20,6 +21,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({ item, onBack }) => {
   // Bumping this re-runs the setup effect below, which starts the stream at live.
   const [reloadKey, setReloadKey] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  const [buffering, setBuffering] = useState(true);
 
   useEffect(() => {
     const video = videoRef.current;
@@ -89,6 +91,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({ item, onBack }) => {
     }
     if (video.paused && item.isLive && liveState.hasLeftDvrWindow) {
       setReloadKey(k => k + 1);
+      setBuffering(true);
     } else if (video.paused) {
       video.play().catch(() => setPaused(true));
     } else {
@@ -117,6 +120,11 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({ item, onBack }) => {
         playsInline
         onPlay={() => setPaused(false)}
         onPause={() => setPaused(true)}
+        // 'waiting'/'seeking' = stalled; 'playing' (or 'canplay' when paused) = recovered.
+        onWaiting={() => setBuffering(true)}
+        onSeeking={() => setBuffering(true)}
+        onPlaying={() => setBuffering(false)}
+        onCanPlay={() => setBuffering(false)}
         onTimeUpdate={e => setCurrentTime(e.currentTarget.currentTime)}
         // Live streams report Infinity; the controls hide the bar for live anyway.
         onDurationChange={e => {
@@ -131,13 +139,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({ item, onBack }) => {
             {item.title}
           </Text>
         </View>
-        <View style={styles.center}>
-          {error ? (
-            <Text style={styles.statusText}>{error}</Text>
-          ) : (
-            paused && <Text style={styles.statusText}>❚❚ Paused</Text>
-          )}
-        </View>
+        <PlayerStatus error={error} buffering={buffering} paused={paused} />
         <PlayerControls
           isLive={item.isLive}
           paused={paused}

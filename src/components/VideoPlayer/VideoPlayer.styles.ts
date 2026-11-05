@@ -1,5 +1,5 @@
 import { StyleSheet } from 'react-native';
-import { colors, spacing, borderRadius, typography } from '../../styles/theme';
+import { colors, spacing, typography } from '../../styles/theme';
 
 export const styles = StyleSheet.create({
   container: {
@@ -23,19 +23,6 @@ export const styles = StyleSheet.create({
     ...typography.heading,
     color: colors.text,
     flexShrink: 1,
-  },
-  center: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  statusText: {
-    ...typography.heading,
-    color: colors.text,
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    borderRadius: borderRadius.md,
   },
 });
 

@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { BackHandler, Text, View } from 'react-native';
 import Video, { VideoRef } from 'react-native-video';
 import { PlayerControls } from '../PlayerControls/PlayerControls';
+import { PlayerStatus } from '../PlayerStatus/PlayerStatus';
 import { useLiveState } from '../../hooks/useLiveState';
 import { styles } from './VideoPlayer.styles';
 import { VideoPlayerProps } from './VideoPlayer.types';
@@ -15,6 +16,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({ item, onBack }) => {
   // Changing the Video key remounts it, which reloads the stream at live.
   const [sourceKey, setSourceKey] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  const [buffering, setBuffering] = useState(true);
 
   useEffect(() => {
     const sub = BackHandler.addEventListener('hardwareBackPress', () => {
@@ -41,6 +43,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({ item, onBack }) => {
   const togglePlay = () => {
     if (paused && item.isLive && liveState.hasLeftDvrWindow) {
       setSourceKey(k => k + 1);
+      setBuffering(true);
       setPaused(false);
     } else {
       setPaused(p => !p);
@@ -68,6 +71,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({ item, onBack }) => {
         resizeMode="contain"
         progressUpdateInterval={250}
         onLoad={e => setDuration(e.duration)}
+        onBuffer={e => setBuffering(e.isBuffering)}
         onProgress={e => {
           setCurrentTime(e.currentTime);
           // For live streams this is the length of the DVR window, i.e. the live edge.
@@ -81,13 +85,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({ item, onBack }) => {
             {item.title}
           </Text>
         </View>
-        <View style={styles.center}>
-          {error ? (
-            <Text style={styles.statusText}>{error}</Text>
-          ) : (
-            paused && <Text style={styles.statusText}>❚❚ Paused</Text>
-          )}
-        </View>
+        <PlayerStatus error={error} buffering={buffering} paused={paused} />
         <PlayerControls
           isLive={item.isLive}
           paused={paused}
