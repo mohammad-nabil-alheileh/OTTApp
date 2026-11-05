@@ -22,7 +22,10 @@ const toRemoteKey = (evt: HWEvent): RemoteKey | null => {
 };
 
 // Calls onKey for D-pad left/right while enabled (Android TV).
-export const useRemoteKeys = (onKey: (key: RemoteKey) => void, enabled: boolean) => {
+export const useRemoteKeys = (
+  onKey: (key: RemoteKey) => void,
+  enabled: boolean,
+) => {
   const handleEvent = useCallback(
     (evt: HWEvent) => {
       const key = enabled ? toRemoteKey(evt) : null;

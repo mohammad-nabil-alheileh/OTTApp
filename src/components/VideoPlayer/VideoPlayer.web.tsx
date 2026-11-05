@@ -4,8 +4,10 @@ import { Text, View } from 'react-native';
 import Hls from 'hls.js';
 import { PlayerControls } from '../PlayerControls/PlayerControls';
 import { PlayerStatus } from '../PlayerStatus/PlayerStatus';
+import { IdleCatcher } from '../IdleCatcher/IdleCatcher';
 import { useLiveState } from '../../hooks/useLiveState';
 import { useBackHandler } from '../../hooks/useBackHandler';
+import { useAutoHide } from '../../hooks/useAutoHide';
 import { AUTO_QUALITY } from '../../types/quality';
 import { toQualities } from '../../utils/quality';
 import { styles, webVideoStyle } from './VideoPlayer.styles';
@@ -68,6 +70,8 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({ item, onBack }) => {
     return true;
   }, [onBack]);
   useBackHandler(handleBack);
+
+  const overlay = useAutoHide(paused || !!error);
 
   useEffect(() => {
     const video = videoRef.current;
@@ -169,27 +173,33 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({ item, onBack }) => {
         onError={() => setError('Playback failed')}
       />
       <View style={styles.overlay}>
-        <View style={styles.topBar}>
-          <Text style={styles.title} numberOfLines={1}>
-            {item.title}
-          </Text>
-        </View>
+        {overlay.visible && (
+          <View style={styles.topBar}>
+            <Text style={styles.title} numberOfLines={1}>
+              {item.title}
+            </Text>
+          </View>
+        )}
         <PlayerStatus error={error} buffering={buffering} paused={paused} />
-        <PlayerControls
-          isLive={item.isLive}
-          paused={paused}
-          currentTime={currentTime}
-          duration={duration}
-          liveState={liveState}
-          playbackRate={playbackRate}
-          onPlaybackRateChange={setPlaybackRate}
-          qualities={qualities}
-          quality={quality}
-          onQualityChange={setQuality}
-          onTogglePlay={togglePlay}
-          onSeek={seek}
-          onGoLive={goLive}
-        />
+        {overlay.visible ? (
+          <PlayerControls
+            isLive={item.isLive}
+            paused={paused}
+            currentTime={currentTime}
+            duration={duration}
+            liveState={liveState}
+            playbackRate={playbackRate}
+            onPlaybackRateChange={setPlaybackRate}
+            qualities={qualities}
+            quality={quality}
+            onQualityChange={setQuality}
+            onTogglePlay={togglePlay}
+            onSeek={seek}
+            onGoLive={goLive}
+          />
+        ) : (
+          <IdleCatcher onWake={overlay.show} />
+        )}
       </View>
     </View>
   );

@@ -29,6 +29,7 @@ export const useLiveState = (
     secondsBehindLive,
     livePosition: liveEdge - gap,
     hasLeftDvrWindow:
-      dvrWindowLength > 0 && liveEdge - currentTime > dvrWindowLength - DVR_SAFETY_SECONDS,
+      dvrWindowLength > 0 &&
+      liveEdge - currentTime > dvrWindowLength - DVR_SAFETY_SECONDS,
   };
 };
