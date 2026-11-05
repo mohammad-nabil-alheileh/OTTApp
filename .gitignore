@@ -31,3 +31,6 @@ dist/
 # Local assistant notes
 CLAUDE.md
 .claude/
+
+# Local presentation docs
+docs/
