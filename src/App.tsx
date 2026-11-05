@@ -38,7 +38,7 @@ export default function App() {
         <Text style={styles.subtitle}>Videos & Live Channels</Text>
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false}>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
         <VODList
           vodList={vodList}
           isLoading={isLoading}

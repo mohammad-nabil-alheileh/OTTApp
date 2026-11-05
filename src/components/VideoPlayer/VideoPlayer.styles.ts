@@ -49,11 +49,6 @@ export const styles = StyleSheet.create({
     paddingVertical: spacing.sm,
     borderRadius: borderRadius.md,
   },
-  hint: {
-    ...typography.caption,
-    color: colors.textSecondary,
-    padding: spacing.xl,
-  },
 });
 
 // The web player renders a DOM <video>, which takes CSS rather than RN styles.

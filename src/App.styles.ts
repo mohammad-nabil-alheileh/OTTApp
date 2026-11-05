@@ -20,4 +20,8 @@ export const styles = StyleSheet.create({
     ...typography.body,
     color: colors.textSecondary,
   },
+  // Room below the last row so a focused (scaled-up) card can scroll fully into view.
+  scrollContent: {
+    paddingBottom: spacing.xxl,
+  },
 });

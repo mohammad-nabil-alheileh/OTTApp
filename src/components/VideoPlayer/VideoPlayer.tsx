@@ -1,11 +1,15 @@
-import React, { useEffect, useState } from 'react';
-import { BackHandler, Pressable, Text, View } from 'react-native';
-import Video from 'react-native-video';
+import React, { useEffect, useRef, useState } from 'react';
+import { BackHandler, Text, View } from 'react-native';
+import Video, { VideoRef } from 'react-native-video';
+import { PlayerControls } from '../PlayerControls/PlayerControls';
 import { styles } from './VideoPlayer.styles';
 import { VideoPlayerProps } from './VideoPlayer.types';
 
 export const VideoPlayer: React.FC<VideoPlayerProps> = ({ item, onBack }) => {
+  const videoRef = useRef<VideoRef>(null);
   const [paused, setPaused] = useState(false);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -16,16 +20,25 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({ item, onBack }) => {
     return () => sub.remove();
   }, [onBack]);
 
+  const seek = (time: number) => {
+    videoRef.current?.seek(time);
+    setCurrentTime(time);
+  };
+
   return (
     <View style={styles.container}>
       <Video
+        ref={videoRef}
         source={{ uri: item.url }}
         style={styles.video}
         paused={paused}
         resizeMode="contain"
+        progressUpdateInterval={250}
+        onLoad={e => setDuration(e.duration)}
+        onProgress={e => setCurrentTime(e.currentTime)}
         onError={e => setError(e.error.errorString ?? 'Playback failed')}
       />
-      <Pressable hasTVPreferredFocus style={styles.overlay} onPress={() => setPaused(p => !p)}>
+      <View style={styles.overlay}>
         <View style={styles.topBar}>
           <Text style={styles.title} numberOfLines={1}>
             {item.title}
@@ -43,8 +56,15 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({ item, onBack }) => {
             paused && <Text style={styles.statusText}>❚❚ Paused</Text>
           )}
         </View>
-        <Text style={styles.hint}>OK: play/pause · Back: home</Text>
-      </Pressable>
+        <PlayerControls
+          isLive={item.isLive}
+          paused={paused}
+          currentTime={currentTime}
+          duration={duration}
+          onTogglePlay={() => setPaused(p => !p)}
+          onSeek={seek}
+        />
+      </View>
     </View>
   );
 };

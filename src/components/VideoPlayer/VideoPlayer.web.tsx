@@ -1,7 +1,8 @@
 /// <reference lib="dom" />
 import React, { useEffect, useRef, useState } from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 import Hls from 'hls.js';
+import { PlayerControls } from '../PlayerControls/PlayerControls';
 import { styles, webVideoStyle } from './VideoPlayer.styles';
 import { VideoPlayerProps } from './VideoPlayer.types';
 
@@ -10,8 +11,9 @@ const LG_BACK_KEY = 461;
 
 export const VideoPlayer: React.FC<VideoPlayerProps> = ({ item, onBack }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
-  const overlayRef = useRef<View>(null);
   const [paused, setPaused] = useState(false);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -46,7 +48,6 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({ item, onBack }) => {
   }, [item.url]);
 
   useEffect(() => {
-    overlayRef.current?.focus();
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.keyCode === LG_BACK_KEY || e.key === 'Escape' || e.key === 'Backspace') {
         e.preventDefault();
@@ -69,6 +70,14 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({ item, onBack }) => {
     }
   };
 
+  const seek = (time: number) => {
+    const video = videoRef.current;
+    if (video) {
+      video.currentTime = time;
+      setCurrentTime(time);
+    }
+  };
+
   return (
     <View style={styles.container}>
       <video
@@ -77,9 +86,15 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({ item, onBack }) => {
         playsInline
         onPlay={() => setPaused(false)}
         onPause={() => setPaused(true)}
+        onTimeUpdate={e => setCurrentTime(e.currentTarget.currentTime)}
+        // Live streams report Infinity; the controls hide the bar for live anyway.
+        onDurationChange={e => {
+          const d = e.currentTarget.duration;
+          setDuration(Number.isFinite(d) ? d : 0);
+        }}
         onError={() => setError('Playback failed')}
       />
-      <Pressable ref={overlayRef} style={styles.overlay} onPress={togglePlay}>
+      <View style={styles.overlay}>
         <View style={styles.topBar}>
           <Text style={styles.title} numberOfLines={1}>
             {item.title}
@@ -97,8 +112,15 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({ item, onBack }) => {
             paused && <Text style={styles.statusText}>❚❚ Paused</Text>
           )}
         </View>
-        <Text style={styles.hint}>OK: play/pause · Back: home</Text>
-      </Pressable>
+        <PlayerControls
+          isLive={item.isLive}
+          paused={paused}
+          currentTime={currentTime}
+          duration={duration}
+          onTogglePlay={togglePlay}
+          onSeek={seek}
+        />
+      </View>
     </View>
   );
 };

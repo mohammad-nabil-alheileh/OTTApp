@@ -1,0 +1,87 @@
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { GestureResponderEvent, LayoutChangeEvent, Pressable, Text, View } from 'react-native';
+import { useRemoteKeys } from '../../hooks/useRemoteKeys';
+import { RemoteKey } from '../../types/remote';
+import { clamp, formatTime } from '../../utils/time';
+import { styles } from './ProgressBar.styles';
+import { ProgressBarProps } from './ProgressBar.types';
+
+const SCRUB_STEP_SECONDS = 10;
+// Seek once the user stops pressing left/right, instead of on every press.
+const COMMIT_DELAY_MS = 800;
+
+export const ProgressBar: React.FC<ProgressBarProps> = ({ currentTime, duration, onSeek }) => {
+  const [focused, setFocused] = useState(false);
+  const [scrubTime, setScrubTime] = useState<number | null>(null);
+  const scrubTimeRef = useRef<number | null>(null);
+  const commitTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const hitAreaWidth = useRef(0);
+
+  const commitScrub = useCallback(() => {
+    clearTimeout(commitTimer.current);
+    if (scrubTimeRef.current !== null) {
+      onSeek(scrubTimeRef.current);
+      scrubTimeRef.current = null;
+      setScrubTime(null);
+    }
+  }, [onSeek]);
+
+  const handleKey = useCallback(
+    (key: RemoteKey) => {
+      const from = scrubTimeRef.current ?? currentTime;
+      const step = key === 'right' ? SCRUB_STEP_SECONDS : -SCRUB_STEP_SECONDS;
+      const next = clamp(from + step, 0, duration);
+      scrubTimeRef.current = next;
+      setScrubTime(next);
+      clearTimeout(commitTimer.current);
+      commitTimer.current = setTimeout(commitScrub, COMMIT_DELAY_MS);
+    },
+    [currentTime, duration, commitScrub],
+  );
+
+  useRemoteKeys(handleKey, focused && duration > 0);
+  useEffect(() => () => clearTimeout(commitTimer.current), []);
+
+  const seekToPointer = (e: GestureResponderEvent) => {
+    if (hitAreaWidth.current > 0 && duration > 0) {
+      const ratio = clamp(e.nativeEvent.locationX / hitAreaWidth.current, 0, 1);
+      onSeek(ratio * duration);
+    }
+  };
+
+  const shownTime = scrubTime ?? currentTime;
+  const percent = `${duration > 0 ? (shownTime / duration) * 100 : 0}%` as const;
+
+  return (
+    <View style={styles.container}>
+      <Pressable
+        onFocus={() => setFocused(true)}
+        onBlur={() => {
+          setFocused(false);
+          commitScrub();
+        }}
+        onPress={commitScrub}
+      >
+        <View
+          style={styles.hitArea}
+          onLayout={(e: LayoutChangeEvent) => {
+            hitAreaWidth.current = e.nativeEvent.layout.width;
+          }}
+          onStartShouldSetResponder={() => true}
+          onResponderRelease={seekToPointer}
+        >
+          <View style={[styles.track, focused && styles.trackFocused]}>
+            <View style={[styles.fill, { width: percent }]} />
+          </View>
+          <View style={[styles.thumb, focused && styles.thumbFocused, { left: percent }]} />
+        </View>
+      </Pressable>
+      <View style={styles.times}>
+        <Text style={[styles.time, scrubTime !== null && styles.timeScrubbing]}>
+          {formatTime(shownTime)}
+        </Text>
+        <Text style={styles.time}>{formatTime(duration)}</Text>
+      </View>
+    </View>
+  );
+};
