@@ -1,0 +1,36 @@
+{
+  "name": "ott-tv-app",
+  "version": "1.0.0",
+  "description": "Simple OTT (Over-The-Top) streaming app for TV - Learning Project",
+  "main": "index.js",
+  "scripts": {
+    "start": "react-native start",
+    "android": "react-native run-android --active-arch=arm64-v8a",
+    "ios": "react-native run-ios",
+    "lint": "eslint src --ext .ts,.tsx",
+    "build-android": "cd android && ./gradlew assembleRelease"
+  },
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-native": "^0.73.0",
+    "@react-native-camera-roll/camera-roll": "^7.0.0",
+    "@react-navigation/native": "^6.1.9",
+    "@react-navigation/native-stack": "^6.9.17",
+    "react-native-gesture-handler": "^2.14.0",
+    "react-native-reanimated": "^3.6.0",
+    "react-native-screens": "^3.27.0",
+    "react-native-video": "^5.2.1"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.23.0",
+    "@babel/preset-env": "^7.23.0",
+    "@babel/preset-react": "^7.23.0",
+    "@babel/preset-typescript": "^7.23.0",
+    "@types/react": "^18.2.0",
+    "@types/react-native": "^0.73.0",
+    "typescript": "^5.3.0",
+    "eslint": "^8.55.0",
+    "@react-native/babel-preset": "^0.73.0",
+    "@react-native/metro-config": "^0.73.0"
+  }
+}
