@@ -4,7 +4,7 @@ import { LiveChannel } from '../types/live';
 const image = (seed: string, w: number, h: number) =>
   `https://picsum.photos/seed/${seed}/${w}/${h}`;
 
-// Public test streams. VODs mix HLS (.m3u8) and a plain MP4 on purpose.
+// Public HLS test streams with several resolutions each.
 export const mockVODData: VODItem[] = [
   {
     id: 'vod-1',
@@ -38,17 +38,6 @@ export const mockVODData: VODItem[] = [
     releaseDate: '2016-01-01',
     rating: 7.0,
     url: 'https://storage.googleapis.com/shaka-demo-assets/angel-one-hls/hls.m3u8',
-  },
-  {
-    id: 'vod-4',
-    title: 'Bunny Clip (MP4)',
-    description: 'A 10 second progressive MP4 clip.',
-    thumbnail: image('clip', 640, 360),
-    poster: image('clip', 600, 900),
-    duration: 10,
-    releaseDate: '2008-05-30',
-    rating: 7.5,
-    url: 'https://test-videos.co.uk/vids/bigbuckbunny/mp4/h264/1080/Big_Buck_Bunny_1080_10s_1MB.mp4',
   },
 ];
 

@@ -6,11 +6,14 @@ import { PlayerControls } from '../PlayerControls/PlayerControls';
 import { PlayerStatus } from '../PlayerStatus/PlayerStatus';
 import { useLiveState } from '../../hooks/useLiveState';
 import { useBackHandler } from '../../hooks/useBackHandler';
+import { AUTO_QUALITY } from '../../types/quality';
+import { toQualities } from '../../utils/quality';
 import { styles, webVideoStyle } from './VideoPlayer.styles';
 import { VideoPlayerProps } from './VideoPlayer.types';
 
 export const VideoPlayer: React.FC<VideoPlayerProps> = ({ item, onBack }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const hlsRef = useRef<Hls | null>(null);
   const [paused, setPaused] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
@@ -21,6 +24,8 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({ item, onBack }) => {
   const [error, setError] = useState<string | null>(null);
   const [buffering, setBuffering] = useState(true);
   const [playbackRate, setPlaybackRate] = useState(1);
+  const [qualities, setQualities] = useState<number[]>([]);
+  const [quality, setQuality] = useState(AUTO_QUALITY);
 
   useEffect(() => {
     const video = videoRef.current;
@@ -39,8 +44,12 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({ item, onBack }) => {
           setError(`Stream failed: ${data.details}`);
         }
       });
+      hls.on(Hls.Events.MANIFEST_PARSED, (_event, data) => {
+        setQualities(toQualities(data.levels.map(level => level.height)));
+      });
       hls.loadSource(item.url);
       hls.attachMedia(video);
+      hlsRef.current = hls;
     } else {
       video.src = item.url;
     }
@@ -48,6 +57,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({ item, onBack }) => {
 
     return () => {
       hls?.destroy();
+      hlsRef.current = null;
       video.removeAttribute('src');
       video.load();
     };
@@ -67,6 +77,28 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({ item, onBack }) => {
       video.playbackRate = playbackRate;
     }
   }, [playbackRate]);
+
+  useEffect(() => {
+    const hls = hlsRef.current;
+    if (!hls) {
+      return;
+    }
+    if (quality === AUTO_QUALITY) {
+      hls.currentLevel = -1;
+      return;
+    }
+    // Several levels can share a height; take the highest bitrate one.
+    let best = -1;
+    hls.levels.forEach((level, index) => {
+      if (
+        level.height === quality &&
+        (best < 0 || level.bitrate > hls.levels[best].bitrate)
+      ) {
+        best = index;
+      }
+    });
+    hls.currentLevel = best;
+  }, [quality]);
 
   // Polled rather than read in onTimeUpdate, which stops firing while paused,
   // and the live edge keeps moving during a pause.
@@ -151,6 +183,9 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({ item, onBack }) => {
           liveState={liveState}
           playbackRate={playbackRate}
           onPlaybackRateChange={setPlaybackRate}
+          qualities={qualities}
+          quality={quality}
+          onQualityChange={setQuality}
           onTogglePlay={togglePlay}
           onSeek={seek}
           onGoLive={goLive}

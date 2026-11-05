@@ -2,12 +2,16 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Platform, Pressable, Text, View } from 'react-native';
 import { useBackHandler } from '../../hooks/useBackHandler';
 import { sharedStyles } from '../../styles/theme';
-import { styles } from './SpeedSelector.styles';
-import { SpeedSelectorProps } from './SpeedSelector.types';
+import { styles } from './OptionSelector.styles';
+import { OptionSelectorProps } from './OptionSelector.types';
 
-const PLAYBACK_RATES = [0.75, 1, 1.15, 1.25];
-
-export const SpeedSelector: React.FC<SpeedSelectorProps> = ({ rate, onChange }) => {
+// A control-bar button that opens a dropdown of options (speed, quality, ...).
+export const OptionSelector: React.FC<OptionSelectorProps> = ({
+  title,
+  options,
+  value,
+  onChange,
+}) => {
   const [open, setOpen] = useState(false);
   // Flipping hasTVPreferredFocus to true is how Android TV moves focus back.
   const [refocusButton, setRefocusButton] = useState(false);
@@ -55,22 +59,25 @@ export const SpeedSelector: React.FC<SpeedSelectorProps> = ({ rate, onChange }) 
     <View style={styles.container}>
       {open && (
         <View style={styles.menu}>
-          {PLAYBACK_RATES.map(option => {
-            const selected = option === rate;
+          {options.map(option => {
+            const selected = option.value === value;
             return (
               <Pressable
-                key={option}
+                key={option.value}
                 ref={selected ? selectedOptionRef : undefined}
                 hasTVPreferredFocus={selected}
                 onFocus={() => {
-                  focusedOption.current = option;
+                  focusedOption.current = option.value;
                 }}
                 onBlur={handleOptionBlur}
                 onPress={() => {
-                  onChange(option);
+                  onChange(option.value);
                   closeMenu();
                 }}
-                style={({ focused }) => [styles.option, focused && styles.optionFocused]}
+                style={({ focused }) => [
+                  styles.option,
+                  focused && styles.optionFocused,
+                ]}
               >
                 {({ focused }) => (
                   <>
@@ -81,7 +88,7 @@ export const SpeedSelector: React.FC<SpeedSelectorProps> = ({ rate, onChange }) 
                         (selected || focused) && styles.optionTextSelected,
                       ]}
                     >
-                      {option}x
+                      {option.label}
                     </Text>
                   </>
                 )}
@@ -99,7 +106,9 @@ export const SpeedSelector: React.FC<SpeedSelectorProps> = ({ rate, onChange }) 
           focused && sharedStyles.controlButtonFocused,
         ]}
       >
-        <Text style={sharedStyles.controlButtonText}>Speed {rate}x</Text>
+        <Text style={sharedStyles.controlButtonText}>
+          {title} {options.find(o => o.value === value)?.label}
+        </Text>
       </Pressable>
     </View>
   );

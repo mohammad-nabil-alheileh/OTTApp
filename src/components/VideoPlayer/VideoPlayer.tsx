@@ -1,10 +1,22 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { Text, View } from 'react-native';
-import Video, { VideoRef } from 'react-native-video';
+import Video, {
+  SelectedVideoTrack,
+  SelectedVideoTrackType,
+  VideoRef,
+} from 'react-native-video';
 import { PlayerControls } from '../PlayerControls/PlayerControls';
 import { PlayerStatus } from '../PlayerStatus/PlayerStatus';
 import { useLiveState } from '../../hooks/useLiveState';
 import { useBackHandler } from '../../hooks/useBackHandler';
+import { AUTO_QUALITY } from '../../types/quality';
+import { toQualities } from '../../utils/quality';
 import { styles } from './VideoPlayer.styles';
 import { VideoPlayerProps } from './VideoPlayer.types';
 
@@ -19,6 +31,8 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({ item, onBack }) => {
   const [error, setError] = useState<string | null>(null);
   const [buffering, setBuffering] = useState(true);
   const [playbackRate, setPlaybackRate] = useState(1);
+  const [qualities, setQualities] = useState<number[]>([]);
+  const [quality, setQuality] = useState(AUTO_QUALITY);
 
   const handleBack = useCallback(() => {
     onBack();
@@ -50,6 +64,16 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({ item, onBack }) => {
     }
   };
 
+  // Memoised: a new object every render would make the native player
+  // re-apply the track selection on every progress update.
+  const selectedVideoTrack = useMemo<SelectedVideoTrack>(
+    () =>
+      quality === AUTO_QUALITY
+        ? { type: SelectedVideoTrackType.AUTO }
+        : { type: SelectedVideoTrackType.RESOLUTION, value: quality },
+    [quality],
+  );
+
   const seek = (time: number) => {
     videoRef.current?.seek(time);
     setCurrentTime(time);
@@ -69,6 +93,10 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({ item, onBack }) => {
         style={styles.video}
         paused={paused}
         rate={playbackRate}
+        selectedVideoTrack={selectedVideoTrack}
+        onVideoTracks={e =>
+          setQualities(toQualities(e.videoTracks.map(t => t.height)))
+        }
         resizeMode="contain"
         progressUpdateInterval={250}
         onLoad={e => setDuration(e.duration)}
@@ -95,6 +123,9 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({ item, onBack }) => {
           liveState={liveState}
           playbackRate={playbackRate}
           onPlaybackRateChange={setPlaybackRate}
+          qualities={qualities}
+          quality={quality}
+          onQualityChange={setQuality}
           onTogglePlay={togglePlay}
           onSeek={seek}
           onGoLive={goLive}

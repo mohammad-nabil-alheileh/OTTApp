@@ -8,6 +8,10 @@ export interface PlayerControlsProps {
   liveState: LiveState;
   playbackRate: number;
   onPlaybackRateChange: (rate: number) => void;
+  // Video heights offered by the stream, highest first.
+  qualities: number[];
+  quality: number;
+  onQualityChange: (quality: number) => void;
   onTogglePlay: () => void;
   onSeek: (time: number) => void;
   onGoLive: () => void;

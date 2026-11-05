@@ -1,13 +1,19 @@
 import React, { useEffect, useRef } from 'react';
 import { Platform, Pressable, Text, View } from 'react-native';
 import { ProgressBar } from '../ProgressBar/ProgressBar';
-import { SpeedSelector } from '../SpeedSelector/SpeedSelector';
+import { OptionSelector } from '../OptionSelector/OptionSelector';
+import { SelectorOption } from '../OptionSelector/OptionSelector.types';
+import { AUTO_QUALITY } from '../../types/quality';
 import { clamp, formatTime } from '../../utils/time';
 import { sharedStyles } from '../../styles/theme';
 import { styles } from './PlayerControls.styles';
 import { PlayerControlsProps } from './PlayerControls.types';
 
 const SKIP_SECONDS = 10;
+const SPEED_OPTIONS: SelectorOption[] = [0.75, 1, 1.15, 1.25].map(rate => ({
+  value: rate,
+  label: `${rate}x`,
+}));
 
 export const PlayerControls: React.FC<PlayerControlsProps> = ({
   isLive,
@@ -17,6 +23,9 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
   liveState,
   playbackRate,
   onPlaybackRateChange,
+  qualities,
+  quality,
+  onQualityChange,
   onTogglePlay,
   onSeek,
   onGoLive,
@@ -29,6 +38,11 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
       playButtonRef.current?.focus();
     }
   }, []);
+
+  const qualityOptions: SelectorOption[] = [
+    { value: AUTO_QUALITY, label: 'Auto' },
+    ...qualities.map(height => ({ value: height, label: `${height}p` })),
+  ];
 
   const skip = (seconds: number) => {
     if (duration > 0) {
@@ -82,7 +96,20 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
           </Pressable>
         )}
         {!isLive && (
-          <SpeedSelector rate={playbackRate} onChange={onPlaybackRateChange} />
+          <OptionSelector
+            title="Speed"
+            options={SPEED_OPTIONS}
+            value={playbackRate}
+            onChange={onPlaybackRateChange}
+          />
+        )}
+        {!isLive && qualities.length > 1 && (
+          <OptionSelector
+            title="Quality"
+            options={qualityOptions}
+            value={quality}
+            onChange={onQualityChange}
+          />
         )}
         {isLive && (
           <Pressable
