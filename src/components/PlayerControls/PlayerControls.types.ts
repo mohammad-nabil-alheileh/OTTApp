@@ -6,6 +6,8 @@ export interface PlayerControlsProps {
   currentTime: number;
   duration: number;
   liveState: LiveState;
+  playbackRate: number;
+  onPlaybackRateChange: (rate: number) => void;
   onTogglePlay: () => void;
   onSeek: (time: number) => void;
   onGoLive: () => void;

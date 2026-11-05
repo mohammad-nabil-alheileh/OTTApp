@@ -1,4 +1,4 @@
-import { Dimensions } from 'react-native';
+import { Dimensions, StyleSheet } from 'react-native';
 
 // Designs are made for 1920x1080. Android TV reports width in dp (960 on a
 // 1080p TV), so scaling by width works for both dp and CSS pixels.
@@ -44,3 +44,27 @@ export const typography = {
   body: { fontSize: scaleSize(24), fontWeight: '400' as const },
   caption: { fontSize: scaleSize(20), fontWeight: '400' as const },
 };
+
+// Styles shared by more than one component.
+export const sharedStyles = StyleSheet.create({
+  controlButton: {
+    minWidth: scaleSize(160),
+    alignItems: 'center',
+    marginHorizontal: spacing.xs,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+    borderRadius: borderRadius.md,
+    borderWidth: scaleSize(4),
+    borderColor: 'transparent',
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+  },
+  controlButtonFocused: {
+    borderColor: colors.focus,
+    backgroundColor: colors.primary,
+    transform: [{ scale: 1.1 }],
+  },
+  controlButtonText: {
+    ...typography.subheading,
+    color: colors.text,
+  },
+});

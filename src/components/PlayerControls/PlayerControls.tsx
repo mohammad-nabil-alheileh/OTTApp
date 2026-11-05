@@ -1,7 +1,9 @@
 import React, { useEffect, useRef } from 'react';
 import { Platform, Pressable, Text, View } from 'react-native';
 import { ProgressBar } from '../ProgressBar/ProgressBar';
+import { SpeedSelector } from '../SpeedSelector/SpeedSelector';
 import { clamp, formatTime } from '../../utils/time';
+import { sharedStyles } from '../../styles/theme';
 import { styles } from './PlayerControls.styles';
 import { PlayerControlsProps } from './PlayerControls.types';
 
@@ -13,6 +15,8 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
   currentTime,
   duration,
   liveState,
+  playbackRate,
+  onPlaybackRateChange,
   onTogglePlay,
   onSeek,
   onGoLive,
@@ -34,42 +38,67 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
 
   return (
     <View style={styles.container}>
-      {!isLive && <ProgressBar currentTime={currentTime} duration={duration} onSeek={onSeek} />}
+      {!isLive && (
+        <ProgressBar
+          currentTime={currentTime}
+          duration={duration}
+          onSeek={onSeek}
+        />
+      )}
       <View style={styles.buttons}>
         {!isLive && (
           <Pressable
-            style={({ focused }) => [styles.button, focused && styles.buttonFocused]}
+            style={({ focused }) => [
+              sharedStyles.controlButton,
+              focused && sharedStyles.controlButtonFocused,
+            ]}
             onPress={() => skip(-SKIP_SECONDS)}
           >
-            <Text style={styles.buttonText}>−10s</Text>
+            <Text style={sharedStyles.controlButtonText}>−10s</Text>
           </Pressable>
         )}
         <Pressable
           ref={playButtonRef}
           hasTVPreferredFocus
-          style={({ focused }) => [styles.button, focused && styles.buttonFocused]}
+          style={({ focused }) => [
+            sharedStyles.controlButton,
+            focused && sharedStyles.controlButtonFocused,
+          ]}
           onPress={onTogglePlay}
         >
-          <Text style={styles.buttonText}>{paused ? '▶ Play' : '❚❚ Pause'}</Text>
+          <Text style={sharedStyles.controlButtonText}>
+            {paused ? '▶ Play' : '❚❚ Pause'}
+          </Text>
         </Pressable>
         {!isLive && (
           <Pressable
-            style={({ focused }) => [styles.button, focused && styles.buttonFocused]}
+            style={({ focused }) => [
+              sharedStyles.controlButton,
+              focused && sharedStyles.controlButtonFocused,
+            ]}
             onPress={() => skip(SKIP_SECONDS)}
           >
-            <Text style={styles.buttonText}>+10s</Text>
+            <Text style={sharedStyles.controlButtonText}>+10s</Text>
           </Pressable>
+        )}
+        {!isLive && (
+          <SpeedSelector rate={playbackRate} onChange={onPlaybackRateChange} />
         )}
         {isLive && (
           <Pressable
-            style={({ focused }) => [styles.button, focused && styles.buttonFocused]}
+            style={({ focused }) => [
+              sharedStyles.controlButton,
+              focused && sharedStyles.controlButtonFocused,
+            ]}
             onPress={onGoLive}
           >
             {({ focused }) => (
-              <Text style={styles.buttonText}>
+              <Text style={sharedStyles.controlButtonText}>
                 <Text
                   style={[
-                    liveState.isBehindLive ? styles.liveDotBehind : styles.liveDot,
+                    liveState.isBehindLive
+                      ? styles.liveDotBehind
+                      : styles.liveDot,
                     focused && styles.liveDotFocused,
                   ]}
                 >

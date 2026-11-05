@@ -1,9 +1,10 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { BackHandler, Text, View } from 'react-native';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { Text, View } from 'react-native';
 import Video, { VideoRef } from 'react-native-video';
 import { PlayerControls } from '../PlayerControls/PlayerControls';
 import { PlayerStatus } from '../PlayerStatus/PlayerStatus';
 import { useLiveState } from '../../hooks/useLiveState';
+import { useBackHandler } from '../../hooks/useBackHandler';
 import { styles } from './VideoPlayer.styles';
 import { VideoPlayerProps } from './VideoPlayer.types';
 
@@ -17,14 +18,13 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({ item, onBack }) => {
   const [sourceKey, setSourceKey] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [buffering, setBuffering] = useState(true);
+  const [playbackRate, setPlaybackRate] = useState(1);
 
-  useEffect(() => {
-    const sub = BackHandler.addEventListener('hardwareBackPress', () => {
-      onBack();
-      return true;
-    });
-    return () => sub.remove();
+  const handleBack = useCallback(() => {
+    onBack();
+    return true;
   }, [onBack]);
+  useBackHandler(handleBack);
 
   // ExoPlayer reports live positions inside a sliding window, so while paused
   // the window moves on and our position in it drops by one second per second.
@@ -68,6 +68,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({ item, onBack }) => {
         source={{ uri: item.url }}
         style={styles.video}
         paused={paused}
+        rate={playbackRate}
         resizeMode="contain"
         progressUpdateInterval={250}
         onLoad={e => setDuration(e.duration)}
@@ -92,6 +93,8 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({ item, onBack }) => {
           currentTime={currentTime}
           duration={duration}
           liveState={liveState}
+          playbackRate={playbackRate}
+          onPlaybackRateChange={setPlaybackRate}
           onTogglePlay={togglePlay}
           onSeek={seek}
           onGoLive={goLive}

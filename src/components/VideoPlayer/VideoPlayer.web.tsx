@@ -1,15 +1,13 @@
 /// <reference lib="dom" />
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Text, View } from 'react-native';
 import Hls from 'hls.js';
 import { PlayerControls } from '../PlayerControls/PlayerControls';
 import { PlayerStatus } from '../PlayerStatus/PlayerStatus';
 import { useLiveState } from '../../hooks/useLiveState';
+import { useBackHandler } from '../../hooks/useBackHandler';
 import { styles, webVideoStyle } from './VideoPlayer.styles';
 import { VideoPlayerProps } from './VideoPlayer.types';
-
-// keyCode of the Back button on LG webOS remotes.
-const LG_BACK_KEY = 461;
 
 export const VideoPlayer: React.FC<VideoPlayerProps> = ({ item, onBack }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -22,6 +20,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({ item, onBack }) => {
   const [reloadKey, setReloadKey] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [buffering, setBuffering] = useState(true);
+  const [playbackRate, setPlaybackRate] = useState(1);
 
   useEffect(() => {
     const video = videoRef.current;
@@ -54,16 +53,20 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({ item, onBack }) => {
     };
   }, [item.url, reloadKey]);
 
-  useEffect(() => {
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.keyCode === LG_BACK_KEY || e.key === 'Escape' || e.key === 'Backspace') {
-        e.preventDefault();
-        onBack();
-      }
-    };
-    window.addEventListener('keydown', onKeyDown);
-    return () => window.removeEventListener('keydown', onKeyDown);
+  const handleBack = useCallback(() => {
+    onBack();
+    return true;
   }, [onBack]);
+  useBackHandler(handleBack);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (video) {
+      // defaultPlaybackRate too, because loading a new source resets playbackRate to it.
+      video.defaultPlaybackRate = playbackRate;
+      video.playbackRate = playbackRate;
+    }
+  }, [playbackRate]);
 
   // Polled rather than read in onTimeUpdate, which stops firing while paused,
   // and the live edge keeps moving during a pause.
@@ -146,6 +149,8 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({ item, onBack }) => {
           currentTime={currentTime}
           duration={duration}
           liveState={liveState}
+          playbackRate={playbackRate}
+          onPlaybackRateChange={setPlaybackRate}
           onTogglePlay={togglePlay}
           onSeek={seek}
           onGoLive={goLive}
