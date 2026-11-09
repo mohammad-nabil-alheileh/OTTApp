@@ -1,0 +1,24 @@
+{
+echo "== System";      sw_vers; uname -m
+echo "== Xcode";       xcode-select -p; xcodebuild -version; xcodebuild -showsdks | grep -i tv
+echo "== Simulators";  xcrun simctl list runtimes | grep -i tvos; xcrun simctl list devices available | grep -i "apple tv"
+echo "== Node";        which node; node -v; npm -v; command -v nvm >/dev/null && echo "nvm: yes" || echo "nvm: no"
+echo "== Ruby";        which ruby; ruby -v; which bundle; bundle -v
+echo "== CocoaPods";   which pod; pod --version; bundle exec pod --version
+echo "== Watchman";    watchman -v
+echo "== RN info";     npx react-native info
+echo "== Git";         git log -1 --oneline; git status --short
+} > mac-report.txt 2>&1
+
+
+{
+npm ci
+bundle install
+cd ios && bundle exec pod install --repo-update; cd ..
+} > install-log.txt 2>&1
+
+xcodebuild -workspace ios/OTTTVApp.xcworkspace -scheme OTTTVApp \
+  -configuration Debug -destination 'generic/platform=tvOS Simulator' build \
+  > build-log.txt 2>&1; echo "exit: $?"
+
+
