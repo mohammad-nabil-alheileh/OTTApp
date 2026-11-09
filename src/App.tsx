@@ -42,7 +42,14 @@ export default function App() {
         <VODList
           vodList={vodList}
           isLoading={isLoading}
-          onSelectVOD={vod => setSelected({ title: vod.title, url: vod.url, isLive: false })}
+          onSelectVOD={vod =>
+            setSelected({
+              title: vod.title,
+              url: vod.url,
+              isLive: false,
+              adBreaks: vod.adBreaks,
+            })
+          }
         />
         <LiveChannelList
           channels={channels}

@@ -15,4 +15,6 @@ export interface PlayerControlsProps {
   onTogglePlay: () => void;
   onSeek: (time: number) => void;
   onGoLive: () => void;
+  // Ad break positions to mark on the progress bar.
+  adMarkers?: number[];
 }

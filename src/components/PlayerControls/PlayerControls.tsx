@@ -29,6 +29,7 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
   onTogglePlay,
   onSeek,
   onGoLive,
+  adMarkers,
 }) => {
   const playButtonRef = useRef<View>(null);
 
@@ -57,6 +58,7 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
           currentTime={currentTime}
           duration={duration}
           onSeek={onSeek}
+          markers={adMarkers}
         />
       )}
       <View style={styles.buttons}>

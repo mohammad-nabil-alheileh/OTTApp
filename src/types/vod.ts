@@ -1,3 +1,5 @@
+import { AdBreak } from './ads';
+
 export interface VODItem {
   id: string;
   title: string;
@@ -8,4 +10,6 @@ export interface VODItem {
   releaseDate: string;
   rating: number;
   url: string;
+  // Mid-roll ad breaks; omit for ad-free content.
+  adBreaks?: AdBreak[];
 }

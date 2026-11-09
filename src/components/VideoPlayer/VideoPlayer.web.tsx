@@ -5,9 +5,11 @@ import Hls from 'hls.js';
 import { PlayerControls } from '../PlayerControls/PlayerControls';
 import { PlayerStatus } from '../PlayerStatus/PlayerStatus';
 import { IdleCatcher } from '../IdleCatcher/IdleCatcher';
+import { AdPlayer } from '../AdPlayer/AdPlayer';
 import { useLiveState } from '../../hooks/useLiveState';
 import { useBackHandler } from '../../hooks/useBackHandler';
 import { useAutoHide } from '../../hooks/useAutoHide';
+import { useMidRollAds } from '../../hooks/useMidRollAds';
 import { AUTO_QUALITY } from '../../types/quality';
 import { toQualities } from '../../utils/quality';
 import { styles, webVideoStyle } from './VideoPlayer.styles';
@@ -72,6 +74,22 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({ item, onBack }) => {
   useBackHandler(handleBack);
 
   const overlay = useAutoHide(paused || !!error);
+
+  const ads = useMidRollAds(item.adBreaks, currentTime, !item.isLive);
+  const inAdBreak = !!ads.activeBreak;
+  const { finishBreak } = ads;
+
+  // Hold the content while a break plays; the ad has its own <video>.
+  useEffect(() => {
+    if (inAdBreak) {
+      videoRef.current?.pause();
+    }
+  }, [inAdBreak]);
+
+  const handleAdsComplete = useCallback(() => {
+    finishBreak();
+    videoRef.current?.play().catch(() => setPaused(true));
+  }, [finishBreak]);
 
   useEffect(() => {
     const video = videoRef.current;
@@ -172,35 +190,40 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({ item, onBack }) => {
         }}
         onError={() => setError('Playback failed')}
       />
-      <View style={styles.overlay}>
-        {overlay.visible && (
-          <View style={styles.topBar}>
-            <Text style={styles.title} numberOfLines={1}>
-              {item.title}
-            </Text>
-          </View>
-        )}
-        <PlayerStatus error={error} buffering={buffering} paused={paused} />
-        {overlay.visible ? (
-          <PlayerControls
-            isLive={item.isLive}
-            paused={paused}
-            currentTime={currentTime}
-            duration={duration}
-            liveState={liveState}
-            playbackRate={playbackRate}
-            onPlaybackRateChange={setPlaybackRate}
-            qualities={qualities}
-            quality={quality}
-            onQualityChange={setQuality}
-            onTogglePlay={togglePlay}
-            onSeek={seek}
-            onGoLive={goLive}
-          />
-        ) : (
-          <IdleCatcher onWake={overlay.show} />
-        )}
-      </View>
+      {ads.activeBreak ? (
+        <AdPlayer adBreak={ads.activeBreak} onComplete={handleAdsComplete} />
+      ) : (
+        <View style={styles.overlay}>
+          {overlay.visible && (
+            <View style={styles.topBar}>
+              <Text style={styles.title} numberOfLines={1}>
+                {item.title}
+              </Text>
+            </View>
+          )}
+          <PlayerStatus error={error} buffering={buffering} paused={paused} />
+          {overlay.visible ? (
+            <PlayerControls
+              isLive={item.isLive}
+              paused={paused}
+              currentTime={currentTime}
+              duration={duration}
+              liveState={liveState}
+              playbackRate={playbackRate}
+              onPlaybackRateChange={setPlaybackRate}
+              qualities={qualities}
+              quality={quality}
+              onQualityChange={setQuality}
+              onTogglePlay={togglePlay}
+              onSeek={seek}
+              onGoLive={goLive}
+              adMarkers={ads.markers}
+            />
+          ) : (
+            <IdleCatcher onWake={overlay.show} />
+          )}
+        </View>
+      )}
     </View>
   );
 };

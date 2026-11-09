@@ -10,7 +10,12 @@ const SCRUB_STEP_SECONDS = 10;
 // Seek once the user stops pressing left/right, instead of on every press.
 const COMMIT_DELAY_MS = 800;
 
-export const ProgressBar: React.FC<ProgressBarProps> = ({ currentTime, duration, onSeek }) => {
+export const ProgressBar: React.FC<ProgressBarProps> = ({
+  currentTime,
+  duration,
+  onSeek,
+  markers = [],
+}) => {
   const [focused, setFocused] = useState(false);
   const [scrubTime, setScrubTime] = useState<number | null>(null);
   const scrubTimeRef = useRef<number | null>(null);
@@ -73,6 +78,15 @@ export const ProgressBar: React.FC<ProgressBarProps> = ({ currentTime, duration,
           <View style={[styles.track, focused && styles.trackFocused]}>
             <View style={[styles.fill, { width: percent }]} />
           </View>
+          {duration > 0 &&
+            markers
+              .filter(time => time < duration)
+              .map(time => (
+                <View
+                  key={time}
+                  style={[styles.marker, { left: `${(time / duration) * 100}%` }]}
+                />
+              ))}
           <View style={[styles.thumb, focused && styles.thumbFocused, { left: percent }]} />
         </View>
       </Pressable>

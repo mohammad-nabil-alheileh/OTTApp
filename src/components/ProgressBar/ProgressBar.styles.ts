@@ -3,6 +3,7 @@ import { colors, spacing, typography, scaleSize } from '../../styles/theme';
 
 const TRACK_HEIGHT = scaleSize(8);
 const THUMB_SIZE = scaleSize(24);
+const MARKER_WIDTH = scaleSize(6);
 const THUMB_SIZE_FOCUSED = scaleSize(36);
 
 export const styles = StyleSheet.create({
@@ -27,6 +28,15 @@ export const styles = StyleSheet.create({
   fill: {
     height: '100%',
     backgroundColor: colors.primary,
+  },
+  // Ad break marker; drawn before the thumb so the thumb stays on top.
+  marker: {
+    position: 'absolute',
+    width: MARKER_WIDTH,
+    height: TRACK_HEIGHT,
+    marginLeft: -MARKER_WIDTH / 2,
+    backgroundColor: colors.gold,
+    pointerEvents: 'none',
   },
   thumb: {
     position: 'absolute',

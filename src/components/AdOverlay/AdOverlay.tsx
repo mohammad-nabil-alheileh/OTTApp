@@ -1,0 +1,107 @@
+import React, { useEffect, useRef, useState } from 'react';
+import {
+  ActivityIndicator,
+  Platform,
+  Pressable,
+  Text,
+  View,
+} from 'react-native';
+import { colors, sharedStyles } from '../../styles/theme';
+import { formatTime } from '../../utils/time';
+import { styles } from './AdOverlay.styles';
+import { AdOverlayProps } from './AdOverlay.types';
+
+// "Ad 1 of 2 · 0:12" badge, an ad info button (bottom left) and a Skip
+// button (bottom right) over the ad video.
+export const AdOverlay: React.FC<AdOverlayProps> = ({
+  ad,
+  index,
+  count,
+  position,
+  duration,
+  loaded,
+  onSkip,
+}) => {
+  const skipRef = useRef<View>(null);
+  const infoRef = useRef<View>(null);
+  const [infoOpen, setInfoOpen] = useState(false);
+  const skippable = ad.skipOffset !== undefined;
+  const skipIn = skippable ? Math.ceil((ad.skipOffset ?? 0) - position) : 0;
+  const canSkip = skippable && loaded && skipIn <= 0;
+
+  // Each ad starts with its details collapsed.
+  useEffect(() => setInfoOpen(false), [ad.id, index]);
+
+  // Skip takes focus when there is one, otherwise the info button does, so
+  // the remote always has somewhere to land. hasTVPreferredFocus is
+  // native-only, so the web focuses explicitly.
+  useEffect(() => {
+    if (Platform.OS === 'web') {
+      (skippable ? skipRef : infoRef).current?.focus();
+    }
+  }, [skippable]);
+
+  return (
+    <View style={styles.container}>
+      <View style={styles.badge}>
+        <Text style={styles.badgeLabel}>Ad </Text>
+        <Text style={styles.badgeText}>
+          {count > 1 ? `${index + 1} of ${count} · ` : ''}
+          {loaded ? formatTime(duration - position) : ''}
+        </Text>
+        {!loaded && <ActivityIndicator color={colors.text} />}
+      </View>
+      <View style={styles.footer}>
+        <View style={styles.infoColumn}>
+          {infoOpen && (
+            <View style={styles.infoPanel}>
+              <Text style={styles.infoCaption}>Sponsored</Text>
+              <Text style={styles.infoPanelText}>
+                {ad.advertiser
+                  ? `This ad is from ${ad.advertiser}.`
+                  : 'This is a sponsored message.'}
+              </Text>
+            </View>
+          )}
+          <Pressable
+            ref={infoRef}
+            hasTVPreferredFocus={!skippable}
+            style={({ focused }) => [
+              sharedStyles.controlButton,
+              styles.infoButton,
+              focused && sharedStyles.controlButtonFocused,
+            ]}
+            onPress={() => setInfoOpen(open => !open)}
+          >
+            <Text style={sharedStyles.controlButtonText} numberOfLines={1}>
+              {ad.title}
+            </Text>
+          </Pressable>
+        </View>
+        {skippable && (
+          // Always focusable so the remote has somewhere to land; it only
+          // acts once the skip offset has passed.
+          <Pressable
+            ref={skipRef}
+            hasTVPreferredFocus
+            style={({ focused }) => [
+              sharedStyles.controlButton,
+              styles.skipButton,
+              focused && canSkip && sharedStyles.controlButtonFocused,
+            ]}
+            onPress={canSkip ? onSkip : undefined}
+          >
+            <Text
+              style={[
+                sharedStyles.controlButtonText,
+                !canSkip && styles.skipText,
+              ]}
+            >
+              {canSkip ? 'Skip Ad ▶▶' : `Skip in ${Math.max(skipIn, 1)}`}
+            </Text>
+          </Pressable>
+        )}
+      </View>
+    </View>
+  );
+};
