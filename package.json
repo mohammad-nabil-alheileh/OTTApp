@@ -7,6 +7,8 @@
     "start": "react-native start",
     "android": "react-native run-android",
     "ios": "react-native run-ios --scheme OTTTVApp --simulator \"Apple TV\"",
+    "setup:ios": "bash scripts/setup-ios.sh",
+    "pods": "cd ios && bundle exec pod install",
     "web": "webpack serve --mode development",
     "web:build": "webpack --mode production",
     "typecheck": "tsc --noEmit",
@@ -50,6 +52,6 @@
     "webpack-dev-server": "^5.2.2"
   },
   "engines": {
-    "node": ">=20"
+    "node": ">=20.19.4"
   }
 }

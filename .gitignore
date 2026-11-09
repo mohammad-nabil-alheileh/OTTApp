@@ -56,3 +56,8 @@ CLAUDE.md
 
 # Local presentation docs
 docs/
+
+# Mac diagnostics output
+mac-report.txt
+install-log.txt
+build-log.txt

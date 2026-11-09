@@ -1,0 +1,13 @@
+# 1. Undo the hand-made scene fix and Info.plist/project edits (replaced by mine)
+git checkout -- ios/OTTTVApp.xcodeproj/project.pbxproj ios/OTTTVApp/Info.plist
+rm ios/SceneDelegate.h ios/SceneDelegate.mm ios/OTTTVApp/SceneDelegate.h ios/OTTTVApp/SceneDelegate.mm
+git pull
+
+# 2. Switch to Node 24 (the setup script stops on Node 26)
+brew install node@24 && brew unlink node && brew link --overwrite node@24
+brew install watchman
+
+# 3. Set up and build
+npm run setup:ios
+xcodebuild -workspace ios/OTTTVApp.xcworkspace -scheme OTTTVApp -configuration Debug \
+  -destination 'generic/platform=tvOS Simulator' build > build-log.txt 2>&1; echo "exit: $?"

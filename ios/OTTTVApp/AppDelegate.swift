@@ -3,8 +3,14 @@ import React
 import React_RCTAppDelegate
 import ReactAppDependencyProvider
 
+// Uses the UIScene life cycle: apps built with the tvOS 27 / iOS 27 SDK and
+// newer must declare a scene (see Info.plist > UIApplicationSceneManifest),
+// otherwise they fail to launch. The AppDelegate only creates the React Native
+// factory; SceneDelegate creates the window and starts React Native in it.
 @main
 class AppDelegate: UIResponder, UIApplicationDelegate {
+  // Set by SceneDelegate. Kept here because parts of React Native (LogBox,
+  // profiler) still read `UIApplication.shared.delegate.window`.
   var window: UIWindow?
 
   var reactNativeDelegate: ReactNativeDelegate?
@@ -21,15 +27,37 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     reactNativeDelegate = delegate
     reactNativeFactory = factory
 
-    window = UIWindow(frame: UIScreen.main.bounds)
-
-    factory.startReactNative(
-      withModuleName: "OTTTVApp",
-      in: window,
-      launchOptions: launchOptions
-    )
-
     return true
+  }
+
+  func application(
+    _ application: UIApplication,
+    configurationForConnecting connectingSceneSession: UISceneSession,
+    options: UIScene.ConnectionOptions
+  ) -> UISceneConfiguration {
+    UISceneConfiguration(name: "Default Configuration", sessionRole: connectingSceneSession.role)
+  }
+}
+
+class SceneDelegate: UIResponder, UIWindowSceneDelegate {
+  var window: UIWindow?
+
+  func scene(
+    _ scene: UIScene,
+    willConnectTo session: UISceneSession,
+    options connectionOptions: UIScene.ConnectionOptions
+  ) {
+    guard
+      let windowScene = scene as? UIWindowScene,
+      let appDelegate = UIApplication.shared.delegate as? AppDelegate,
+      let factory = appDelegate.reactNativeFactory
+    else { return }
+
+    let window = UIWindow(windowScene: windowScene)
+    self.window = window
+    appDelegate.window = window
+
+    factory.startReactNative(withModuleName: "OTTTVApp", in: window, launchOptions: nil)
   }
 }
 

@@ -20,12 +20,23 @@ npm start          # Metro bundler for Android TV
 npm run android    # build + install on an Android TV emulator/device
 
 # Apple TV (macOS + Xcode only)
-bundle install                          # once: installs CocoaPods via the Gemfile
-cd ios && bundle exec pod install && cd ..
-npm run ios                             # build + run on the "Apple TV" simulator
+npm run setup:ios  # checks Xcode/Node/Ruby, installs npm packages, CocoaPods, pods, simulator
+npm run ios        # build + run on the "Apple TV" simulator (keep `npm start` running)
 ```
 
 On web, use the arrow keys to move focus, **Enter** to open or play/pause, and **Escape** to go back. The LG remote's Back key also works.
+
+### Apple TV toolchain
+
+| Tool | Version | Pinned by |
+|---|---|---|
+| Xcode | 27.x (tvOS 27 SDK + tvOS simulator runtime) | `npm run setup:ios` checks it |
+| Node | 24 | `.nvmrc` (`nvm use`, or `brew install node@24`) |
+| Ruby | Homebrew Ruby 3.3, not the macOS system Ruby | `npm run setup:ios` checks it |
+| CocoaPods | from `Gemfile.lock`; always run it as `bundle exec pod`, never a global `pod` | `Gemfile.lock` |
+| Pods | from `ios/Podfile.lock` | `ios/Podfile.lock` |
+
+Run `npm run pods` after adding or updating a native npm package, then commit `ios/Podfile.lock`.
 
 ## Project structure
 
