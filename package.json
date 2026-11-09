@@ -6,6 +6,7 @@
   "scripts": {
     "start": "react-native start",
     "android": "react-native run-android",
+    "preios": "bash scripts/ensure-pods.sh",
     "ios": "react-native run-tvos --scheme OTTTVApp --simulator \"Apple TV\"",
     "setup:ios": "bash scripts/setup-ios.sh",
     "pods": "cd ios && bundle exec pod install",
