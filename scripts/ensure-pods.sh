@@ -5,6 +5,12 @@
 # Called automatically before `npm run ios` (npm "preios" script).
 set -euo pipefail
 
+if [ "$(uname -s)" != "Darwin" ]; then
+  echo "Apple TV (tvOS) builds need macOS with Xcode; this machine runs $(uname -s)." >&2
+  echo "On this machine use: npm run web  (or npm run android)." >&2
+  exit 1
+fi
+
 cd "$(dirname "$0")/../ios"
 
 if [ -f Podfile.lock ] && [ -f Pods/Manifest.lock ] && diff -q Podfile.lock Pods/Manifest.lock >/dev/null; then
