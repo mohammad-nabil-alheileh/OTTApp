@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Platform, Pressable, Text, View } from 'react-native';
 import { useBackHandler } from '../../hooks/useBackHandler';
+import { useMenuKeys } from '../../hooks/useMenuKeys';
 import { sharedStyles } from '../../styles/theme';
 import { styles } from './OptionSelector.styles';
 import { OptionSelectorProps } from './OptionSelector.types';
@@ -16,7 +17,7 @@ export const OptionSelector: React.FC<OptionSelectorProps> = ({
   // Flipping hasTVPreferredFocus to true is how Android TV moves focus back.
   const [refocusButton, setRefocusButton] = useState(false);
   const buttonRef = useRef<View>(null);
-  const selectedOptionRef = useRef<View>(null);
+  const optionRefs = useRef<Record<number, View | null>>({});
   const focusedOption = useRef<number | null>(null);
 
   const openMenu = () => {
@@ -41,9 +42,28 @@ export const OptionSelector: React.FC<OptionSelectorProps> = ({
   // hasTVPreferredFocus is native-only, so the web focuses the selected option itself.
   useEffect(() => {
     if (open && Platform.OS === 'web') {
-      selectedOptionRef.current?.focus();
+      optionRefs.current[value]?.focus();
     }
-  }, [open]);
+  }, [open, value]);
+
+  // The menu opens over the seekbar; without this the web arrow-key polyfill
+  // jumps to the seekbar instead of the next option. Move focus directly.
+  const handleMenuKey = useCallback(
+    (key: 'up' | 'down') => {
+      const values = options.map(o => o.value);
+      const index = values.indexOf(focusedOption.current ?? value);
+      if (index === -1) {
+        return;
+      }
+      const next =
+        key === 'down'
+          ? Math.min(index + 1, values.length - 1)
+          : Math.max(index - 1, 0);
+      optionRefs.current[values[next]]?.focus();
+    },
+    [options, value],
+  );
+  useMenuKeys(handleMenuKey, open);
 
   // Focus left the menu (e.g. Left/Right to another button): just close it.
   const handleOptionBlur = () => {
@@ -64,7 +84,9 @@ export const OptionSelector: React.FC<OptionSelectorProps> = ({
             return (
               <Pressable
                 key={option.value}
-                ref={selected ? selectedOptionRef : undefined}
+                ref={node => {
+                  optionRefs.current[option.value] = node;
+                }}
                 hasTVPreferredFocus={selected}
                 onFocus={() => {
                   focusedOption.current = option.value;

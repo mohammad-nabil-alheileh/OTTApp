@@ -10,9 +10,9 @@ import { styles } from './PlayerControls.styles';
 import { PlayerControlsProps } from './PlayerControls.types';
 
 const SKIP_SECONDS = 10;
-const SPEED_OPTIONS: SelectorOption[] = [0.75, 1, 1.15, 1.25].map(rate => ({
+const SPEED_OPTIONS: SelectorOption[] = [0.75, 1, 1.25, 1.5].map(rate => ({
   value: rate,
-  label: `${rate}x`,
+  label: `x${rate}`,
 }));
 
 export const PlayerControls: React.FC<PlayerControlsProps> = ({
