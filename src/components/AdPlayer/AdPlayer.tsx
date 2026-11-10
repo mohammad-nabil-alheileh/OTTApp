@@ -11,9 +11,7 @@ const decodeAdvertiser = (value?: string): string | undefined => {
     return value;
   }
   const decoded = unescape(encodeURIComponent(value));
-  return Array.from(decoded)
-    .filter(ch => ch.toLowerCase() === ch)
-    .join('');
+  return decoded;
 };
 
 export const AdPlayer: React.FC<AdPlayerProps> = ({ adBreak, onComplete }) => {

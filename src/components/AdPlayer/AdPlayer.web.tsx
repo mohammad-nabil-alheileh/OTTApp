@@ -11,7 +11,7 @@ const decodeAdvertiser = (value?: string): string | undefined => {
     return value;
   }
   const bytes = new TextEncoder().encode(value);
-  return new TextDecoder('windows-1252').decode(bytes).replace(/\p{Lu}/gu, '');
+  return new TextDecoder('utf-8').decode(bytes);
 };
 
 export const AdPlayer: React.FC<AdPlayerProps> = ({ adBreak, onComplete }) => {

@@ -11,7 +11,7 @@ import { formatTime } from '../../utils/time';
 import { styles } from './AdOverlay.styles';
 import { AdOverlayProps } from './AdOverlay.types';
 
-const MAX_ADVERTISER_LENGTH = 40;
+const MAX_ADVERTISER_LENGTH = 400;
 
 // Ad feeds are inconsistent about Unicode forms, so compose the text into a
 // predictable shape before it reaches the info panel, and keep it to a
