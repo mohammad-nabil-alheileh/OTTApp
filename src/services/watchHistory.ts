@@ -1,44 +1,73 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+export interface WatchProgress {
+  id: string;
+  // Playback position in seconds.
+  position: number;
+  // Stream duration in seconds, as reported by the player.
+  duration: number;
+}
+
 const STORAGE_KEY = 'ott:watchHistory';
 const MAX_ENTRIES = 10;
 
-// In-memory fallback for platforms without localStorage (native TV).
-// History then lasts for the app session only.
-let memoryHistory: string[] = [];
+// Storage is async, so renders read this sync snapshot instead.
+let cache: WatchProgress[] = [];
 
-const hasLocalStorage = (): boolean => {
-  try {
-    return typeof localStorage !== 'undefined';
-  } catch {
+const isWatchProgress = (value: unknown): value is WatchProgress => {
+  if (typeof value !== 'object' || value === null) {
     return false;
   }
-};
-
-export const getWatchHistory = (): string[] => {
-  if (!hasLocalStorage()) {
-    return [...memoryHistory];
-  }
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    const parsed = raw ? JSON.parse(raw) : [];
-    return Array.isArray(parsed) ? parsed.filter(id => typeof id === 'string') : [];
-  } catch {
-    return [];
-  }
-};
-
-// Records a view, most recent first, and returns the updated history.
-export const recordWatch = (id: string): string[] => {
-  const history = [id, ...getWatchHistory().filter(existing => existing !== id)].slice(
-    0,
-    MAX_ENTRIES,
+  const entry = value as Record<string, unknown>;
+  return (
+    typeof entry.id === 'string' &&
+    typeof entry.position === 'number' &&
+    Number.isFinite(entry.position) &&
+    entry.position >= 0 &&
+    typeof entry.duration === 'number' &&
+    Number.isFinite(entry.duration) &&
+    entry.duration > 0
   );
-  memoryHistory = history;
-  if (hasLocalStorage()) {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(history));
-    } catch {
-      // Storage full or blocked; in-memory copy still works.
-    }
+};
+
+export const loadWatchHistory = async (): Promise<WatchProgress[]> => {
+  try {
+    const raw = await AsyncStorage.getItem(STORAGE_KEY);
+    const parsed: unknown = raw ? JSON.parse(raw) : [];
+    cache = Array.isArray(parsed)
+      ? parsed.filter(isWatchProgress).slice(0, MAX_ENTRIES)
+      : [];
+  } catch {
+    cache = [];
   }
-  return history;
+  return cache;
+};
+
+export const getWatchHistory = (): WatchProgress[] => cache;
+
+const persist = () => {
+  AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(cache)).catch(() => {
+    // Storage full or blocked; the in-memory copy still works this session.
+  });
+};
+
+// Records a position, most recent first, and returns the updated history.
+export const saveProgress = (
+  id: string,
+  position: number,
+  duration: number,
+): WatchProgress[] => {
+  cache = [
+    { id, position, duration },
+    ...cache.filter(entry => entry.id !== id),
+  ].slice(0, MAX_ENTRIES);
+  persist();
+  return cache;
+};
+
+// Finished content drops out of Continue Watching.
+export const clearProgress = (id: string): WatchProgress[] => {
+  cache = cache.filter(entry => entry.id !== id);
+  persist();
+  return cache;
 };

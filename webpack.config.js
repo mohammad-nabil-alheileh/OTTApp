@@ -17,8 +17,14 @@ module.exports = {
   module: {
     rules: [
       {
+        // async-storage's ESM build uses extensionless relative imports.
+        test: /\.m?js$/,
+        resolve: { fullySpecified: false },
+      },
+      {
         test: /\.[jt]sx?$/,
-        exclude: /node_modules\/(?!react-native-web)/,
+        // async-storage ships optional chaining, which Chrome 68 can't parse.
+        exclude: /node_modules\/(?!react-native-web|@react-native-async-storage)/,
         use: {
           loader: 'babel-loader',
           options: {

@@ -2,7 +2,13 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { View, Text, ScrollView } from 'react-native';
 import { VODList } from './components/VODList/VODList';
 import { ContinueWatchingRail } from './components/ContinueWatchingRail/ContinueWatchingRail';
-import { getWatchHistory, recordWatch } from './services/watchHistory';
+import { ContinueWatchingItem } from './components/ContinueWatchingRail/ContinueWatchingRail.types';
+import {
+  getWatchHistory,
+  loadWatchHistory,
+  saveProgress,
+  WatchProgress,
+} from './services/watchHistory';
 import { LiveChannelList } from './components/LiveChannelList/LiveChannelList';
 import { VideoPlayer } from './components/VideoPlayer/VideoPlayer';
 import { ShowDetails } from './components/ShowDetails/ShowDetails';
@@ -20,24 +26,46 @@ export default function App() {
   // from the player returns to the details screen.
   const [detailsItem, setDetailsItem] = useState<VODItem | null>(null);
   const [selected, setSelected] = useState<SelectedContent>(null);
-  // Recently watched VOD ids, most recent first.
-  const [watchHistory, setWatchHistory] = useState<string[]>(() => getWatchHistory());
+  // Saved playback positions, most recently watched first.
+  const [watchHistory, setWatchHistory] = useState<WatchProgress[]>([]);
+
+  useEffect(() => {
+    loadWatchHistory().then(setWatchHistory);
+  }, []);
+
+  // The player writes its final position while unmounting; passive effects
+  // run after that, so returning home picks up the latest progress.
+  useEffect(() => {
+    if (!selected) {
+      setWatchHistory(getWatchHistory());
+    }
+  }, [selected]);
 
   const continueWatchingItems = useMemo(
     () =>
       watchHistory
-        .map(id => vodList.find(vod => vod.id === id))
-        .filter((vod): vod is VODItem => Boolean(vod)),
+        .map(entry => {
+          const vod = vodList.find(item => item.id === entry.id);
+          return vod
+            ? { vod, position: entry.position, duration: entry.duration }
+            : null;
+        })
+        .filter((item): item is ContinueWatchingItem => item !== null),
     [watchHistory, vodList],
   );
 
   const playVOD = useCallback((vod: VODItem) => {
-    setWatchHistory(recordWatch(vod.id));
+    const saved = getWatchHistory().find(entry => entry.id === vod.id);
+    setWatchHistory(
+      saveProgress(vod.id, saved?.position ?? 0, saved?.duration ?? vod.duration),
+    );
     setSelected({
       title: vod.title,
       url: vod.url,
       isLive: false,
       adBreaks: vod.adBreaks,
+      id: vod.id,
+      startPosition: saved && saved.position > 0 ? saved.position : undefined,
     });
   }, []);
 
@@ -62,6 +90,9 @@ export default function App() {
     return (
       <ShowDetails
         item={detailsItem}
+        resumePosition={
+          watchHistory.find(entry => entry.id === detailsItem.id)?.position
+        }
         onBack={handleDetailsBack}
         onPlay={playVOD}
         onPlayTrailer={vod =>

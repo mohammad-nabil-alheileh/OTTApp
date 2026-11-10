@@ -1,9 +1,11 @@
 import React from 'react';
 import { View, Text, Image, Pressable, FlatList, ListRenderItem } from 'react-native';
-import { VODItem } from '../../types/vod';
-import { formatDuration } from '../../utils/time';
-import { styles } from '../VODList/VODList.styles';
-import { ContinueWatchingRailProps } from './ContinueWatchingRail.types';
+import { clamp, formatDuration } from '../../utils/time';
+import { styles } from './ContinueWatchingRail.styles';
+import {
+  ContinueWatchingItem,
+  ContinueWatchingRailProps,
+} from './ContinueWatchingRail.types';
 
 export const ContinueWatchingRail: React.FC<ContinueWatchingRailProps> = ({
   items,
@@ -13,21 +15,31 @@ export const ContinueWatchingRail: React.FC<ContinueWatchingRailProps> = ({
     return null;
   }
 
-  const renderItem: ListRenderItem<VODItem> = ({ item }) => (
-    <Pressable
-      onPress={() => onSelectVOD(item)}
-      style={({ focused }) => [styles.vodItem, focused && styles.vodItemFocused]}
-    >
-      <Image source={{ uri: item.thumbnail }} style={styles.thumbnail} resizeMode="cover" />
-      <View style={styles.vodInfo}>
-        <Text style={styles.title} numberOfLines={1}>
-          {item.title}
-        </Text>
-        <Text style={styles.rating}>★ {item.rating}</Text>
-        <Text style={styles.duration}>{formatDuration(item.duration)}</Text>
-      </View>
-    </Pressable>
-  );
+  const renderItem: ListRenderItem<ContinueWatchingItem> = ({ item }) => {
+    const { vod, position, duration } = item;
+    const percent = duration > 0 ? clamp((position / duration) * 100, 0, 100) : 0;
+    return (
+      <Pressable
+        onPress={() => onSelectVOD(vod)}
+        style={({ focused }) => [styles.vodItem, focused && styles.vodItemFocused]}
+      >
+        <View>
+          <Image source={{ uri: vod.thumbnail }} style={styles.thumbnail} resizeMode="cover" />
+          <View style={styles.progressTrack}>
+            <View style={[styles.progressFill, { width: `${percent}%` }]} />
+          </View>
+        </View>
+        <View style={styles.vodInfo}>
+          <Text style={styles.title} numberOfLines={1}>
+            {vod.title}
+          </Text>
+          <Text style={styles.remaining}>
+            {formatDuration(Math.max(0, duration - position))} left
+          </Text>
+        </View>
+      </Pressable>
+    );
+  };
 
   return (
     <View style={styles.container}>
@@ -35,7 +47,7 @@ export const ContinueWatchingRail: React.FC<ContinueWatchingRailProps> = ({
       <FlatList
         data={items}
         renderItem={renderItem}
-        keyExtractor={item => item.id}
+        keyExtractor={item => item.vod.id}
         horizontal
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.listContent}

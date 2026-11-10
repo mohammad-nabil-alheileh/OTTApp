@@ -19,6 +19,7 @@ import { useLiveState } from '../../hooks/useLiveState';
 import { useBackHandler } from '../../hooks/useBackHandler';
 import { useAutoHide } from '../../hooks/useAutoHide';
 import { useMidRollAds } from '../../hooks/useMidRollAds';
+import { useWatchProgress } from '../../hooks/useWatchProgress';
 import { AUTO_QUALITY } from '../../types/quality';
 import { toQualities } from '../../utils/quality';
 import { styles } from './VideoPlayer.styles';
@@ -51,6 +52,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({ item, onBack }) => {
   const overlay = useAutoHide(paused || !!error);
 
   const ads = useMidRollAds(item.adBreaks, currentTime, !item.isLive);
+  const markFinished = useWatchProgress(item, currentTime, duration);
   const { finishBreak } = ads;
   const handleAdsComplete = useCallback(() => {
     finishBreak();
@@ -128,7 +130,14 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({ item, onBack }) => {
       <Video
         key={sourceKey}
         ref={videoRef}
-        source={{ uri: item.url }}
+        source={{
+          uri: item.url,
+          // react-native-video takes the resume point in milliseconds.
+          startPosition:
+            item.startPosition !== undefined
+              ? Math.round(item.startPosition * 1000)
+              : undefined,
+        }}
         style={styles.video}
         paused={paused || !!ads.activeBreak}
         rate={playbackRate}
@@ -163,6 +172,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({ item, onBack }) => {
           setLiveEdge(e.seekableDuration);
         }}
         onError={e => setError(e.error.errorString ?? 'Playback failed')}
+        onEnd={markFinished}
       />
       {ads.activeBreak ? (
         <AdPlayer adBreak={ads.activeBreak} onComplete={handleAdsComplete} />

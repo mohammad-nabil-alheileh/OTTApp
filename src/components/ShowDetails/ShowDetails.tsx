@@ -8,6 +8,7 @@ import { ShowDetailsProps } from './ShowDetails.types';
 
 export const ShowDetails: React.FC<ShowDetailsProps> = ({
   item,
+  resumePosition,
   onPlay,
   onPlayTrailer,
   onBack,
@@ -56,7 +57,11 @@ export const ShowDetails: React.FC<ShowDetailsProps> = ({
               ]}
               onPress={() => onPlay(item)}
             >
-              <Text style={sharedStyles.controlButtonText}>▶ Play</Text>
+              <Text style={sharedStyles.controlButtonText}>
+                {resumePosition !== undefined && resumePosition > 0
+                  ? `▶ Resume · ${formatTime(resumePosition)}`
+                  : '▶ Play'}
+              </Text>
             </Pressable>
             {trailer && (
               <Pressable

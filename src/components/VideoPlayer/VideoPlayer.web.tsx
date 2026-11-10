@@ -10,6 +10,7 @@ import { useLiveState } from '../../hooks/useLiveState';
 import { useBackHandler } from '../../hooks/useBackHandler';
 import { useAutoHide } from '../../hooks/useAutoHide';
 import { useMidRollAds } from '../../hooks/useMidRollAds';
+import { useWatchProgress } from '../../hooks/useWatchProgress';
 import { AUTO_QUALITY } from '../../types/quality';
 import { toQualities } from '../../utils/quality';
 import { styles, webVideoStyle } from './VideoPlayer.styles';
@@ -76,6 +77,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({ item, onBack }) => {
   const overlay = useAutoHide(paused || !!error);
 
   const ads = useMidRollAds(item.adBreaks, currentTime, !item.isLive);
+  const markFinished = useWatchProgress(item, currentTime, duration);
   const inAdBreak = !!ads.activeBreak;
   const { finishBreak } = ads;
 
@@ -190,6 +192,12 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({ item, onBack }) => {
           }
         }}
         onSeeked={e => setCurrentTime(e.currentTarget.currentTime)}
+        onLoadedMetadata={e => {
+          if (item.startPosition !== undefined) {
+            e.currentTarget.currentTime = item.startPosition;
+          }
+        }}
+        onEnded={markFinished}
         // Live streams report Infinity; the controls hide the bar for live anyway.
         onDurationChange={e => {
           const d = e.currentTarget.duration;

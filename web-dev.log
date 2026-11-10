@@ -1,0 +1,26 @@
+
+> ott-tv-app@1.0.0 web
+> webpack serve --mode development
+
+<i> [webpack-dev-server] Project is running at:
+<i> [webpack-dev-server] Loopback: http://localhost:8080/, http://[::1]:8080/
+<i> [webpack-dev-server] On Your Network (IPv4): http://10.10.10.104:8080/
+<i> [webpack-dev-server] Content not from webpack is served from '/Users/yazan-muala/OTTApp/public' directory
+asset bundle.3dbdaa2793850cd51f34.js 3.67 MiB [emitted] [immutable] (name: main)
+asset index.html 444 bytes [emitted]
+runtime modules 27.8 KiB 13 modules
+orphan modules 234 bytes [orphan] 1 module
+modules by path ./node_modules/ 3.16 MiB 175 modules
+modules by path ./src/ 76.9 KiB
+  modules by path ./src/components/ 52.6 KiB 24 modules
+  modules by path ./src/hooks/*.ts 10.3 KiB 9 modules
+  modules by path ./src/utils/*.ts 1.44 KiB
+    ./src/utils/time.ts 911 bytes [built] [code generated]
+    + 2 modules
+  modules by path ./src/services/*.ts 5.08 KiB
+    ./src/services/watchHistory.ts 1.53 KiB [built] [code generated]
+    ./src/services/mockData.ts 3.55 KiB [built] [code generated]
+  + 4 modules
+./index.web.ts 435 bytes [built] [code generated]
+./app.json 54 bytes [built] [code generated]
+webpack 5.112.2 compiled successfully in 4040 ms
