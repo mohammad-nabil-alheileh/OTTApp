@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { GestureResponderEvent, LayoutChangeEvent, Pressable, Text, View } from 'react-native';
 import { useRemoteKeys } from '../../hooks/useRemoteKeys';
 import { RemoteKey } from '../../types/remote';
-import { clamp, formatTime } from '../../utils/time';
+import { clamp, formatTime, skipBy } from '../../utils/time';
 import { styles } from './ProgressBar.styles';
 import { ProgressBarProps } from './ProgressBar.types';
 
@@ -35,7 +35,7 @@ export const ProgressBar: React.FC<ProgressBarProps> = ({
     (key: RemoteKey) => {
       const from = scrubTimeRef.current ?? currentTime;
       const step = key === 'right' ? SCRUB_STEP_SECONDS : -SCRUB_STEP_SECONDS;
-      const next = clamp(from + step, 0, duration);
+      const next = skipBy(from, step, duration);
       scrubTimeRef.current = next;
       setScrubTime(next);
       clearTimeout(commitTimer.current);

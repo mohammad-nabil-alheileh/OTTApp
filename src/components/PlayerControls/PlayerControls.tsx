@@ -4,7 +4,7 @@ import { ProgressBar } from '../ProgressBar/ProgressBar';
 import { OptionSelector } from '../OptionSelector/OptionSelector';
 import { SelectorOption } from '../OptionSelector/OptionSelector.types';
 import { AUTO_QUALITY } from '../../types/quality';
-import { clamp, formatTime } from '../../utils/time';
+import { formatTime, skipBy } from '../../utils/time';
 import { sharedStyles } from '../../styles/theme';
 import { styles } from './PlayerControls.styles';
 import { PlayerControlsProps } from './PlayerControls.types';
@@ -47,7 +47,7 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
 
   const skip = (seconds: number) => {
     if (duration > 0) {
-      onSeek(clamp(currentTime + seconds, 0, duration));
+      onSeek(skipBy(currentTime, seconds, duration));
     }
   };
 

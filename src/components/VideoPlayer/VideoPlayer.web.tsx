@@ -182,7 +182,14 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({ item, onBack }) => {
         onSeeking={() => setBuffering(true)}
         onPlaying={() => setBuffering(false)}
         onCanPlay={() => setBuffering(false)}
-        onTimeUpdate={e => setCurrentTime(e.currentTarget.currentTime)}
+        // Ignore positions reported mid-seek so the seeker doesn't jump back;
+        // 'seeked' then reports where the seek actually landed.
+        onTimeUpdate={e => {
+          if (!e.currentTarget.seeking) {
+            setCurrentTime(e.currentTarget.currentTime);
+          }
+        }}
+        onSeeked={e => setCurrentTime(e.currentTarget.currentTime)}
         // Live streams report Infinity; the controls hide the bar for live anyway.
         onDurationChange={e => {
           const d = e.currentTarget.duration;

@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { View, Text, Image, Pressable, FlatList, ListRenderItem, Platform } from 'react-native';
 import { VODItem } from '../../types/vod';
+import { formatDuration } from '../../utils/time';
 import { styles } from './VODList.styles';
 import { VODListProps } from './VODList.types';
 
@@ -35,9 +36,7 @@ export const VODList: React.FC<VODListProps> = ({ vodList, onSelectVOD, isLoadin
           {item.title}
         </Text>
         <Text style={styles.rating}>★ {item.rating}</Text>
-        <Text style={styles.duration}>
-          {item.duration < 60 ? `${item.duration} sec` : `${Math.round(item.duration / 60)} min`}
-        </Text>
+        <Text style={styles.duration}>{formatDuration(item.duration)}</Text>
       </View>
     </Pressable>
   );

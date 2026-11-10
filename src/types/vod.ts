@@ -1,5 +1,11 @@
 import { AdBreak } from './ads';
 
+export interface Trailer {
+  url: string;
+  // Length in seconds.
+  duration: number;
+}
+
 export interface VODItem {
   id: string;
   title: string;
@@ -12,4 +18,5 @@ export interface VODItem {
   url: string;
   // Mid-roll ad breaks; omit for ad-free content.
   adBreaks?: AdBreak[];
+  trailer?: Trailer;
 }

@@ -30,7 +30,8 @@ const ads: Record<'stock' | 'android' | 'flower', Ad> = {
   },
 };
 
-// Public HLS test streams with several resolutions each.
+// Public HLS test streams with several resolutions each. There are no public
+// trailer streams for these titles, so trailers reuse a short test clip.
 export const mockVODData: VODItem[] = [
   {
     id: 'vod-1',
@@ -46,6 +47,10 @@ export const mockVODData: VODItem[] = [
       { id: 'vod-1-mid-1', time: 120, ads: [ads.flower, ads.stock] },
       { id: 'vod-1-mid-2', time: 360, ads: [ads.android] },
     ],
+    trailer: {
+      url: 'https://storage.googleapis.com/shaka-demo-assets/angel-one-hls/hls.m3u8',
+      duration: 60,
+    },
   },
   {
     id: 'vod-2',
@@ -61,6 +66,10 @@ export const mockVODData: VODItem[] = [
       { id: 'vod-2-mid-1', time: 180, ads: [ads.android] },
       { id: 'vod-2-mid-2', time: 450, ads: [ads.stock, ads.flower] },
     ],
+    trailer: {
+      url: 'https://storage.googleapis.com/shaka-demo-assets/angel-one-hls/hls.m3u8',
+      duration: 60,
+    },
   },
   {
     id: 'vod-3',

@@ -24,6 +24,10 @@ import { toQualities } from '../../utils/quality';
 import { styles } from './VideoPlayer.styles';
 import { VideoPlayerProps } from './VideoPlayer.types';
 
+// Players may land slightly off the requested time (keyframes/segments).
+const SEEK_MATCH_TOLERANCE_SECONDS = 2;
+const SEEK_CONFIRM_TIMEOUT_MS = 3000;
+
 export const VideoPlayer: React.FC<VideoPlayerProps> = ({ item, onBack }) => {
   const videoRef = useRef<VideoRef>(null);
   const [paused, setPaused] = useState(false);
@@ -87,7 +91,29 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({ item, onBack }) => {
     [quality],
   );
 
+  // A seek is async: until it settles, onProgress can still report the old
+  // position, which would pull the seeker back. Hold progress updates for the
+  // latest seek target until the player confirms it via onSeek.
+  const pendingSeekRef = useRef<number | null>(null);
+  const pendingSeekTimer = useRef<ReturnType<typeof setTimeout> | undefined>(
+    undefined,
+  );
+
+  const clearPendingSeek = useCallback(() => {
+    clearTimeout(pendingSeekTimer.current);
+    pendingSeekRef.current = null;
+  }, []);
+
+  useEffect(() => clearPendingSeek, [clearPendingSeek]);
+
   const seek = (time: number) => {
+    pendingSeekRef.current = time;
+    clearTimeout(pendingSeekTimer.current);
+    // Safety net in case onSeek never arrives for this target.
+    pendingSeekTimer.current = setTimeout(
+      clearPendingSeek,
+      SEEK_CONFIRM_TIMEOUT_MS,
+    );
     videoRef.current?.seek(time);
     setCurrentTime(time);
   };
@@ -112,10 +138,27 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({ item, onBack }) => {
         }
         resizeMode="contain"
         progressUpdateInterval={250}
-        onLoad={e => setDuration(e.duration)}
+        onLoad={e => {
+          clearPendingSeek();
+          setDuration(e.duration);
+        }}
         onBuffer={e => setBuffering(e.isBuffering)}
+        onSeek={e => {
+          const target = pendingSeekRef.current;
+          // Several quick skips can be confirmed separately; only release
+          // once the player has landed near the latest target.
+          if (
+            target !== null &&
+            Math.abs(e.currentTime - target) <= SEEK_MATCH_TOLERANCE_SECONDS
+          ) {
+            clearPendingSeek();
+            setCurrentTime(e.currentTime);
+          }
+        }}
         onProgress={e => {
-          setCurrentTime(e.currentTime);
+          if (pendingSeekRef.current === null) {
+            setCurrentTime(e.currentTime);
+          }
           // For live streams this is the length of the DVR window, i.e. the live edge.
           setLiveEdge(e.seekableDuration);
         }}
