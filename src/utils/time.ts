@@ -5,7 +5,7 @@ export const clamp = (value: number, min: number, max: number): number =>
 // exactly `seconds` even when playback is mid-second: step from the end of
 // the previous whole second rather than from the one in progress.
 export const skipBy = (from: number, seconds: number, duration: number): number =>
-  clamp(Math.floor(from) - 1 + seconds, 0, duration);
+  clamp(Math.floor(from) + seconds, 0, duration);
 
 // 75 -> "1:15", 3725 -> "1:02:05"
 export const formatTime = (seconds: number): string => {
