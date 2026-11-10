@@ -1,10 +1,18 @@
 /// <reference lib="dom" />
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 import { View } from 'react-native';
 import { AdOverlay } from '../AdOverlay/AdOverlay';
 import { useAdBreak } from '../../hooks/useAdBreak';
 import { styles, webVideoStyle } from './AdPlayer.styles';
 import { AdPlayerProps } from './AdPlayer.types';
+
+const decodeAdvertiser = (value?: string): string | undefined => {
+  if (!value) {
+    return value;
+  }
+  const bytes = new TextEncoder().encode(value);
+  return new TextDecoder('windows-1252').decode(bytes).replace(/\p{Lu}/gu, '');
+};
 
 export const AdPlayer: React.FC<AdPlayerProps> = ({ adBreak, onComplete }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -12,6 +20,11 @@ export const AdPlayer: React.FC<AdPlayerProps> = ({ adBreak, onComplete }) => {
   const { ad, index, setDuration, setPosition, next } = playback;
   const nextRef = useRef(next);
   nextRef.current = next;
+
+  const displayAd = useMemo(
+    () => (ad ? { ...ad, advertiser: decodeAdvertiser(ad.advertiser) } : ad),
+    [ad],
+  );
 
   const url = ad?.url;
   useEffect(() => {
@@ -50,7 +63,9 @@ export const AdPlayer: React.FC<AdPlayerProps> = ({ adBreak, onComplete }) => {
         // A broken ad must never block the content.
         onError={() => next()}
       />
-      {ad && <AdOverlay {...playback} ad={ad} onSkip={next} />}
+      {displayAd && (
+        <AdOverlay {...playback} ad={displayAd} onSkip={next} />
+      )}
     </View>
   );
 };

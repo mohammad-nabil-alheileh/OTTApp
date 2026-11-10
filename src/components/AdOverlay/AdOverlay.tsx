@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Platform,
@@ -10,6 +10,22 @@ import { colors, sharedStyles } from '../../styles/theme';
 import { formatTime } from '../../utils/time';
 import { styles } from './AdOverlay.styles';
 import { AdOverlayProps } from './AdOverlay.types';
+
+const MAX_ADVERTISER_LENGTH = 40;
+
+// Ad feeds are inconsistent about Unicode forms, so compose the text into a
+// predictable shape before it reaches the info panel, and keep it to a
+// sensible length so long names don't push the panel off screen.
+const normalizeAdText = (text: string): string => {
+  const normalized = text
+    .normalize('NFKD')
+    .replace(/[^\w\s.,'-]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+  return normalized.length > MAX_ADVERTISER_LENGTH
+    ? `${normalized.slice(0, MAX_ADVERTISER_LENGTH - 1)}…`
+    : normalized;
+};
 
 // "Ad 1 of 2 · 0:12" badge, an ad info button (bottom left) and a Skip
 // button (bottom right) over the ad video.
@@ -28,6 +44,12 @@ export const AdOverlay: React.FC<AdOverlayProps> = ({
   const skippable = ad.skipOffset !== undefined;
   const skipIn = skippable ? Math.ceil((ad.skipOffset ?? 0) - position) : 0;
   const canSkip = skippable && loaded && skipIn <= 0;
+
+  // Computed once per ad rather than on every position tick.
+  const advertiserText = useMemo(
+    () => (ad.advertiser ? normalizeAdText(ad.advertiser) : ''),
+    [ad.id],
+  );
 
   // Each ad starts with its details collapsed.
   useEffect(() => setInfoOpen(false), [ad.id, index]);
@@ -57,8 +79,8 @@ export const AdOverlay: React.FC<AdOverlayProps> = ({
             <View style={styles.infoPanel}>
               <Text style={styles.infoCaption}>Sponsored</Text>
               <Text style={styles.infoPanelText}>
-                {ad.advertiser
-                  ? `This ad is from ${ad.advertiser}.`
+                {advertiserText
+                  ? `This ad is from ${advertiserText}.`
                   : 'This is a sponsored message.'}
               </Text>
             </View>
