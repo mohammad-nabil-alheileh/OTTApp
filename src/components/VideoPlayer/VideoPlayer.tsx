@@ -51,7 +51,12 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({ item, onBack }) => {
 
   const overlay = useAutoHide(paused || !!error);
 
-  const ads = useMidRollAds(item.adBreaks, currentTime, !item.isLive);
+  const ads = useMidRollAds(
+    item.adBreaks,
+    currentTime,
+    !item.isLive,
+    item.startPosition ?? 0,
+  );
   const markFinished = useWatchProgress(item, currentTime, duration);
   const { finishBreak } = ads;
   const handleAdsComplete = useCallback(() => {

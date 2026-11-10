@@ -24,3 +24,53 @@ modules by path ./src/ 76.9 KiB
 ./index.web.ts 435 bytes [built] [code generated]
 ./app.json 54 bytes [built] [code generated]
 webpack 5.112.2 compiled successfully in 4040 ms
+assets by path *.js 3.67 MiB
+  asset bundle.530b3c1bc0e8c8635931.js 3.67 MiB [emitted] [immutable] (name: main)
+  asset main.c5e4a887222dc73c427e.hot-update.js 3.85 KiB [emitted] [immutable] [hmr] (name: main)
+asset index.html 444 bytes [emitted]
+asset main.c5e4a887222dc73c427e.hot-update.json 49 bytes [emitted] [immutable] [hmr]
+Entrypoint main 3.67 MiB = bundle.530b3c1bc0e8c8635931.js 3.67 MiB main.c5e4a887222dc73c427e.hot-update.js 3.85 KiB
+cached modules 3.24 MiB [cached] 219 modules
+runtime modules 27.8 KiB 13 modules
+./src/hooks/useMidRollAds.ts 1.91 KiB [built] [code generated]
+webpack 5.112.2 compiled successfully in 159 ms
+assets by path *.js 3.67 MiB
+  asset bundle.27d8232ac2ebc8bea7a1.js 3.67 MiB [emitted] [immutable] (name: main)
+  asset main.7780b65d6d2c886f9565.hot-update.js 3.88 KiB [emitted] [immutable] [hmr] (name: main)
+asset index.html 444 bytes [emitted]
+asset main.7780b65d6d2c886f9565.hot-update.json 49 bytes [emitted] [immutable] [hmr]
+Entrypoint main 3.67 MiB = bundle.27d8232ac2ebc8bea7a1.js 3.67 MiB main.7780b65d6d2c886f9565.hot-update.js 3.88 KiB
+cached modules 3.24 MiB [cached] 219 modules
+runtime modules 27.8 KiB 13 modules
+./src/hooks/useMidRollAds.ts 1.94 KiB [built] [code generated]
+webpack 5.112.2 compiled successfully in 198 ms
+assets by path *.js 3.68 MiB
+  asset bundle.2e2f10bf71741c891e1a.js 3.67 MiB [emitted] [immutable] (name: main)
+  asset main.7c8b4bfe438a08507ed8.hot-update.js 14.7 KiB [emitted] [immutable] [hmr] (name: main)
+asset index.html 444 bytes [emitted]
+asset main.7c8b4bfe438a08507ed8.hot-update.json 49 bytes [emitted] [immutable] [hmr]
+Entrypoint main 3.68 MiB = bundle.2e2f10bf71741c891e1a.js 3.67 MiB main.7c8b4bfe438a08507ed8.hot-update.js 14.7 KiB
+cached modules 3.23 MiB [cached] 219 modules
+runtime modules 27.8 KiB 13 modules
+./src/components/VideoPlayer/VideoPlayer.web.tsx 8.41 KiB [built] [code generated]
+webpack 5.112.2 compiled successfully in 126 ms
+assets by path *.js 3.67 MiB
+  asset bundle.d78139831ef0e5507136.js 3.67 MiB [emitted] [immutable] (name: main)
+  asset main.286f64275d1e5962262d.hot-update.js 4.25 KiB [emitted] [immutable] [hmr] (name: main)
+asset index.html 444 bytes [emitted]
+asset main.286f64275d1e5962262d.hot-update.json 49 bytes [emitted] [immutable] [hmr]
+Entrypoint main 3.67 MiB = bundle.d78139831ef0e5507136.js 3.67 MiB main.286f64275d1e5962262d.hot-update.js 4.25 KiB
+cached modules 3.24 MiB [cached] 219 modules
+runtime modules 27.8 KiB 13 modules
+./src/hooks/useMidRollAds.ts 2.3 KiB [built] [code generated]
+webpack 5.112.2 compiled successfully in 141 ms
+assets by path *.js 3.67 MiB
+  asset bundle.f5c70d9b69b7d1fdbdbf.js 3.67 MiB [emitted] [immutable] (name: main)
+  asset main.0a69b8a75f74bbf91938.hot-update.js 4.3 KiB [emitted] [immutable] [hmr] (name: main)
+asset index.html 444 bytes [emitted]
+asset main.0a69b8a75f74bbf91938.hot-update.json 49 bytes [emitted] [immutable] [hmr]
+Entrypoint main 3.67 MiB = bundle.f5c70d9b69b7d1fdbdbf.js 3.67 MiB main.0a69b8a75f74bbf91938.hot-update.js 4.3 KiB
+cached modules 3.24 MiB [cached] 219 modules
+runtime modules 27.8 KiB 13 modules
+./src/hooks/useMidRollAds.ts 2.31 KiB [built] [code generated]
+webpack 5.112.2 compiled successfully in 263 ms
