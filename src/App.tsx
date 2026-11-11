@@ -132,8 +132,13 @@ export default function App() {
 
   if (detailsItem) {
     return (
+      // Keyed by show so opening another one from the carousel remounts the
+      // screen: focus returns to Play and the carousel scrolls back to start.
       <ShowDetails
+        key={detailsItem.id}
         item={detailsItem}
+        relatedItems={vodList.filter(vod => vod.id !== detailsItem.id)}
+        onSelectVOD={setDetailsItem}
         resumePosition={
           watchHistory.find(entry => entry.id === detailsItem.id)?.position
         }

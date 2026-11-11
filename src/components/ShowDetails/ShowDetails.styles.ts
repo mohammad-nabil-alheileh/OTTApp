@@ -2,6 +2,7 @@ import { StyleSheet } from 'react-native';
 import { borderRadius, colors, scaleSize, spacing, typography } from '../../styles/theme';
 
 const POSTER_WIDTH = scaleSize(400);
+const RELATED_CARD_WIDTH = scaleSize(260);
 
 export const styles = StyleSheet.create({
   container: {
@@ -58,5 +59,52 @@ export const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     marginLeft: -spacing.xs,
+  },
+  // Runs to the screen edge so cards scroll off it instead of being cut at
+  // the info column's padding.
+  related: {
+    marginTop: spacing.lg,
+    marginRight: -spacing.xxl,
+  },
+  relatedHeading: {
+    ...typography.subheading,
+    color: colors.text,
+  },
+  // Room for the focused card's border and scale-up.
+  relatedListContent: {
+    paddingVertical: spacing.sm,
+    paddingLeft: spacing.xs,
+    paddingRight: spacing.xxl,
+  },
+  relatedItem: {
+    width: RELATED_CARD_WIDTH,
+    marginRight: spacing.sm,
+    borderRadius: borderRadius.md,
+    borderWidth: scaleSize(4),
+    borderColor: 'transparent',
+    overflow: 'hidden',
+    backgroundColor: colors.cardBackground,
+  },
+  relatedItemFocused: {
+    borderColor: colors.focus,
+    transform: [{ scale: 1.08 }],
+  },
+  relatedThumbnail: {
+    width: '100%',
+    aspectRatio: 16 / 9,
+    backgroundColor: colors.border,
+  },
+  relatedOverlay: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    paddingHorizontal: spacing.xs,
+    paddingVertical: scaleSize(4),
+    backgroundColor: 'rgba(0, 0, 0, 0.72)',
+  },
+  relatedTitle: {
+    ...typography.caption,
+    color: colors.text,
   },
 });
