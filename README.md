@@ -53,6 +53,7 @@ src/
 │   ├── VODList/         VODList.tsx, VODList.types.ts, VODList.styles.ts
 │   ├── LiveChannelList/ LiveChannelList.tsx, .types.ts, .styles.ts
 │   └── VideoPlayer/     VideoPlayer.tsx (native), VideoPlayer.web.tsx (web), .types.ts, .styles.ts
+├── focus/               useFocusGroup.ts (native no-op), useFocusGroup.web.ts (web focus groups)
 ├── services/mockData.ts Mock VOD + live channels
 ├── types/               Shared types (vod.ts, live.ts, playable.ts)
 └── styles/theme.ts      Shared colors, spacing, typography, scaling
@@ -69,8 +70,9 @@ src/
 
 | Concern | Android TV | Apple TV | LG webOS / browser |
 |---|---|---|---|
-| Focus movement | Native D-pad focus engine | tvOS focus engine (Siri Remote) | `spatial-navigation-polyfill` (arrow keys) |
-| Initial focus | `hasTVPreferredFocus` | `hasTVPreferredFocus` | `ref.focus()` on mount |
+| Focus movement | Native D-pad focus engine | tvOS focus engine (Siri Remote) | `useFocusGroup` per rail (arrow keys), `spatial-navigation-polyfill` elsewhere |
+| Focus memory | Per-row focus memory | Per-row focus memory | Each rail remembers its last focused item |
+| Initial focus | `hasTVPreferredFocus` | `hasTVPreferredFocus` | `focusFirst()` when the data arrives |
 | Video | `react-native-video` (ExoPlayer) | `react-native-video` (AVPlayer) | `<video>` + `hls.js` (native HLS fallback) |
 | Back key | `BackHandler` | `BackHandler` (Menu / Back button) | `keydown` keyCode 461, Escape, Backspace |
 

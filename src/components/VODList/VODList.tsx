@@ -1,19 +1,22 @@
-import React, { useEffect, useRef } from 'react';
-import { View, Text, Image, Pressable, FlatList, ListRenderItem, Platform } from 'react-native';
+import React, { useEffect } from 'react';
+import { View, Text, Image, Pressable, FlatList, ListRenderItem } from 'react-native';
 import { VODItem } from '../../types/vod';
+import { useFocusGroup } from '../../focus/useFocusGroup';
 import { formatDuration } from '../../utils/time';
 import { styles } from './VODList.styles';
 import { VODListProps } from './VODList.types';
 
 export const VODList: React.FC<VODListProps> = ({ vodList, onSelectVOD, isLoading }) => {
-  const firstItemRef = useRef<View>(null);
+  const { containerRef, getItemProps, activeIndex, focusFirst } =
+    useFocusGroup('vod-rail', vodList.length);
 
-  // hasTVPreferredFocus is native-only, so the web needs an explicit focus.
+  // Native uses hasTVPreferredFocus below; on web this is a no-op until the
+  // data arrives, then it puts focus on the rail.
   useEffect(() => {
-    if (Platform.OS === 'web' && !isLoading) {
-      firstItemRef.current?.focus();
+    if (!isLoading) {
+      focusFirst();
     }
-  }, [isLoading]);
+  }, [isLoading, focusFirst]);
 
   if (isLoading) {
     return (
@@ -25,7 +28,7 @@ export const VODList: React.FC<VODListProps> = ({ vodList, onSelectVOD, isLoadin
 
   const renderVODItem: ListRenderItem<VODItem> = ({ item, index }) => (
     <Pressable
-      ref={index === 0 ? firstItemRef : undefined}
+      {...getItemProps(index)}
       hasTVPreferredFocus={index === 0}
       onPress={() => onSelectVOD(item)}
       style={({ focused }) => [styles.vodItem, focused && styles.vodItemFocused]}
@@ -42,12 +45,13 @@ export const VODList: React.FC<VODListProps> = ({ vodList, onSelectVOD, isLoadin
   );
 
   return (
-    <View style={styles.container}>
+    <View style={styles.container} ref={containerRef}>
       <Text style={styles.sectionTitle}>Videos On Demand</Text>
       <FlatList
         data={vodList}
         renderItem={renderVODItem}
         keyExtractor={item => item.id}
+        extraData={activeIndex}
         horizontal
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.listContent}

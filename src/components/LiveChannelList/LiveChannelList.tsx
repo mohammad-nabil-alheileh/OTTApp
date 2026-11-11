@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, Image, Pressable, FlatList, ListRenderItem } from 'react-native';
 import { LiveChannel } from '../../types/live';
+import { useFocusGroup } from '../../focus/useFocusGroup';
 import { styles } from './LiveChannelList.styles';
 import { LiveChannelListProps } from './LiveChannelList.types';
 
@@ -9,6 +10,11 @@ export const LiveChannelList: React.FC<LiveChannelListProps> = ({
   onSelectChannel,
   isLoading,
 }) => {
+  const { containerRef, getItemProps, activeIndex } = useFocusGroup(
+    'live-rail',
+    channels.length,
+  );
+
   if (isLoading) {
     return (
       <View style={styles.loadingContainer}>
@@ -17,8 +23,9 @@ export const LiveChannelList: React.FC<LiveChannelListProps> = ({
     );
   }
 
-  const renderChannel: ListRenderItem<LiveChannel> = ({ item }) => (
+  const renderChannel: ListRenderItem<LiveChannel> = ({ item, index }) => (
     <Pressable
+      {...getItemProps(index)}
       onPress={() => onSelectChannel(item)}
       style={({ focused }) => [styles.channelCard, focused && styles.channelCardFocused]}
     >
@@ -41,12 +48,13 @@ export const LiveChannelList: React.FC<LiveChannelListProps> = ({
   );
 
   return (
-    <View style={styles.container}>
+    <View style={styles.container} ref={containerRef}>
       <Text style={styles.sectionTitle}>Live Channels</Text>
       <FlatList
         data={channels}
         renderItem={renderChannel}
         keyExtractor={item => item.id}
+        extraData={activeIndex}
         horizontal
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.listContent}
