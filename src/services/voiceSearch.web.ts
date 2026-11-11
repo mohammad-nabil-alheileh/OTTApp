@@ -28,6 +28,8 @@ interface Recognition {
   continuous: boolean;
   interimResults: boolean;
   maxAlternatives: number;
+  onstart: (() => void) | null;
+  onaudiostart: (() => void) | null;
   onresult: ((event: RecognitionEvent) => void) | null;
   onerror: ((event: RecognitionErrorEvent) => void) | null;
   onend: (() => void) | null;
@@ -57,6 +59,9 @@ const isSupported = () =>
 
 let activeRecognition: Recognition | null = null;
 let settle: ((value: string | null) => void) | null = null;
+// Bumped whenever a session starts or stops, so a start still waiting on the
+// permission prompt cannot begin capturing after the user moved on.
+let session = 0;
 
 // Resolve once, detach handlers, and drop the reference so late events from the
 // browser (abort triggers error + end) cannot resolve the promise twice.
@@ -64,6 +69,8 @@ const finish = (value: string | null) => {
   const resolve = settle;
   settle = null;
   if (activeRecognition) {
+    activeRecognition.onstart = null;
+    activeRecognition.onaudiostart = null;
     activeRecognition.onresult = null;
     activeRecognition.onerror = null;
     activeRecognition.onend = null;
@@ -72,19 +79,55 @@ const finish = (value: string | null) => {
   resolve?.(value);
 };
 
+// Chrome and Safari only grant the microphone through a prompt. Asking here,
+// inside the press handler, spends that prompt before recognition starts; the
+// first spoken words would otherwise be lost while the user clicks Allow.
+const primeMicrophone = async () => {
+  if (typeof navigator === 'undefined') {
+    return;
+  }
+  const media = navigator.mediaDevices;
+  if (!media?.getUserMedia) {
+    return;
+  }
+  try {
+    const permissions = navigator.permissions as
+      | { query?: (descriptor: { name: string }) => Promise<{ state: string }> }
+      | undefined;
+    const status = await permissions?.query?.({ name: 'microphone' });
+    if (status?.state === 'granted' || status?.state === 'denied') {
+      return;
+    }
+  } catch {
+    // No Permissions API entry for the microphone; fall through to a prompt.
+  }
+  try {
+    const stream = await media.getUserMedia({ audio: true });
+    stream.getTracks().forEach(track => track.stop());
+  } catch {
+    // Denied or unavailable; recognition reports the same thing.
+  }
+};
+
 export const isVoiceSearchAvailable: VoiceSearchService['isAvailable'] =
   async () => isSupported();
 
-export const startVoiceListening: VoiceSearchService['startListening'] = (
+export const startVoiceListening: VoiceSearchService['startListening'] = async (
   options = {},
 ) => {
   if (!isSupported() || settle !== null) {
-    return Promise.resolve(null);
+    return null;
+  }
+
+  const current = (session += 1);
+  await primeMicrophone();
+  if (current !== session || settle !== null) {
+    return null;
   }
 
   const Constructor = readConstructor();
   if (!Constructor) {
-    return Promise.resolve(null);
+    return null;
   }
 
   const recognition = new Constructor();
@@ -100,6 +143,10 @@ export const startVoiceListening: VoiceSearchService['startListening'] = (
 
   return new Promise<string | null>(resolve => {
     settle = resolve;
+
+    // "Speak now" is only honest once the service is capturing audio.
+    recognition.onstart = () => options.onStart?.();
+    recognition.onaudiostart = () => options.onStart?.();
 
     recognition.onresult = event => {
       let transcript = '';
@@ -150,6 +197,7 @@ export const startVoiceListening: VoiceSearchService['startListening'] = (
 };
 
 export const stopVoiceListening: VoiceSearchService['stopListening'] = () => {
+  session += 1;
   if (settle === null) {
     return;
   }

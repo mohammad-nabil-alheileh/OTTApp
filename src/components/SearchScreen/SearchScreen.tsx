@@ -55,6 +55,7 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({
   const {
     available: voiceAvailable,
     listening: voiceListening,
+    capturing: voiceCapturing,
     partial: voicePartial,
     start: startVoice,
   } = useVoiceSearch();
@@ -218,7 +219,11 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({
               </Text>
             ) : (
               <Text style={styles.placeholder} numberOfLines={1}>
-                {voiceListening ? 'Listening…' : 'Search videos…'}
+                {voiceListening
+                  ? voiceCapturing
+                    ? 'Listening…'
+                    : 'Starting microphone…'
+                  : 'Search videos…'}
               </Text>
             )}
           </View>
@@ -258,7 +263,9 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({
 
         <Text style={styles.hint}>
           {voiceListening
-            ? 'Listening… speak now'
+            ? voiceCapturing
+              ? 'Listening… speak now'
+              : 'Starting microphone… allow access if asked'
             : 'Arrows to move · Enter to select · Back to close'}
         </Text>
 

@@ -9,6 +9,9 @@ import { VoiceSearchOptions } from '../../services/voiceSearch.types';
 export const useVoiceSearch = () => {
   const [available, setAvailable] = useState(false);
   const [listening, setListening] = useState(false);
+  // True once the browser is actually capturing audio; the permission prompt
+  // and service handshake can take a moment on the first press.
+  const [capturing, setCapturing] = useState(false);
   // Words recognized so far, before the service finalizes the utterance.
   const [partial, setPartial] = useState('');
   const listeningRef = useRef(false);
@@ -35,10 +38,16 @@ export const useVoiceSearch = () => {
     }
     listeningRef.current = true;
     setListening(true);
+    setCapturing(false);
     setPartial('');
     try {
       return await startVoiceListening({
         ...options,
+        onStart: () => {
+          if (mountedRef.current) {
+            setCapturing(true);
+          }
+        },
         onPartial: text => {
           if (mountedRef.current) {
             setPartial(text);
@@ -49,10 +58,11 @@ export const useVoiceSearch = () => {
       listeningRef.current = false;
       if (mountedRef.current) {
         setListening(false);
+        setCapturing(false);
         setPartial('');
       }
     }
   }, []);
 
-  return { available, listening, partial, start };
+  return { available, listening, capturing, partial, start };
 };

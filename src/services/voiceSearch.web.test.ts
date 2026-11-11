@@ -12,6 +12,8 @@ class FakeRecognition {
   continuous = true;
   interimResults = false;
   maxAlternatives = 0;
+  onstart: (() => void) | null = null;
+  onaudiostart: (() => void) | null = null;
   onresult: ((event: unknown) => void) | null = null;
   onerror: ((event: unknown) => void) | null = null;
   onend: (() => void) | null = null;
@@ -43,6 +45,15 @@ const installWindow = (constructor: unknown, secure = true) => {
   };
 };
 
+// Starting now asks for microphone permission first (async), so the recognizer
+// only exists after a couple of microtasks.
+const begin = async (options?: Parameters<typeof startVoiceListening>[0]) => {
+  const listening = startVoiceListening(options);
+  await Promise.resolve();
+  await Promise.resolve();
+  return { listening, recognition: latest() };
+};
+
 describe('voice search (web)', () => {
   beforeEach(() => {
     FakeRecognition.instances = [];
@@ -67,8 +78,7 @@ describe('voice search (web)', () => {
   });
 
   it('returns the trimmed transcript once the result is final', async () => {
-    const listening = startVoiceListening({ locale: 'en-GB' });
-    const recognition = latest();
+    const { listening, recognition } = await begin({ locale: 'en-GB' });
 
     expect(recognition.lang).toBe('en-GB');
     expect(recognition.started).toBe(1);
@@ -88,13 +98,13 @@ describe('voice search (web)', () => {
   it('streams partial transcripts without resolving', async () => {
     const partials: string[] = [];
     let settled = false;
-    const listening = startVoiceListening({
+    const { listening: pending, recognition } = await begin({
       onPartial: text => partials.push(text),
-    }).then(text => {
+    });
+    const listening = pending.then(text => {
       settled = true;
       return text;
     });
-    const recognition = latest();
 
     recognition.onresult?.({
       results: {
@@ -119,8 +129,8 @@ describe('voice search (web)', () => {
   });
 
   it('joins all result segments before resolving', async () => {
-    const listening = startVoiceListening();
-    latest().onresult?.({
+    const { listening, recognition } = await begin();
+    recognition.onresult?.({
       results: {
         0: { 0: { transcript: 'tears of' }, isFinal: true },
         1: { 0: { transcript: ' steel' }, isFinal: true },
@@ -133,10 +143,9 @@ describe('voice search (web)', () => {
 
   it('keeps interim words out of the final result when cancelled', async () => {
     const partials: string[] = [];
-    const listening = startVoiceListening({
+    const { listening, recognition } = await begin({
       onPartial: text => partials.push(text),
     });
-    const recognition = latest();
 
     recognition.onresult?.({
       results: {
@@ -151,34 +160,49 @@ describe('voice search (web)', () => {
   });
 
   it('resolves null on cancel or no match instead of surfacing an error', async () => {
-    const listening = startVoiceListening();
-    latest().onerror?.({ error: 'no-speech' });
+    const { listening, recognition } = await begin();
+    recognition.onerror?.({ error: 'no-speech' });
 
     await expect(listening).resolves.toBeNull();
   });
 
   it('resolves null when recognition ends without a result', async () => {
-    const listening = startVoiceListening();
-    latest().onend?.();
+    const { listening, recognition } = await begin();
+    recognition.onend?.();
 
+    await expect(listening).resolves.toBeNull();
+  });
+
+  it('reports when audio capture has actually started', async () => {
+    let starts = 0;
+    const { listening, recognition } = await begin({
+      onStart: () => (starts += 1),
+    });
+
+    expect(starts).toBe(0);
+    recognition.onstart?.();
+    recognition.onaudiostart?.();
+    expect(starts).toBe(2);
+
+    recognition.onend?.();
     await expect(listening).resolves.toBeNull();
   });
 
   it('aborts the active recognition when stopped', async () => {
-    const listening = startVoiceListening();
+    const { listening, recognition } = await begin();
 
     stopVoiceListening();
 
     await expect(listening).resolves.toBeNull();
-    expect(latest().aborted).toBe(1);
+    expect(recognition.aborted).toBe(1);
   });
 
   it('refuses a second session while one is already listening', async () => {
-    const first = startVoiceListening();
+    const { listening, recognition } = await begin();
     await expect(startVoiceListening()).resolves.toBeNull();
 
-    latest().onend?.();
-    await expect(first).resolves.toBeNull();
+    recognition.onend?.();
+    await expect(listening).resolves.toBeNull();
     expect(FakeRecognition.instances).toHaveLength(1);
   });
 });
