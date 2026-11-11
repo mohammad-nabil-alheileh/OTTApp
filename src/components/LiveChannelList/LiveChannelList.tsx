@@ -37,12 +37,12 @@ export const LiveChannelList: React.FC<LiveChannelListProps> = ({
       )}
       <Image source={{ uri: item.icon }} style={styles.icon} resizeMode="cover" />
       <View style={styles.cardOverlay}>
-        <Text style={styles.channelName} numberOfLines={1}>
+        <Text style={styles.channelName} numberOfLines={2} ellipsizeMode="tail">
           {item.name}
         </Text>
-        <Text style={styles.category} numberOfLines={1}>
-          {item.category}
-        </Text>
+        <View style={styles.metaRow}>
+          <Text style={styles.category}>{item.category}</Text>
+        </View>
       </View>
     </Pressable>
   );

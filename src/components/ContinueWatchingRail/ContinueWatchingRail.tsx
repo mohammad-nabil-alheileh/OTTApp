@@ -37,12 +37,14 @@ export const ContinueWatchingRail: React.FC<ContinueWatchingRailProps> = ({
           </View>
         </View>
         <View style={styles.cardOverlay}>
-          <Text style={styles.title} numberOfLines={1}>
+          <Text style={styles.title} numberOfLines={2} ellipsizeMode="tail">
             {vod.title}
           </Text>
-          <Text style={styles.remaining} numberOfLines={1}>
-            {formatDuration(Math.max(0, duration - position))} left
-          </Text>
+          <View style={styles.metaRow}>
+            <Text style={styles.remaining}>
+              {formatDuration(Math.max(0, duration - position))} left
+            </Text>
+          </View>
         </View>
       </Pressable>
     );

@@ -35,15 +35,13 @@ export const VODList: React.FC<VODListProps> = ({ vodList, onSelectVOD, isLoadin
     >
       <Image source={{ uri: item.thumbnail }} style={styles.thumbnail} resizeMode="cover" />
       <View style={styles.cardOverlay}>
-        <Text style={styles.title} numberOfLines={1}>
+        <Text style={styles.title} numberOfLines={2} ellipsizeMode="tail">
           {item.title}
         </Text>
-        <Text style={styles.rating} numberOfLines={1}>
-          ★ {item.rating}
-        </Text>
-        <Text style={styles.duration} numberOfLines={1}>
-          {formatDuration(item.duration)}
-        </Text>
+        <View style={styles.metaRow}>
+          <Text style={styles.rating}>★ {item.rating}</Text>
+          <Text style={styles.duration}>{formatDuration(item.duration)}</Text>
+        </View>
       </View>
     </Pressable>
   );

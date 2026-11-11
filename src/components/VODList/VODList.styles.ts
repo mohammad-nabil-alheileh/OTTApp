@@ -1,8 +1,7 @@
 import { StyleSheet } from 'react-native';
 import { colors, spacing, borderRadius, typography, scaleSize } from '../../styles/theme';
 
-// Sized so the three home rails fit one 1080p screen without scrolling.
-const CARD_WIDTH = scaleSize(300);
+const CARD_WIDTH = scaleSize(320);
 
 export const styles = StyleSheet.create({
   container: {
@@ -16,7 +15,7 @@ export const styles = StyleSheet.create({
   },
   listContent: {
     paddingHorizontal: spacing.xl,
-    paddingVertical: spacing.sm,
+    paddingVertical: spacing.md,
   },
   vodItem: {
     width: CARD_WIDTH,
@@ -33,41 +32,44 @@ export const styles = StyleSheet.create({
   },
   thumbnail: {
     width: '100%',
-    aspectRatio: 16 / 9,
+    aspectRatio: 4 / 3,
     backgroundColor: colors.border,
   },
-  // Title sits on the artwork, so cards need no text row underneath.
   cardOverlay: {
     position: 'absolute',
     left: 0,
     right: 0,
     bottom: 0,
-    flexDirection: 'row',
-    alignItems: 'center',
     paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs,
-    backgroundColor: 'rgba(0, 0, 0, 0.72)',
+    paddingVertical: spacing.sm,
+    backgroundColor: 'rgba(0, 0, 0, 0.82)',
   },
   title: {
-    ...typography.subheading,
-    lineHeight: scaleSize(32),
+    fontSize: scaleSize(18),
+    fontWeight: '600',
+    lineHeight: scaleSize(24),
     color: colors.text,
-    flexShrink: 1,
+  },
+  metaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: scaleSize(4),
   },
   rating: {
-    ...typography.caption,
-    lineHeight: scaleSize(24),
+    fontSize: scaleSize(14),
+    fontWeight: '400',
+    lineHeight: scaleSize(18),
     color: colors.gold,
-    marginLeft: spacing.xs,
+    marginRight: spacing.sm,
   },
   duration: {
-    ...typography.caption,
-    lineHeight: scaleSize(24),
+    fontSize: scaleSize(14),
+    fontWeight: '400',
+    lineHeight: scaleSize(18),
     color: colors.textSecondary,
-    marginLeft: spacing.xs,
   },
   loadingContainer: {
-    height: scaleSize(300),
+    height: scaleSize(240),
     justifyContent: 'center',
     alignItems: 'center',
   },

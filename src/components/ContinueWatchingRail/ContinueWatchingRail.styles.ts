@@ -1,5 +1,5 @@
 import { StyleSheet } from 'react-native';
-import { colors, spacing, scaleSize, typography } from '../../styles/theme';
+import { colors, scaleSize } from '../../styles/theme';
 import { styles as vodStyles } from '../VODList/VODList.styles';
 
 const progressStyles = StyleSheet.create({
@@ -20,11 +20,16 @@ const progressStyles = StyleSheet.create({
     height: '100%',
     backgroundColor: colors.primary,
   },
+  metaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: scaleSize(4),
+  },
   remaining: {
-    ...typography.caption,
-    lineHeight: scaleSize(24),
+    fontSize: scaleSize(14),
+    fontWeight: '400',
+    lineHeight: scaleSize(18),
     color: colors.textSecondary,
-    marginLeft: spacing.xs,
   },
 });
 
