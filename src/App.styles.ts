@@ -20,8 +20,9 @@ export const styles = StyleSheet.create({
     ...typography.body,
     color: colors.textSecondary,
   },
-  // Room below the last row so a focused (scaled-up) card can scroll fully into view.
+  // Just enough room for the focused card's scale-up; the rails are sized to
+  // fit the viewport, so the home screen should not need to scroll.
   scrollContent: {
-    paddingBottom: spacing.xxl,
+    paddingBottom: spacing.xs,
   },
 });

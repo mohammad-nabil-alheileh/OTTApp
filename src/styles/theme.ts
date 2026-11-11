@@ -1,11 +1,14 @@
 import { Dimensions, StyleSheet } from 'react-native';
 
 // Designs are made for 1920x1080. Android TV reports width in dp (960 on a
-// 1080p TV), so scaling by width works for both dp and CSS pixels.
+// 1080p TV), so scaling by width works for both dp and CSS pixels. Height is
+// the other limit: a wide, short browser window would otherwise scale the
+// layout taller than the viewport and bring back page scrolling.
 const DESIGN_WIDTH = 1920;
+const DESIGN_HEIGHT = 1080;
 
 const { width, height } = Dimensions.get('window');
-const scale = width / DESIGN_WIDTH;
+const scale = Math.min(width / DESIGN_WIDTH, height / DESIGN_HEIGHT);
 
 export const scaleSize = (size: number): number => Math.round(size * scale);
 

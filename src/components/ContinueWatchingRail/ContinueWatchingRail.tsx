@@ -36,11 +36,11 @@ export const ContinueWatchingRail: React.FC<ContinueWatchingRailProps> = ({
             <View style={[styles.progressFill, { width: `${percent}%` }]} />
           </View>
         </View>
-        <View style={styles.vodInfo}>
+        <View style={styles.cardOverlay}>
           <Text style={styles.title} numberOfLines={1}>
             {vod.title}
           </Text>
-          <Text style={styles.remaining}>
+          <Text style={styles.remaining} numberOfLines={1}>
             {formatDuration(Math.max(0, duration - position))} left
           </Text>
         </View>

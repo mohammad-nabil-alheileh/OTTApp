@@ -35,14 +35,14 @@ export const LiveChannelList: React.FC<LiveChannelListProps> = ({
           <Text style={styles.liveText}>● LIVE</Text>
         </View>
       )}
-      <View style={styles.channelInfo}>
-        <Image source={{ uri: item.icon }} style={styles.icon} resizeMode="cover" />
-        <View style={styles.textInfo}>
-          <Text style={styles.channelName} numberOfLines={1}>
-            {item.name}
-          </Text>
-          <Text style={styles.category}>{item.category}</Text>
-        </View>
+      <Image source={{ uri: item.icon }} style={styles.icon} resizeMode="cover" />
+      <View style={styles.cardOverlay}>
+        <Text style={styles.channelName} numberOfLines={1}>
+          {item.name}
+        </Text>
+        <Text style={styles.category} numberOfLines={1}>
+          {item.category}
+        </Text>
       </View>
     </Pressable>
   );

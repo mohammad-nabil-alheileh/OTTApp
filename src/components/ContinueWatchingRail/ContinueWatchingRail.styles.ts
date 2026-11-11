@@ -1,8 +1,13 @@
 import { StyleSheet } from 'react-native';
-import { colors, scaleSize, typography } from '../../styles/theme';
+import { colors, spacing, scaleSize, typography } from '../../styles/theme';
 import { styles as vodStyles } from '../VODList/VODList.styles';
 
 const progressStyles = StyleSheet.create({
+  // Sit above the progress bar instead of covering it.
+  cardOverlay: {
+    ...vodStyles.cardOverlay,
+    bottom: scaleSize(6),
+  },
   progressTrack: {
     position: 'absolute',
     left: 0,
@@ -17,7 +22,9 @@ const progressStyles = StyleSheet.create({
   },
   remaining: {
     ...typography.caption,
+    lineHeight: scaleSize(24),
     color: colors.textSecondary,
+    marginLeft: spacing.xs,
   },
 });
 

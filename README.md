@@ -63,7 +63,7 @@ src/
 
 - Each component has its own folder with `Name.tsx`, `Name.types.ts`, and `Name.styles.ts`.
 - Types used by more than one component go in `src/types/`.
-- Styles use the shared theme. Sizes are designed for 1920x1080 and scaled with `scaleSize()`, so the same layout fits any resolution. Android TV reports 960dp width on a 1080p screen, and scaling by width handles that too.
+- Styles use the shared theme. Sizes are designed for 1920x1080 and scaled with `scaleSize()` by whichever dimension is more constrained (width or height), so the whole home screen fits without scrolling at any resolution. Android TV reports 960dp width on a 1080p screen, and the same scaling handles that too.
 - Platform-specific code uses file extensions. webpack picks `*.web.tsx`; Metro (Android TV and Apple TV) picks `*.tsx`.
 
 ## How the TV parts work

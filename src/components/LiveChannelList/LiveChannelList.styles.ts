@@ -1,12 +1,13 @@
 import { StyleSheet } from 'react-native';
 import { colors, spacing, borderRadius, typography, scaleSize } from '../../styles/theme';
 
-const CARD_WIDTH = scaleSize(400);
-const ICON_SIZE = scaleSize(64);
+// Sized so the three home rails fit one 1080p screen without scrolling.
+const CARD_WIDTH = scaleSize(300);
+const ICON_SIZE = scaleSize(48);
 
 export const styles = StyleSheet.create({
   container: {
-    marginVertical: spacing.md,
+    marginVertical: spacing.sm,
   },
   sectionTitle: {
     ...typography.heading,
@@ -50,28 +51,38 @@ export const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: colors.text,
   },
-  channelInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: spacing.sm,
-  },
   icon: {
+    position: 'absolute',
+    top: spacing.xs,
+    left: spacing.xs,
     width: ICON_SIZE,
     height: ICON_SIZE,
     borderRadius: borderRadius.sm,
-    marginRight: spacing.sm,
     backgroundColor: colors.border,
   },
-  textInfo: {
-    flex: 1,
+  // Name and category sit on the artwork, so cards need no text row underneath.
+  cardOverlay: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    backgroundColor: 'rgba(0, 0, 0, 0.72)',
   },
   channelName: {
     ...typography.subheading,
+    lineHeight: scaleSize(32),
     color: colors.text,
+    flexShrink: 1,
   },
   category: {
     ...typography.caption,
+    lineHeight: scaleSize(24),
     color: colors.textSecondary,
+    marginLeft: spacing.xs,
   },
   loadingContainer: {
     height: scaleSize(300),
