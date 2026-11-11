@@ -56,6 +56,7 @@ export const styles = StyleSheet.create({
   // Cancel the first button's margin so the row lines up with the text.
   buttons: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     marginLeft: -spacing.xs,
   },
 });

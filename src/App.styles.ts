@@ -20,9 +20,11 @@ export const styles = StyleSheet.create({
     ...typography.body,
     color: colors.textSecondary,
   },
-  // Just enough room for the focused card's scale-up; the rails are sized to
-  // fit the viewport, so the home screen should not need to scroll.
+  // The rails are sized to fit the viewport; flexGrow lets them share any
+  // leftover height so the home screen fills the screen at any aspect ratio.
   scrollContent: {
+    flexGrow: 1,
+    justifyContent: 'space-evenly',
     paddingBottom: spacing.xs,
   },
 });
