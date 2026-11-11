@@ -96,6 +96,45 @@ const focusItem = (group: GroupState, index: number) => {
   // only when the row itself is out of view.
   item.focus({ preventScroll: true });
   item.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+  revealWithGutter(item);
+};
+
+const scrollerOf = (element: FocusableElement): FocusableElement | null => {
+  for (let node = element.parentElement; node; node = node.parentElement) {
+    const { overflowX } = getComputedStyle(node);
+    if (
+      (overflowX === 'auto' || overflowX === 'scroll') &&
+      node.scrollWidth > node.clientWidth
+    ) {
+      return node;
+    }
+  }
+  return null;
+};
+
+// 'nearest' only scrolls until the card touches the rail's edge, which hides
+// the rail's padding: coming back to the first card would leave it stuck to
+// the screen edge. Keep the content container's padding visible as a gutter,
+// so the first and last cards sit where they do at rest.
+const revealWithGutter = (item: FocusableElement) => {
+  const scroller = scrollerOf(item);
+  if (!scroller) {
+    return;
+  }
+  const content = scroller.firstElementChild;
+  const padding = content ? getComputedStyle(content) : null;
+  const gutterStart = padding ? parseFloat(padding.paddingLeft) || 0 : 0;
+  const gutterEnd = padding ? parseFloat(padding.paddingRight) || 0 : 0;
+
+  const scrollerRect = scroller.getBoundingClientRect();
+  const itemRect = item.getBoundingClientRect();
+  const start = itemRect.left - scrollerRect.left - gutterStart;
+  const end = itemRect.right - scrollerRect.right + gutterEnd;
+  if (start < 0) {
+    scroller.scrollLeft += start;
+  } else if (end > 0) {
+    scroller.scrollLeft += end;
+  }
 };
 
 const ARROW_KEYS: Record<string, Direction> = {
