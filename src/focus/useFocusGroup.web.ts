@@ -135,9 +135,11 @@ const handleKeyDown = (event: KeyboardEvent) => {
   }
 
   // The group owns the arrows: preventDefault stops the browser and the
-  // polyfill from also moving focus or scrolling.
+  // polyfill from also moving focus or scrolling. stopImmediatePropagation is
+  // needed because the TV FocusGroup wrapper listens on this same target and
+  // would otherwise see the already-moved focus and move a second rail.
   event.preventDefault();
-  event.stopPropagation();
+  event.stopImmediatePropagation();
 
   if (direction === 'left' || direction === 'right') {
     const index = group.items.indexOf(active);
