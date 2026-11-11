@@ -1,206 +1,177 @@
-import React, { useCallback, useEffect, useState } from 'react';
-import { View, Text, Pressable, Modal } from 'react-native';
-import { useBackHandler } from '../../hooks/useBackHandler';
+import React, { useEffect } from 'react';
+import { Pressable, Text, View } from 'react-native';
+import { useFocusGroup } from '../../focus/useFocusGroup';
 import { SearchKeyboardProps } from './SearchKeyboard.types';
-import { KeyboardFocusPos } from './keyboardNavigation.types';
-import { useKeyboardNavigation } from './useKeyboardNavigation';
-import { styles } from './SearchKeyboard.styles';
+import { ROW_INDENTS, keyWidth, styles } from './SearchKeyboard.styles';
 
-// TV-friendly on-screen keyboard layout.
-const KEYBOARD_ROWS: string[][] = [
+const KEY_ROWS: string[][] = [
   ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0'],
-  ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'],
-  ['K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T'],
-  ['U', 'V', 'W', 'X', 'Y', 'Z', '-', "'", '.', ','],
+  ['Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P'],
+  ['A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L'],
+  ['Z', 'X', 'C', 'V', 'B', 'N', 'M', '.', ',', '-'],
 ];
 
-const SPACE_LABEL = 'SPACE';
-const DELETE_LABEL = '⌫ DEL';
-const CLEAR_LABEL = 'CLEAR';
+const ACTIONS = [
+  { id: 'delete', label: '⌫', units: 2 },
+  { id: 'space', label: 'SPACE', units: 4 },
+  { id: 'clear', label: 'CLEAR', units: 2 },
+];
 
-export const SearchKeyboard: React.FC<SearchKeyboardProps> = ({
-  visible,
-  onClose,
-  onQueryChange,
+interface KeyboardRowProps {
+  groupId: string;
+  keys: string[];
+  indent: number;
+  autoFocus?: boolean;
+  focusRequest?: number;
+  onKeyPress: (key: string) => void;
+  onFocus?: () => void;
+}
+
+const KeyboardRow: React.FC<KeyboardRowProps> = ({
+  groupId,
+  keys,
+  indent,
+  autoFocus,
+  focusRequest,
+  onKeyPress,
+  onFocus,
 }) => {
-  const [query, setQuery] = useState('');
-
-  const handleBack = useCallback(() => {
-    if (visible) {
-      onClose();
-      return true;
-    }
-    return false;
-  }, [visible, onClose]);
-
-  useBackHandler(handleBack, visible);
-
-  // Reset query when overlay opens
-  useEffect(() => {
-    if (visible) {
-      setQuery('');
-    }
-  }, [visible]);
-
-  // Notify parent on every query change
-  useEffect(() => {
-    onQueryChange(query);
-  }, [query, onQueryChange]);
-
-  const handleSelect = useCallback(
-    (pos: KeyboardFocusPos) => {
-      const { row, col } = pos;
-      if (row === -1) {
-        onClose();
-      } else if (row >= 0 && row <= 3) {
-        setQuery(prev => prev + KEYBOARD_ROWS[row][col]);
-      } else if (row === 4) {
-        if (col === 0) {
-          setQuery(prev => prev.slice(0, -1));
-        } else if (col === 1) {
-          setQuery(prev => prev + ' ');
-        } else if (col === 2) {
-          setQuery('');
-        }
-      }
-    },
-    [onClose],
+  const { containerRef, getItemProps, focusFirst } = useFocusGroup(
+    groupId,
+    keys.length,
   );
 
-  const handleChar = useCallback((char: string) => {
-    setQuery(prev => prev + char);
-  }, []);
-
-  const handleBackspace = useCallback(() => {
-    setQuery(prev => prev.slice(0, -1));
-  }, []);
-
-  const handleSpace = useCallback(() => {
-    setQuery(prev => prev + ' ');
-  }, []);
-
-  const { focusPos, setFocusPos } = useKeyboardNavigation({
-    visible,
-    onClose,
-    onSelect: handleSelect,
-    onChar: handleChar,
-    onBackspace: handleBackspace,
-    onSpace: handleSpace,
-  });
-
-  if (!visible) {
-    return null;
-  }
-
-  const isCloseFocused = focusPos.row === -1;
-  const isDelFocused = focusPos.row === 4 && focusPos.col === 0;
-  const isSpaceFocused = focusPos.row === 4 && focusPos.col === 1;
-  const isClearFocused = focusPos.row === 4 && focusPos.col === 2;
+  // The first row takes focus when the screen opens. On native the TV engine
+  // handles this through hasTVPreferredFocus below.
+  useEffect(() => {
+    if (autoFocus) {
+      focusFirst();
+    }
+  }, [autoFocus, focusRequest, focusFirst]);
 
   return (
-    <Modal
-      visible={visible}
-      transparent
-      animationType="fade"
-      onRequestClose={onClose}
-    >
-      <View style={styles.overlay}>
-        {/* ── Search Bar ── */}
-        <View style={styles.searchRow}>
-          <View style={styles.searchInputContainer}>
-            <Text style={styles.searchIcon}>🔍</Text>
-            {query.length > 0 ? (
-              <Text style={styles.searchText}>
-                {query}
-                <Text style={styles.cursor}>|</Text>
-              </Text>
-            ) : (
-              <Text style={styles.placeholder}>Search movies, shows…</Text>
-            )}
-          </View>
+    <View ref={containerRef} style={[styles.row, { marginLeft: indent }]}>
+      {keys.map((key, index) => {
+        const itemProps = getItemProps(index);
+        return (
           <Pressable
-            onPress={onClose}
-            style={[
-              styles.closeButton,
-              isCloseFocused && styles.closeButtonFocused,
-            ]}
+            key={key}
+            {...itemProps}
+            onFocus={() => {
+              itemProps.onFocus?.();
+              onFocus?.();
+            }}
+            hasTVPreferredFocus={autoFocus && index === 0}
+            onPress={() => onKeyPress(key)}
+            style={({ focused }) => [styles.key, focused && styles.keyFocused]}
           >
-            <Text style={styles.closeButtonText}>✕ Close</Text>
+            {({ focused }) => (
+              <Text
+                style={[styles.keyText, focused && styles.keyTextFocused]}
+                numberOfLines={1}
+              >
+                {key}
+              </Text>
+            )}
           </Pressable>
-        </View>
-
-        {/* ── Keyboard Grid ── */}
-        <View style={styles.keyboardContainer}>
-          {KEYBOARD_ROWS.map((row, rowIdx) => (
-            <View style={styles.keyboardRow} key={`row-${rowIdx}`}>
-              {row.map((char, colIdx) => {
-                const isKeyFocused =
-                  focusPos.row === rowIdx && focusPos.col === colIdx;
-                return (
-                  <Pressable
-                    key={char}
-                    onPress={() => {
-                      setFocusPos({ row: rowIdx, col: colIdx });
-                      handleChar(char);
-                    }}
-                    style={[
-                      styles.key,
-                      isKeyFocused && styles.keyFocused,
-                    ]}
-                  >
-                    <Text style={styles.keyText}>{char}</Text>
-                  </Pressable>
-                );
-              })}
-            </View>
-          ))}
-
-          {/* Action Row: DEL · SPACE · CLEAR */}
-          <View style={styles.keyboardRow}>
-            <Pressable
-              onPress={() => {
-                setFocusPos({ row: 4, col: 0 });
-                handleBackspace();
-              }}
-              style={[
-                styles.key,
-                styles.wideKey,
-                isDelFocused && styles.keyFocused,
-              ]}
-            >
-              <Text style={styles.keyText}>{DELETE_LABEL}</Text>
-            </Pressable>
-
-            <Pressable
-              onPress={() => {
-                setFocusPos({ row: 4, col: 1 });
-                handleSpace();
-              }}
-              style={[
-                styles.key,
-                styles.extraWideKey,
-                isSpaceFocused && styles.keyFocused,
-              ]}
-            >
-              <Text style={styles.keyText}>{SPACE_LABEL}</Text>
-            </Pressable>
-
-            <Pressable
-              onPress={() => {
-                setFocusPos({ row: 4, col: 2 });
-                setQuery('');
-              }}
-              style={[
-                styles.key,
-                styles.wideKey,
-                isClearFocused && styles.keyFocused,
-              ]}
-            >
-              <Text style={styles.keyText}>{CLEAR_LABEL}</Text>
-            </Pressable>
-          </View>
-        </View>
-      </View>
-    </Modal>
+        );
+      })}
+    </View>
   );
 };
+
+interface ActionRowProps {
+  onKeyPress: (key: string) => void;
+  onDelete: () => void;
+  onClear: () => void;
+  onFocus?: () => void;
+}
+
+const ActionRow: React.FC<ActionRowProps> = ({
+  onKeyPress,
+  onDelete,
+  onClear,
+  onFocus,
+}) => {
+  const { containerRef, getItemProps } = useFocusGroup(
+    'search-actions',
+    ACTIONS.length,
+  );
+
+  const pressAction = (id: string) => {
+    if (id === 'delete') {
+      onDelete();
+    } else if (id === 'clear') {
+      onClear();
+    } else {
+      onKeyPress(' ');
+    }
+  };
+
+  return (
+    <View ref={containerRef} style={styles.actionRow}>
+      {ACTIONS.map((action, index) => {
+        const itemProps = getItemProps(index);
+        return (
+          <Pressable
+            key={action.id}
+            {...itemProps}
+            accessibilityLabel={
+              action.id === 'delete' ? 'Delete' : action.label
+            }
+            onFocus={() => {
+              itemProps.onFocus?.();
+              onFocus?.();
+            }}
+            onPress={() => pressAction(action.id)}
+            style={({ focused }) => [
+              styles.actionKey,
+              { width: keyWidth(action.units) },
+              focused && styles.keyFocused,
+            ]}
+          >
+            {({ focused }) => (
+              <Text
+                style={[styles.actionText, focused && styles.keyTextFocused]}
+                numberOfLines={1}
+              >
+                {action.label}
+              </Text>
+            )}
+          </Pressable>
+        );
+      })}
+    </View>
+  );
+};
+
+export const SearchKeyboard: React.FC<SearchKeyboardProps> = ({
+  onKeyPress,
+  onDelete,
+  onClear,
+  onFocus,
+  focusRequest,
+}) => (
+  <View style={styles.plate}>
+    <View style={styles.keyboard}>
+      {KEY_ROWS.map((keys, row) => (
+        <KeyboardRow
+          key={`search-row-${row}`}
+          groupId={`search-row-${row}`}
+          keys={keys}
+          indent={ROW_INDENTS[row]}
+          autoFocus={row === 0}
+          focusRequest={row === 0 ? focusRequest : undefined}
+          onKeyPress={onKeyPress}
+          onFocus={onFocus}
+        />
+      ))}
+      <ActionRow
+        onKeyPress={onKeyPress}
+        onDelete={onDelete}
+        onClear={onClear}
+        onFocus={onFocus}
+      />
+    </View>
+  </View>
+);
