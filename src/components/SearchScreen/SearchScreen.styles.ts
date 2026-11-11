@@ -83,6 +83,10 @@ export const styles = StyleSheet.create({
     lineHeight: scaleSize(36),
     color: colors.text,
   },
+  // Still being recognized; not yet committed to the query.
+  queryPartial: {
+    color: colors.textSecondary,
+  },
   caret: {
     color: colors.primary,
   },
@@ -90,6 +94,33 @@ export const styles = StyleSheet.create({
     ...typography.subheading,
     lineHeight: scaleSize(36),
     color: colors.textSecondary,
+  },
+  micButton: {
+    width: scaleSize(64),
+    height: scaleSize(64),
+    marginLeft: spacing.sm,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: borderRadius.md,
+    borderWidth: scaleSize(2),
+    borderColor: '#4d4d4d',
+    borderBottomWidth: scaleSize(4),
+    borderBottomColor: '#0a0a0a',
+    backgroundColor: '#2e2e2e',
+  },
+  micButtonFocused: {
+    borderColor: colors.focus,
+    borderBottomColor: '#bdbdbd',
+    backgroundColor: colors.focus,
+    transform: [{ scale: 1.08 }],
+  },
+  micButtonListening: {
+    borderColor: colors.primary,
+    borderBottomColor: '#8a050c',
+    backgroundColor: colors.primary,
+  },
+  micIcon: {
+    fontSize: scaleSize(32),
   },
   keyboardWrap: {
     width: CONTENT_WIDTH,

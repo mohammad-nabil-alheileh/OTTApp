@@ -3,4 +3,6 @@ plugins { id("com.facebook.react.settings") }
 extensions.configure(com.facebook.react.ReactSettingsExtension){ ex -> ex.autolinkLibrariesFromCommand() }
 rootProject.name = 'OTTTVApp'
 include ':app'
+include ':voice-search'
+project(':voice-search').projectDir = new File(rootProject.projectDir, '../modules/voice-search/android')
 includeBuild('../node_modules/@react-native/gradle-plugin')

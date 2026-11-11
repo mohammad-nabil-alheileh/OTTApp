@@ -15,15 +15,17 @@ import {
 } from 'react-native';
 import { useBackHandler } from '../../hooks/useBackHandler';
 import { useFocusGroup } from '../../focus/useFocusGroup';
+import { SearchInputMethod, trackSearch } from '../../services/analytics';
 import { searchVideos } from '../../services/search';
 import { VODItem } from '../../types/vod';
 import { formatDuration } from '../../utils/time';
 import { SearchKeyboard } from '../SearchKeyboard/SearchKeyboard';
 import { SearchScreenProps } from './SearchScreen.types';
 import { useSearchTyping } from './useSearchTyping';
+import { useVoiceSearch } from './useVoiceSearch';
 import { styles } from './SearchScreen.styles';
 
-type FocusedArea = 'back' | 'keyboard' | 'results';
+type FocusedArea = 'back' | 'mic' | 'keyboard' | 'results';
 
 export const SearchScreen: React.FC<SearchScreenProps> = ({
   videos,
@@ -39,14 +41,28 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({
   const { containerRef: backContainerRef, getItemProps: getBackItemProps } =
     useFocusGroup('search-back', 1);
   const {
+    containerRef: micContainerRef,
+    getItemProps: getMicItemProps,
+    focusFirst: focusFirstMic,
+  } = useFocusGroup('search-mic', 1);
+  const {
     containerRef: resultsContainerRef,
     getItemProps: getResultItemProps,
     activeIndex: activeResultIndex,
     focusFirst: focusFirstResult,
   } = useFocusGroup('search-results', results.length);
 
+  const {
+    available: voiceAvailable,
+    listening: voiceListening,
+    partial: voicePartial,
+    start: startVoice,
+  } = useVoiceSearch();
+
   const [focusedArea, setFocusedArea] = useState<FocusedArea>('keyboard');
   const [keyboardFocusRequest, setKeyboardFocusRequest] = useState(0);
+  // Which input produced the current query, reported with search analytics.
+  const inputMethod = useRef<SearchInputMethod>('typed');
 
   const handleBack = useCallback(() => {
     onBack();
@@ -55,17 +71,40 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({
   useBackHandler(handleBack);
 
   const appendChar = useCallback(
-    (char: string) => onQueryChange(previous => previous + char),
+    (char: string) => {
+      inputMethod.current = 'typed';
+      onQueryChange(previous => previous + char);
+    },
     [onQueryChange],
   );
-  const deleteLast = useCallback(
-    () => onQueryChange(previous => previous.slice(0, -1)),
-    [onQueryChange],
-  );
-  const clearQuery = useCallback(
-    () => onQueryChange(() => ''),
-    [onQueryChange],
-  );
+  const deleteLast = useCallback(() => {
+    inputMethod.current = 'typed';
+    onQueryChange(previous => previous.slice(0, -1));
+  }, [onQueryChange]);
+  const clearQuery = useCallback(() => {
+    inputMethod.current = 'typed';
+    onQueryChange(() => '');
+  }, [onQueryChange]);
+
+  const handleVoiceSearch = useCallback(() => {
+    if (!voiceAvailable || voiceListening) {
+      return;
+    }
+    startVoice().then(text => {
+      if (text) {
+        inputMethod.current = 'voice';
+        onQueryChange(() => text);
+      }
+      // Cancel and no-match land back on the mic, ready to try again.
+      focusFirstMic();
+    });
+  }, [
+    focusFirstMic,
+    onQueryChange,
+    startVoice,
+    voiceAvailable,
+    voiceListening,
+  ]);
 
   useSearchTyping(true, appendChar, deleteLast);
 
@@ -85,7 +124,25 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({
     }
   }, [results, focusedArea, focusFirstResult]);
 
+  // Report the query once typing or speaking pauses, tagged with how it was
+  // entered so voice searches can be measured separately.
+  useEffect(() => {
+    const trimmed = query.trim();
+    if (!trimmed || isLoading) {
+      return;
+    }
+    const timer = setTimeout(() => {
+      trackSearch({
+        query: trimmed,
+        resultCount: results.length,
+        inputMethod: inputMethod.current,
+      });
+    }, 800);
+    return () => clearTimeout(timer);
+  }, [query, results, isLoading]);
+
   const backItemProps = getBackItemProps(0);
+  const micItemProps = getMicItemProps(0);
 
   const renderResult: ListRenderItem<VODItem> = ({ item, index }) => {
     const itemProps = getResultItemProps(index);
@@ -146,17 +203,47 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({
         <View style={styles.queryBar}>
           <Text style={styles.queryIcon}>🔍</Text>
           <View style={styles.queryField}>
-            {hasQuery ? (
+            {voiceListening && voicePartial ? (
+              <Text
+                style={[styles.queryText, styles.queryPartial]}
+                numberOfLines={1}
+              >
+                {voicePartial}
+                <Text style={styles.caret}>|</Text>
+              </Text>
+            ) : hasQuery ? (
               <Text style={styles.queryText} numberOfLines={1}>
                 {query}
                 <Text style={styles.caret}>|</Text>
               </Text>
             ) : (
               <Text style={styles.placeholder} numberOfLines={1}>
-                Search videos…
+                {voiceListening ? 'Listening…' : 'Search videos…'}
               </Text>
             )}
           </View>
+          {voiceAvailable && (
+            <View ref={micContainerRef}>
+              <Pressable
+                {...micItemProps}
+                onFocus={() => {
+                  micItemProps.onFocus?.();
+                  setFocusedArea('mic');
+                }}
+                onPress={handleVoiceSearch}
+                accessibilityLabel={
+                  voiceListening ? 'Listening' : 'Search by voice'
+                }
+                style={({ focused }) => [
+                  styles.micButton,
+                  focused && styles.micButtonFocused,
+                  voiceListening && styles.micButtonListening,
+                ]}
+              >
+                <Text style={styles.micIcon}>🎤</Text>
+              </Pressable>
+            </View>
+          )}
         </View>
 
         <View style={styles.keyboardWrap}>
@@ -170,7 +257,9 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({
         </View>
 
         <Text style={styles.hint}>
-          Arrows to move · Enter to select · Back to close
+          {voiceListening
+            ? 'Listening… speak now'
+            : 'Arrows to move · Enter to select · Back to close'}
         </Text>
 
         <View style={styles.resultsSection} ref={resultsContainerRef}>
