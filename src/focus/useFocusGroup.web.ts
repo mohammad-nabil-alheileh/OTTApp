@@ -91,11 +91,22 @@ const focusItem = (group: GroupState, index: number) => {
     return;
   }
   group.lastFocusedIndex = index;
-  // Focus without the browser's own scrolling, then reveal the item with
-  // 'nearest': the rail scrolls sideways, and the page scrolls vertically
-  // only when the row itself is out of view.
+  // Focus without the browser's own scrolling, then reveal with 'nearest' so
+  // the page scrolls vertically only when the row is out of view. Reveal the
+  // whole rail, not just the card, so its title isn't left above the
+  // viewport when coming back up. The rail itself scrolls sideways to the card.
   item.focus({ preventScroll: true });
-  item.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+  // A group taller than the screen (e.g. a results grid) can't be shown
+  // whole, so reveal just the card there.
+  const container = group.container;
+  if (
+    container &&
+    container.getBoundingClientRect().height <= window.innerHeight
+  ) {
+    container.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+  } else {
+    item.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+  }
   revealWithGutter(item);
 };
 
