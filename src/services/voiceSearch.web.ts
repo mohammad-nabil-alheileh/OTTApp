@@ -132,7 +132,13 @@ export const startVoiceListening: VoiceSearchService['startListening'] = (
     };
     // Cancelling, silence, no match, denied permission, offline: all become
     // "no result" so the search screen never shows an error.
-    recognition.onerror = () => finish(null);
+    recognition.onerror = event => {
+      if (event.error !== 'aborted') {
+        // e.g. no-speech (silent mic), not-allowed (permission), network.
+        console.warn('[voiceSearch] recognition error:', event.error);
+      }
+      finish(null);
+    };
     recognition.onend = () => finish(null);
 
     try {

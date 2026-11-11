@@ -31,7 +31,8 @@ class VoiceSearchModule(
 
   @ReactMethod
   fun isAvailable(promise: Promise) {
-    val available = try {
+    val available = try {pactl set-default-source alsa_input.pci-0000_00_1f.3-platform-skl_hda_dsp_generic.HiFi__Mic1__source
+
       SpeechRecognizer.isRecognitionAvailable(reactContext) &&
         reactContext.packageManager
           .queryIntentActivities(Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH), 0)
@@ -49,7 +50,7 @@ class VoiceSearchModule(
       return
     }
 
-    val activity = currentActivity
+    val activity = reactContext.currentActivity
     if (activity == null) {
       promise.resolve(null)
       return
@@ -72,6 +73,9 @@ class VoiceSearchModule(
         putExtra(RecognizerIntent.EXTRA_PROMPT, it)
       }
     }
+    // Several apps (e.g. Google TTS) may also claim RECOGNIZE_SPEECH, which
+    // makes Android show a chooser dialog. Target the real recognizer directly.
+    preferredRecognizerPackage(intent)?.let { intent.setPackage(it) }
 
     pendingPromise = promise
     activity.runOnUiThread {
@@ -118,10 +122,30 @@ class VoiceSearchModule(
     super.invalidate()
   }
 
+  private fun preferredRecognizerPackage(intent: Intent): String? {
+    val packages = try {
+      reactContext.packageManager
+        .queryIntentActivities(intent, 0)
+        .map { it.activityInfo.packageName }
+        .distinct()
+    } catch (error: Exception) {
+      return null
+    }
+    if (packages.size <= 1) {
+      return null
+    }
+    return PREFERRED_RECOGNIZERS.firstOrNull { it in packages }
+  }
+
   private fun ReadableMap.stringOrNull(key: String): String? =
     if (hasKey(key) && !isNull(key)) getString(key) else null
 
   companion object {
     private const val REQUEST_CODE = 7711
+
+    private val PREFERRED_RECOGNIZERS = listOf(
+      "com.google.android.katniss", // Google TV / Android TV
+      "com.google.android.googlequicksearchbox", // Google app (phones)
+    )
   }
 }
