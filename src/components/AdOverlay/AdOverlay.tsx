@@ -48,7 +48,7 @@ export const AdOverlay: React.FC<AdOverlayProps> = ({
   // Computed once per ad rather than on every position tick.
   const advertiserText = useMemo(
     () => (ad.advertiser ? normalizeAdText(ad.advertiser) : ''),
-    [ad.id],
+    [ad.advertiser],
   );
 
   // Each ad starts with its details collapsed.

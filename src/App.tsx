@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { View, Text, ScrollView } from 'react-native';
+import { View, Text, ScrollView, Pressable } from 'react-native';
 import { VODList } from './components/VODList/VODList';
 import { ContinueWatchingRail } from './components/ContinueWatchingRail/ContinueWatchingRail';
 import { ContinueWatchingItem } from './components/ContinueWatchingRail/ContinueWatchingRail.types';
@@ -13,6 +13,8 @@ import { LiveChannelList } from './components/LiveChannelList/LiveChannelList';
 import { VideoPlayer } from './components/VideoPlayer/VideoPlayer';
 import { ShowDetails } from './components/ShowDetails/ShowDetails';
 import { FocusGroup } from './components/FocusGroup/FocusGroup';
+import { useFocusGroup } from './focus/useFocusGroup';
+import { SearchKeyboard } from './components/SearchKeyboard/SearchKeyboard';
 import { mockVODData, mockLiveChannels } from './services/mockData';
 import { VODItem } from './types/vod';
 import { LiveChannel } from './types/live';
@@ -29,6 +31,12 @@ export default function App() {
   const [selected, setSelected] = useState<SelectedContent>(null);
   // Saved playback positions, most recently watched first.
   const [watchHistory, setWatchHistory] = useState<WatchProgress[]>([]);
+  // Search overlay state.
+  const [searchVisible, setSearchVisible] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const { containerRef: headerContainerRef, getItemProps: getHeaderItemProps } =
+    useFocusGroup('header-bar', 1);
 
   useEffect(() => {
     loadWatchHistory().then(setWatchHistory);
@@ -83,6 +91,41 @@ export default function App() {
   const handleBack = useCallback(() => setSelected(null), []);
   const handleDetailsBack = useCallback(() => setDetailsItem(null), []);
 
+  const handleOpenSearch = useCallback(() => setSearchVisible(true), []);
+  const handleCloseSearch = useCallback(() => {
+    setSearchVisible(false);
+    setSearchQuery('');
+  }, []);
+  const handleSearchQueryChange = useCallback((query: string) => {
+    setSearchQuery(query);
+  }, []);
+
+  // Filter VOD and channels based on search query.
+  const filteredVodList = useMemo(() => {
+    if (!searchQuery.trim()) {
+      return vodList;
+    }
+    const q = searchQuery.toLowerCase();
+    return vodList.filter(
+      item =>
+        item.title.toLowerCase().includes(q) ||
+        item.description.toLowerCase().includes(q),
+    );
+  }, [vodList, searchQuery]);
+
+  const filteredChannels = useMemo(() => {
+    if (!searchQuery.trim()) {
+      return channels;
+    }
+    const q = searchQuery.toLowerCase();
+    return channels.filter(
+      ch =>
+        ch.name.toLowerCase().includes(q) ||
+        ch.description.toLowerCase().includes(q) ||
+        ch.category.toLowerCase().includes(q),
+    );
+  }, [channels, searchQuery]);
+
   if (selected) {
     return <VideoPlayer item={selected} onBack={handleBack} />;
   }
@@ -106,10 +149,31 @@ export default function App() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>OTT TV App</Text>
-        <Text style={styles.subtitle}>Videos & Live Channels</Text>
-      </View>
+      <FocusGroup style={styles.header}>
+        <View ref={headerContainerRef} style={styles.headerRow}>
+          <View style={styles.headerText}>
+            <Text style={styles.title}>OTT TV App</Text>
+            <Text style={styles.subtitle}>Videos & Live Channels</Text>
+          </View>
+          <Pressable
+            {...getHeaderItemProps(0)}
+            onPress={handleOpenSearch}
+            style={({ focused }) => [
+              styles.searchButton,
+              focused && styles.searchButtonFocused,
+            ]}
+          >
+            <Text style={styles.searchButtonIcon}>🔍</Text>
+            <Text style={styles.searchButtonLabel}>Search</Text>
+          </Pressable>
+        </View>
+      </FocusGroup>
+
+      <SearchKeyboard
+        visible={searchVisible}
+        onClose={handleCloseSearch}
+        onQueryChange={handleSearchQueryChange}
+      />
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
         {continueWatchingItems.length > 0 && (
@@ -122,14 +186,14 @@ export default function App() {
         )}
         <FocusGroup>
           <VODList
-            vodList={vodList}
+            vodList={filteredVodList}
             isLoading={isLoading}
             onSelectVOD={setDetailsItem}
           />
         </FocusGroup>
         <FocusGroup>
           <LiveChannelList
-            channels={channels}
+            channels={filteredChannels}
             isLoading={isLoading}
             onSelectChannel={channel =>
               setSelected({ title: channel.name, url: channel.streamUrl, isLive: channel.isLive })
