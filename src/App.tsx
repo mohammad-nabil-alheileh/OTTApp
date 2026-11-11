@@ -12,6 +12,7 @@ import {
 import { LiveChannelList } from './components/LiveChannelList/LiveChannelList';
 import { VideoPlayer } from './components/VideoPlayer/VideoPlayer';
 import { ShowDetails } from './components/ShowDetails/ShowDetails';
+import { FocusGroup } from './components/FocusGroup/FocusGroup';
 import { mockVODData, mockLiveChannels } from './services/mockData';
 import { VODItem } from './types/vod';
 import { LiveChannel } from './types/live';
@@ -111,19 +112,30 @@ export default function App() {
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
-        <ContinueWatchingRail items={continueWatchingItems} onSelectVOD={setDetailsItem} />
-        <VODList
-          vodList={vodList}
-          isLoading={isLoading}
-          onSelectVOD={setDetailsItem}
-        />
-        <LiveChannelList
-          channels={channels}
-          isLoading={isLoading}
-          onSelectChannel={channel =>
-            setSelected({ title: channel.name, url: channel.streamUrl, isLive: channel.isLive })
-          }
-        />
+        {continueWatchingItems.length > 0 && (
+          <FocusGroup>
+            <ContinueWatchingRail
+              items={continueWatchingItems}
+              onSelectVOD={setDetailsItem}
+            />
+          </FocusGroup>
+        )}
+        <FocusGroup>
+          <VODList
+            vodList={vodList}
+            isLoading={isLoading}
+            onSelectVOD={setDetailsItem}
+          />
+        </FocusGroup>
+        <FocusGroup>
+          <LiveChannelList
+            channels={channels}
+            isLoading={isLoading}
+            onSelectChannel={channel =>
+              setSelected({ title: channel.name, url: channel.streamUrl, isLive: channel.isLive })
+            }
+          />
+        </FocusGroup>
       </ScrollView>
     </View>
   );
