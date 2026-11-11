@@ -1,5 +1,11 @@
 import { StyleSheet } from 'react-native';
-import { borderRadius, colors, scaleSize, spacing, typography } from '../../styles/theme';
+import {
+  borderRadius,
+  colors,
+  scaleSize,
+  spacing,
+  typography,
+} from '../../styles/theme';
 
 const POSTER_WIDTH = scaleSize(400);
 const RELATED_CARD_WIDTH = scaleSize(260);

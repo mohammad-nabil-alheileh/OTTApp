@@ -1,5 +1,12 @@
 import React, { useCallback, useEffect } from 'react';
-import { FlatList, Image, ListRenderItem, Pressable, Text, View } from 'react-native';
+import {
+  FlatList,
+  Image,
+  ListRenderItem,
+  Pressable,
+  Text,
+  View,
+} from 'react-native';
 import { useBackHandler } from '../../hooks/useBackHandler';
 import { useFocusGroup } from '../../focus/useFocusGroup';
 import { VODItem } from '../../types/vod';
@@ -15,6 +22,8 @@ export const ShowDetails: React.FC<ShowDetailsProps> = ({
   onPlay,
   onPlayTrailer,
   onSelectVOD,
+  isFavorite,
+  onToggleFavorite,
   onBack,
 }) => {
   const { trailer } = item;
@@ -22,7 +31,7 @@ export const ShowDetails: React.FC<ShowDetailsProps> = ({
   // On web the buttons and the carousel are separate focus groups, so arrow
   // keys move along each row and Up/Down jump between them. Native TV focus
   // engines handle this on their own (both hooks are no-ops there).
-  const buttons = useFocusGroup('details-buttons', trailer ? 2 : 1);
+  const buttons = useFocusGroup('details-buttons', trailer ? 3 : 2);
   const related = useFocusGroup('details-related', relatedItems.length);
   const { focusFirst } = buttons;
 
@@ -41,9 +50,16 @@ export const ShowDetails: React.FC<ShowDetailsProps> = ({
     <Pressable
       {...related.getItemProps(index)}
       onPress={() => onSelectVOD(vod)}
-      style={({ focused }) => [styles.relatedItem, focused && styles.relatedItemFocused]}
+      style={({ focused }) => [
+        styles.relatedItem,
+        focused && styles.relatedItemFocused,
+      ]}
     >
-      <Image source={{ uri: vod.thumbnail }} style={styles.relatedThumbnail} resizeMode="cover" />
+      <Image
+        source={{ uri: vod.thumbnail }}
+        style={styles.relatedThumbnail}
+        resizeMode="cover"
+      />
       <View style={styles.relatedOverlay}>
         <Text style={styles.relatedTitle} numberOfLines={1}>
           {vod.title}
@@ -54,9 +70,17 @@ export const ShowDetails: React.FC<ShowDetailsProps> = ({
 
   return (
     <View style={styles.container}>
-      <Image source={{ uri: item.thumbnail }} style={styles.backdrop} resizeMode="cover" />
+      <Image
+        source={{ uri: item.thumbnail }}
+        style={styles.backdrop}
+        resizeMode="cover"
+      />
       <View style={styles.content}>
-        <Image source={{ uri: item.poster }} style={styles.poster} resizeMode="cover" />
+        <Image
+          source={{ uri: item.poster }}
+          style={styles.poster}
+          resizeMode="cover"
+        />
         <View style={styles.info}>
           <Text style={styles.title} numberOfLines={2}>
             {item.title}
@@ -99,6 +123,18 @@ export const ShowDetails: React.FC<ShowDetailsProps> = ({
                 </Text>
               </Pressable>
             )}
+            <Pressable
+              {...buttons.getItemProps(trailer ? 2 : 1)}
+              onPress={() => onToggleFavorite(item)}
+              style={({ focused }) => [
+                sharedStyles.controlButton,
+                focused && sharedStyles.controlButtonFocused,
+              ]}
+            >
+              <Text style={sharedStyles.controlButtonText}>
+                {isFavorite ? '♥ Favorited' : '♡ Favorite'}
+              </Text>
+            </Pressable>
           </View>
           {relatedItems.length > 0 && (
             <View style={styles.related} ref={related.containerRef}>

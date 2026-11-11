@@ -10,5 +10,7 @@ export interface ShowDetailsProps {
   onPlayTrailer: (item: VODItem) => void;
   // Opens the details of a carousel card.
   onSelectVOD: (item: VODItem) => void;
+  isFavorite: boolean;
+  onToggleFavorite: (item: VODItem) => void;
   onBack: () => void;
 }

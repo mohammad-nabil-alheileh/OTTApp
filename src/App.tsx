@@ -3,12 +3,14 @@ import { View, Text, ScrollView, Pressable } from 'react-native';
 import { VODList } from './components/VODList/VODList';
 import { ContinueWatchingRail } from './components/ContinueWatchingRail/ContinueWatchingRail';
 import { ContinueWatchingItem } from './components/ContinueWatchingRail/ContinueWatchingRail.types';
+import { FavoritesRail } from './components/FavoritesRail/FavoritesRail';
 import {
   getWatchHistory,
   loadWatchHistory,
   saveProgress,
   WatchProgress,
 } from './services/watchHistory';
+import { loadFavorites, toggleFavorite } from './services/favorites';
 import { LiveChannelList } from './components/LiveChannelList/LiveChannelList';
 import { VideoPlayer } from './components/VideoPlayer/VideoPlayer';
 import { ShowDetails } from './components/ShowDetails/ShowDetails';
@@ -31,6 +33,8 @@ export default function App() {
   const [selected, setSelected] = useState<SelectedContent>(null);
   // Saved playback positions, most recently watched first.
   const [watchHistory, setWatchHistory] = useState<WatchProgress[]>([]);
+  // Favorite VOD ids, most recently added first.
+  const [favoriteIds, setFavoriteIds] = useState<string[]>([]);
   // Search overlay state.
   const [searchVisible, setSearchVisible] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -40,6 +44,7 @@ export default function App() {
 
   useEffect(() => {
     loadWatchHistory().then(setWatchHistory);
+    loadFavorites().then(setFavoriteIds);
   }, []);
 
   // The player writes its final position while unmounting; passive effects
@@ -62,6 +67,20 @@ export default function App() {
         .filter((item): item is ContinueWatchingItem => item !== null),
     [watchHistory, vodList],
   );
+
+  const favoriteItems = useMemo(
+    () =>
+      favoriteIds
+        .map(id => vodList.find(item => item.id === id))
+        .filter((vod): vod is VODItem => vod !== undefined),
+    [favoriteIds, vodList],
+  );
+
+  // The service keeps the sync cache and storage in step, so the returned ids
+  // are safe to render immediately.
+  const handleToggleFavorite = useCallback((vod: VODItem) => {
+    setFavoriteIds(toggleFavorite(vod.id));
+  }, []);
 
   const playVOD = useCallback((vod: VODItem) => {
     const saved = getWatchHistory().find(entry => entry.id === vod.id);
@@ -114,6 +133,8 @@ export default function App() {
         item={detailsItem}
         relatedItems={vodList.filter(vod => vod.id !== detailsItem.id)}
         onSelectVOD={setDetailsItem}
+        isFavorite={favoriteIds.includes(detailsItem.id)}
+        onToggleFavorite={handleToggleFavorite}
         resumePosition={
           watchHistory.find(entry => entry.id === detailsItem.id)?.position
         }
@@ -176,6 +197,11 @@ export default function App() {
               items={continueWatchingItems}
               onSelectVOD={setDetailsItem}
             />
+          </FocusGroup>
+        )}
+        {favoriteItems.length > 0 && (
+          <FocusGroup>
+            <FavoritesRail items={favoriteItems} onSelectVOD={setDetailsItem} />
           </FocusGroup>
         )}
         <FocusGroup>
