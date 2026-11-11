@@ -40,10 +40,15 @@ const orderedGroups = (): GroupState[] => {
     (group): group is GroupState & { container: FocusableElement } =>
       group.container !== null && group.items.some(Boolean),
   );
-  return withContainer.sort(
-    (a, b) =>
-      a.container.getBoundingClientRect().top -
-      b.container.getBoundingClientRect().top,
+  // Document order, not on-screen position: once the page scrolls, a rail
+  // scrolled above the viewport would otherwise sort above the fixed header,
+  // and Up from the next rail would skip straight to the header.
+  return withContainer.sort((a, b) =>
+    // eslint-disable-next-line no-bitwise
+    a.container.compareDocumentPosition(b.container) &
+    Node.DOCUMENT_POSITION_FOLLOWING
+      ? -1
+      : 1,
   );
 };
 
