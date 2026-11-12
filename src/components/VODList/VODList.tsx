@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
-import { View, Image, Pressable, FlatList, ListRenderItem } from 'react-native';
+import { View, Image, FlatList, ListRenderItem } from 'react-native';
+import { AppPressable as Pressable } from '../AppPressable/AppPressable';
 import { AppText as Text } from '../AppText/AppText';
 import { VODItem } from '../../types/vod';
 import { useFocusGroup } from '../../focus/useFocusGroup';

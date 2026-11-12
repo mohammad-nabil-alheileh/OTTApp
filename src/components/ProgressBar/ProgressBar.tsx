@@ -1,9 +1,11 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { GestureResponderEvent, LayoutChangeEvent, Pressable, View } from 'react-native';
+import { GestureResponderEvent, LayoutChangeEvent, View } from 'react-native';
+import { AppPressable as Pressable } from '../AppPressable/AppPressable';
 import { AppText as Text } from '../AppText/AppText';
 import { useRemoteKeys } from '../../hooks/useRemoteKeys';
 import { RemoteKey } from '../../types/remote';
 import { clamp, formatTime, skipBy } from '../../utils/time';
+import { useScreenReaderEnabled } from '../../accessibility/useScreenReaderEnabled';
 import { styles } from './ProgressBar.styles';
 import { ProgressBarProps } from './ProgressBar.types';
 
@@ -22,6 +24,11 @@ export const ProgressBar: React.FC<ProgressBarProps> = ({
   const scrubTimeRef = useRef<number | null>(null);
   const commitTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const hitAreaWidth = useRef(0);
+  const screenReaderEnabled = useScreenReaderEnabled();
+  // TalkBack re-reads a focused slider whenever its value changes, and the
+  // playhead moves every progress tick. With a screen reader, the value it
+  // hears is a snapshot taken on focus, updated only when the viewer seeks.
+  const [spokenTime, setSpokenTime] = useState<number | null>(null);
 
   const commitScrub = useCallback(() => {
     clearTimeout(commitTimer.current);
@@ -56,14 +63,21 @@ export const ProgressBar: React.FC<ProgressBarProps> = ({
   };
 
   const shownTime = scrubTime ?? currentTime;
+  const a11yTime =
+    screenReaderEnabled && spokenTime !== null ? spokenTime : shownTime;
+  const a11yText = `${formatTime(a11yTime)} of ${formatTime(duration)}`;
   const percent = `${duration > 0 ? (shownTime / duration) * 100 : 0}%` as const;
 
   return (
     <View style={styles.container}>
       <Pressable
-        onFocus={() => setFocused(true)}
+        onFocus={() => {
+          setFocused(true);
+          setSpokenTime(currentTime);
+        }}
         onBlur={() => {
           setFocused(false);
+          setSpokenTime(null);
           commitScrub();
         }}
         onPress={commitScrub}
@@ -73,13 +87,13 @@ export const ProgressBar: React.FC<ProgressBarProps> = ({
         accessibilityValue={{
           min: 0,
           max: Math.round(duration),
-          now: Math.round(shownTime),
-          text: `${formatTime(shownTime)} of ${formatTime(duration)}`,
+          now: Math.round(a11yTime),
+          text: a11yText,
         }}
         aria-valuemin={0}
         aria-valuemax={Math.round(duration)}
-        aria-valuenow={Math.round(shownTime)}
-        aria-valuetext={`${formatTime(shownTime)} of ${formatTime(duration)}`}
+        aria-valuenow={Math.round(a11yTime)}
+        aria-valuetext={a11yText}
         accessibilityActions={[
           { name: 'increment', label: 'Forward 10 seconds' },
           { name: 'decrement', label: 'Back 10 seconds' },
@@ -92,7 +106,9 @@ export const ProgressBar: React.FC<ProgressBarProps> = ({
             event.nativeEvent.actionName === 'increment'
               ? SCRUB_STEP_SECONDS
               : -SCRUB_STEP_SECONDS;
-          onSeek(skipBy(currentTime, step, duration));
+          const target = skipBy(currentTime, step, duration);
+          onSeek(target);
+          setSpokenTime(target);
         }}
       >
         <View

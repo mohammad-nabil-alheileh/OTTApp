@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, Image, Pressable, FlatList, ListRenderItem } from 'react-native';
+import { View, Image, FlatList, ListRenderItem } from 'react-native';
+import { AppPressable as Pressable } from '../AppPressable/AppPressable';
 import { AppText as Text } from '../AppText/AppText';
 import { clamp, formatDuration } from '../../utils/time';
 import { useFocusGroup } from '../../focus/useFocusGroup';

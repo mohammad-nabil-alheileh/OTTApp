@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react';
-import { Platform, Pressable, View } from 'react-native';
+import { Platform, View } from 'react-native';
+import { AppPressable as Pressable } from '../AppPressable/AppPressable';
 import { AppText as Text } from '../AppText/AppText';
 import { ProgressBar } from '../ProgressBar/ProgressBar';
 import { OptionSelector } from '../OptionSelector/OptionSelector';
@@ -7,6 +8,7 @@ import { SelectorOption } from '../OptionSelector/OptionSelector.types';
 import { AUTO_QUALITY } from '../../types/quality';
 import { formatTime, skipBy } from '../../utils/time';
 import { sharedStyles } from '../../styles/theme';
+import { useAccessibilityFocusOnMount } from '../../accessibility/useAccessibilityFocusOnMount';
 import { styles } from './PlayerControls.styles';
 import { PlayerControlsProps } from './PlayerControls.types';
 
@@ -33,6 +35,7 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
   adMarkers,
 }) => {
   const playButtonRef = useRef<View>(null);
+  useAccessibilityFocusOnMount(playButtonRef);
 
   // hasTVPreferredFocus is native-only, so the web needs an explicit focus.
   useEffect(() => {

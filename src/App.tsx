@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { View, ScrollView, Pressable } from 'react-native';
+import { View, ScrollView } from 'react-native';
+import { AppPressable as Pressable } from './components/AppPressable/AppPressable';
 import { AppText as Text } from './components/AppText/AppText';
 import { BoldTextProvider } from './accessibility/BoldTextProvider';
 import { SettingsScreen } from './components/SettingsScreen/SettingsScreen';

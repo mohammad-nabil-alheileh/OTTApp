@@ -41,6 +41,7 @@ class VoiceSearchModule(
     } catch (error: Exception) {
       false
     }
+    promise.resolve(available)
   }
 
   @ReactMethod

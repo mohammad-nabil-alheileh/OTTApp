@@ -39,8 +39,9 @@ export const AdPlayer: React.FC<AdPlayerProps> = ({ adBreak, onComplete }) => {
         viewType={ViewType.TEXTURE}
         resizeMode="contain"
         progressUpdateInterval={250}
-        accessible
-        accessibilityLabel={`Advertisement: ${ad.title}`}
+        // The overlay's badge and buttons describe the ad; a full-screen
+        // TalkBack stop here would only pull focus away from them.
+        importantForAccessibility="no-hide-descendants"
         onLoad={e => setDuration(e.duration)}
         onProgress={e => setPosition(e.currentTime)}
         onEnd={next}

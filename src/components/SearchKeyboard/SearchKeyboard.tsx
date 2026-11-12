@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
-import { Pressable, View } from 'react-native';
+import { View } from 'react-native';
+import { AppPressable as Pressable } from '../AppPressable/AppPressable';
 import { AppText as Text } from '../AppText/AppText';
 import { useFocusGroup } from '../../focus/useFocusGroup';
 import { SearchKeyboardProps } from './SearchKeyboard.types';

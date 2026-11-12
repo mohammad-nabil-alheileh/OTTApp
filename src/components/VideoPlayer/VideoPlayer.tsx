@@ -153,8 +153,10 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({ item, onBack }) => {
         }
         resizeMode="contain"
         progressUpdateInterval={250}
-        accessible
-        accessibilityLabel={`Now playing: ${item.title}`}
+        // Nothing to do on the video itself: a full-screen TalkBack stop
+        // only pulls its focus away from the controls. The title is read
+        // from the top bar.
+        importantForAccessibility="no-hide-descendants"
         onLoad={e => {
           clearPendingSeek();
           setDuration(e.duration);

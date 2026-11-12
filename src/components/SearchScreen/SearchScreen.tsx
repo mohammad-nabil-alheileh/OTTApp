@@ -9,9 +9,9 @@ import {
   FlatList,
   Image,
   ListRenderItem,
-  Pressable,
   View,
 } from 'react-native';
+import { AppPressable as Pressable } from '../AppPressable/AppPressable';
 import { AppText as Text } from '../AppText/AppText';
 import { useBackHandler } from '../../hooks/useBackHandler';
 import { useFocusGroup } from '../../focus/useFocusGroup';
