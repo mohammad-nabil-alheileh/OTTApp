@@ -3,8 +3,53 @@ import { LiveChannel } from '../types/live';
 import { Ad } from '../types/ads';
 import { Podcast } from '../types/podcast';
 
+// Public Unsplash photos served straight from their CDN (no key needed). The
+// seed picks one, so a title keeps the same art for every size it is drawn at.
+const PHOTOS = [
+  'photo-1489599849927-2ee91cede3ba',
+  'photo-1478720568477-152d9b164e26',
+  'photo-1485846234645-a62644f84728',
+  'photo-1517604931442-7e0c8ed2963c',
+  'photo-1440404653325-ab127d49abc1',
+  'photo-1536440136628-849c177e76a1',
+  'photo-1524985069026-dd778a71c7b4',
+  'photo-1470229722913-7c0e2dbbafd3',
+  'photo-1493804714600-6edb1cd93080',
+  'photo-1522869635100-9f4c5e86aa37',
+  'photo-1509347528160-9a9e33742cdb',
+  'photo-1512070679279-8988d32161be',
+  'photo-1574375927938-d5a98e8ffe85',
+  'photo-1594909122845-11baa439b7bf',
+  'photo-1586899028174-e7098604235b',
+  'photo-1500530855697-b586d89ba3ee',
+  'photo-1441974231531-c6227db76b6e',
+  'photo-1470071459604-3b5ec3a7fe05',
+  'photo-1506744038136-46273834b3fb',
+  'photo-1518791841217-8f162f1e1131',
+  'photo-1521302080334-4bebac2763a6',
+  'photo-1542204165-65bf26472b9b',
+  'photo-1511671782779-c97d3d27a1d4',
+  'photo-1481627834876-b7833e8f5570',
+  'photo-1495020689067-958852a7765e',
+  'photo-1516280440614-37939bbacd81',
+  'photo-1460881680858-30d872d5b530',
+  'photo-1502136969935-8d8eef54d77b',
+  'photo-1518709268805-4e9042af9f23',
+  'photo-1524253482453-3fed8d2fe12b',
+];
+
+const seedIndex = (seed: string) => {
+  let hash = 0;
+  for (let i = 0; i < seed.length; i += 1) {
+    hash = (hash * 37 + seed.charCodeAt(i)) % 1000003;
+  }
+  return hash % PHOTOS.length;
+};
+
 const image = (seed: string, w: number, h: number) =>
-  `https://picsum.photos/seed/${seed}/${w}/${h}`;
+  `https://images.unsplash.com/${
+    PHOTOS[seedIndex(seed)]
+  }?w=${w}&h=${h}&fit=crop&auto=format&q=70`;
 
 // Public sample ad creatives (Google IMA samples + an MDN CC0 clip).
 const ads: Record<'stock' | 'android' | 'flower', Ad> = {
@@ -115,14 +160,12 @@ export const mockVODData: VODItem[] = [
     releaseDate: '2011-09-21',
     rating: 6.9,
     url: 'https://bitdash-a.akamaihd.net/content/MI201109210084_1/m3u8s/f08e80da-bf1d-4e3d-8899-f0f6155f6efa.m3u8',
-    adBreaks: [
-      { id: 'vod-5-mid-1', time: 90, ads: [ads.flower] },
-    ],
+    adBreaks: [{ id: 'vod-5-mid-1', time: 90, ads: [ads.flower] }],
   },
   {
     id: 'vod-6',
     title: 'BipBop Lab',
-    description: 'Apple\'s classic HLS reference stream in many renditions.',
+    description: "Apple's classic HLS reference stream in many renditions.",
     thumbnail: image('bipbop', 640, 360),
     poster: image('bipbop', 600, 900),
     duration: 1800,
@@ -133,16 +176,14 @@ export const mockVODData: VODItem[] = [
   {
     id: 'vod-7',
     title: 'Dark Truths',
-    description: 'A moody re-grade of the bunny\'s forest adventure.',
+    description: "A moody re-grade of the bunny's forest adventure.",
     thumbnail: image('truths', 640, 360),
     poster: image('truths', 600, 900),
     duration: 635,
     releaseDate: '2019-03-12',
     rating: 7.2,
     url: 'https://storage.googleapis.com/shaka-demo-assets/bbb-dark-truths-hls/hls.m3u8',
-    adBreaks: [
-      { id: 'vod-7-mid-1', time: 200, ads: [ads.android] },
-    ],
+    adBreaks: [{ id: 'vod-7-mid-1', time: 200, ads: [ads.android] }],
     trailer: {
       url: 'https://storage.googleapis.com/shaka-demo-assets/angel-one-hls/hls.m3u8',
       duration: 60,
@@ -177,9 +218,7 @@ export const mockVODData: VODItem[] = [
     releaseDate: '2020-04-17',
     rating: 8.3,
     url: 'https://demo.unified-streaming.com/k8s/features/stable/video/tears-of-steel/tears-of-steel.ism/.m3u8',
-    adBreaks: [
-      { id: 'vod-9-mid-1', time: 300, ads: [ads.android, ads.stock] },
-    ],
+    adBreaks: [{ id: 'vod-9-mid-1', time: 300, ads: [ads.android, ads.stock] }],
     trailer: {
       url: 'https://storage.googleapis.com/shaka-demo-assets/angel-one-hls/hls.m3u8',
       duration: 60,
@@ -188,7 +227,8 @@ export const mockVODData: VODItem[] = [
   {
     id: 'vod-10',
     title: 'Neon Drift',
-    description: 'Street racers chase one last score through a rain-soaked city.',
+    description:
+      'Street racers chase one last score through a rain-soaked city.',
     thumbnail: image('neon', 640, 360),
     poster: image('neon', 600, 900),
     duration: 888,
@@ -207,7 +247,8 @@ export const mockVODData: VODItem[] = [
   {
     id: 'vod-11',
     title: 'Paper Lanterns',
-    description: 'A quiet story about a festival that brings a village together.',
+    description:
+      'A quiet story about a festival that brings a village together.',
     thumbnail: image('lantern', 640, 360),
     poster: image('lantern', 600, 900),
     duration: 60,
@@ -218,7 +259,8 @@ export const mockVODData: VODItem[] = [
   {
     id: 'vod-12',
     title: 'Cold Signal',
-    description: 'An arctic research team picks up a transmission from nowhere.',
+    description:
+      'An arctic research team picks up a transmission from nowhere.',
     thumbnail: image('arctic', 640, 360),
     poster: image('arctic', 600, 900),
     duration: 734,
@@ -244,9 +286,7 @@ export const mockVODData: VODItem[] = [
     releaseDate: '2019-10-02',
     rating: 8.6,
     url: 'https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8',
-    adBreaks: [
-      { id: 'vod-13-mid-1', time: 300, ads: [ads.android] },
-    ],
+    adBreaks: [{ id: 'vod-13-mid-1', time: 300, ads: [ads.android] }],
   },
   {
     id: 'vod-14',
@@ -258,9 +298,7 @@ export const mockVODData: VODItem[] = [
     releaseDate: '2024-05-09',
     rating: 6.7,
     url: 'https://bitdash-a.akamaihd.net/content/MI201109210084_1/m3u8s/f08e80da-bf1d-4e3d-8899-f0f6155f6efa.m3u8',
-    adBreaks: [
-      { id: 'vod-14-mid-1', time: 100, ads: [ads.flower] },
-    ],
+    adBreaks: [{ id: 'vod-14-mid-1', time: 100, ads: [ads.flower] }],
     trailer: {
       url: 'https://storage.googleapis.com/shaka-demo-assets/angel-one-hls/hls.m3u8',
       duration: 60,
@@ -294,9 +332,7 @@ export const mockVODData: VODItem[] = [
     releaseDate: '2025-03-14',
     rating: 5.9,
     url: 'https://devstreaming-cdn.apple.com/videos/streaming/examples/img_bipbop_adv_example_fmp4/master.m3u8',
-    adBreaks: [
-      { id: 'vod-16-mid-1', time: 600, ads: [ads.flower] },
-    ],
+    adBreaks: [{ id: 'vod-16-mid-1', time: 600, ads: [ads.flower] }],
   },
 ];
 
