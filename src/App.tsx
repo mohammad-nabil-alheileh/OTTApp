@@ -215,7 +215,17 @@ const AppContent = () => {
   const handleCloseSettings = useCallback(() => setSettingsVisible(false), []);
 
   if (selected) {
-    return <VideoPlayer item={selected} onBack={handleBack} />;
+    return (
+      // Keyed by content so playing another title starts from a clean player
+      // (position, finished state, controls).
+      <VideoPlayer
+        key={selected.id ?? selected.url}
+        item={selected}
+        recommendedItems={vodList.filter(vod => vod.id !== selected.id)}
+        onSelectRecommended={playVOD}
+        onBack={handleBack}
+      />
+    );
   }
 
   if (playingAudio) {

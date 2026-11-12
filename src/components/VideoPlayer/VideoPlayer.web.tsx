@@ -5,6 +5,7 @@ import Hls from 'hls.js';
 import { AppText as Text } from '../AppText/AppText';
 import { PlayerControls } from '../PlayerControls/PlayerControls';
 import { PlayerStatus } from '../PlayerStatus/PlayerStatus';
+import { PlayerUpNext } from '../PlayerUpNext/PlayerUpNext';
 import { IdleCatcher } from '../IdleCatcher/IdleCatcher';
 import { AdPlayer } from '../AdPlayer/AdPlayer';
 import { useLiveState } from '../../hooks/useLiveState';
@@ -17,7 +18,12 @@ import { toQualities } from '../../utils/quality';
 import { styles, webVideoStyle } from './VideoPlayer.styles';
 import { VideoPlayerProps } from './VideoPlayer.types';
 
-export const VideoPlayer: React.FC<VideoPlayerProps> = ({ item, onBack }) => {
+export const VideoPlayer: React.FC<VideoPlayerProps> = ({
+  item,
+  onBack,
+  recommendedItems,
+  onSelectRecommended,
+}) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const hlsRef = useRef<Hls | null>(null);
   const [paused, setPaused] = useState(false);
@@ -32,6 +38,12 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({ item, onBack }) => {
   const [playbackRate, setPlaybackRate] = useState(1);
   const [qualities, setQualities] = useState<number[]>([]);
   const [quality, setQuality] = useState(AUTO_QUALITY);
+  // A finished VOD parks on its last frame and offers other titles instead of
+  // the transport controls.
+  const [ended, setEnded] = useState(false);
+  const hasRecommendations =
+    !item.isLive && !!recommendedItems?.length && !!onSelectRecommended;
+  const showsUpNext = ended && hasRecommendations;
 
   useEffect(() => {
     const video = videoRef.current;
@@ -75,7 +87,10 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({ item, onBack }) => {
   }, [onBack]);
   useBackHandler(handleBack);
 
-  const overlay = useAutoHide(paused || !!error);
+  const overlay = useAutoHide(paused || !!error || ended);
+  // While paused, the same titles sit in a shelf above the controls.
+  const showsPausedRail =
+    overlay.visible && paused && !ended && hasRecommendations;
 
   const ads = useMidRollAds(
     item.adBreaks,
@@ -204,7 +219,12 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({ item, onBack }) => {
             e.currentTarget.currentTime = item.startPosition;
           }
         }}
-        onEnded={markFinished}
+        onEnded={() => {
+          markFinished();
+          if (!item.isLive) {
+            setEnded(true);
+          }
+        }}
         // Live streams report Infinity; the controls hide the bar for live anyway.
         onDurationChange={e => {
           const d = e.currentTarget.duration;
@@ -215,40 +235,63 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({ item, onBack }) => {
       {ads.activeBreak ? (
         <AdPlayer adBreak={ads.activeBreak} onComplete={handleAdsComplete} />
       ) : (
-        <View style={styles.overlay}>
-          {overlay.visible && (
-            <View style={styles.topBar}>
-              <Text
-                style={styles.title}
-                numberOfLines={1}
-                accessibilityRole="header"
-              >
-                {item.title}
-              </Text>
-            </View>
-          )}
-          <PlayerStatus error={error} buffering={buffering} paused={paused} />
-          {overlay.visible ? (
-            <PlayerControls
-              isLive={item.isLive}
-              paused={paused}
-              currentTime={currentTime}
-              duration={duration}
-              liveState={liveState}
-              playbackRate={playbackRate}
-              onPlaybackRateChange={setPlaybackRate}
-              qualities={qualities}
-              quality={quality}
-              onQualityChange={setQuality}
-              onTogglePlay={togglePlay}
-              onSeek={seek}
-              onGoLive={goLive}
-              adMarkers={ads.markers}
+        <>
+          <View style={styles.overlay}>
+            {overlay.visible && (
+              <View style={styles.topBar}>
+                <Text
+                  style={styles.title}
+                  numberOfLines={1}
+                  accessibilityRole="header"
+                >
+                  {item.title}
+                </Text>
+              </View>
+            )}
+            {!showsUpNext && (
+              <PlayerStatus
+                error={error}
+                buffering={buffering}
+                paused={paused}
+              />
+            )}
+            {showsUpNext ? null : overlay.visible ? (
+              <PlayerControls
+                isLive={item.isLive}
+                paused={paused}
+                currentTime={currentTime}
+                duration={duration}
+                liveState={liveState}
+                playbackRate={playbackRate}
+                onPlaybackRateChange={setPlaybackRate}
+                qualities={qualities}
+                quality={quality}
+                onQualityChange={setQuality}
+                onTogglePlay={togglePlay}
+                onSeek={seek}
+                onGoLive={goLive}
+                adMarkers={ads.markers}
+              />
+            ) : (
+              <IdleCatcher onWake={overlay.show} />
+            )}
+            {showsPausedRail && recommendedItems && onSelectRecommended && (
+              <PlayerUpNext
+                items={recommendedItems}
+                onSelectVOD={onSelectRecommended}
+                variant="bottom"
+              />
+            )}
+          </View>
+          {showsUpNext && recommendedItems && onSelectRecommended && (
+            <PlayerUpNext
+              items={recommendedItems}
+              onSelectVOD={onSelectRecommended}
+              variant="fullScreen"
+              autoFocus
             />
-          ) : (
-            <IdleCatcher onWake={overlay.show} />
           )}
-        </View>
+        </>
       )}
     </View>
   );

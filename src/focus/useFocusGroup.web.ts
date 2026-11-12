@@ -189,14 +189,13 @@ const handleKeyDown = (event: KeyboardEvent) => {
     return;
   }
 
-  // The group owns the arrows: preventDefault stops the browser and the
-  // polyfill from also moving focus or scrolling. stopImmediatePropagation is
-  // needed because the TV FocusGroup wrapper listens on this same target and
-  // would otherwise see the already-moved focus and move a second rail.
-  event.preventDefault();
-  event.stopImmediatePropagation();
-
   if (direction === 'left' || direction === 'right') {
+    // The group owns horizontal movement: preventDefault stops the browser and
+    // the polyfill from also moving focus or scrolling. stopImmediatePropagation
+    // is needed because the TV FocusGroup wrapper listens on this same target
+    // and would otherwise see the already-moved focus and move a second rail.
+    event.preventDefault();
+    event.stopImmediatePropagation();
     const index = group.items.indexOf(active);
     const next = availableIndex(
       group,
@@ -212,8 +211,13 @@ const handleKeyDown = (event: KeyboardEvent) => {
   const currentIndex = ordered.indexOf(group);
   const nextGroup = ordered[currentIndex + (direction === 'down' ? 1 : -1)];
   if (!nextGroup) {
+    // Nothing on that side (e.g. a shelf inside the player): leave the arrow
+    // to the polyfill so focus can step back out instead of being trapped.
     return;
   }
+
+  event.preventDefault();
+  event.stopImmediatePropagation();
 
   const remembered =
     nextGroup.lastFocusedIndex >= 0
@@ -288,8 +292,7 @@ export const useFocusGroup = (
   );
 
   const focusFirst = useCallback(() => {
-    const index =
-      group.lastFocusedIndex >= 0 ? group.lastFocusedIndex : 0;
+    const index = group.lastFocusedIndex >= 0 ? group.lastFocusedIndex : 0;
     const target = availableIndex(group, index);
     if (target !== null) {
       focusItem(group, target);
