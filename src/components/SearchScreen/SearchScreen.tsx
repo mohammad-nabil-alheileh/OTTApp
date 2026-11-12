@@ -221,6 +221,13 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({
         <Text style={styles.headerTitle} accessibilityRole="header">
           Search
         </Text>
+        <Text style={styles.hint} accessibilityLiveRegion="polite">
+          {voiceListening
+            ? voiceCapturing
+              ? 'Listening… speak now'
+              : 'Starting microphone… allow access if asked'
+            : 'Arrows to move · Enter to select · Back to close'}
+        </Text>
       </View>
 
       <View style={styles.body}>
@@ -285,24 +292,6 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({
           )}
         </View>
 
-        <View style={styles.keyboardWrap}>
-          <SearchKeyboard
-            onKeyPress={appendChar}
-            onDelete={deleteLast}
-            onClear={clearQuery}
-            onFocus={() => setFocusedArea('keyboard')}
-            focusRequest={keyboardFocusRequest}
-          />
-        </View>
-
-        <Text style={styles.hint} accessibilityLiveRegion="polite">
-          {voiceListening
-            ? voiceCapturing
-              ? 'Listening… speak now'
-              : 'Starting microphone… allow access if asked'
-            : 'Arrows to move · Enter to select · Back to close'}
-        </Text>
-
         <View style={styles.resultsSection} ref={resultsContainerRef}>
           {(isLoading || results.length > 0) && (
             <View style={styles.resultsHeader}>
@@ -345,6 +334,18 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({
               onRecommendedFocus={() => setFocusedArea('recommended')}
             />
           )}
+        </View>
+
+        <View style={styles.footer}>
+          <View style={styles.keyboardWrap}>
+            <SearchKeyboard
+              onKeyPress={appendChar}
+              onDelete={deleteLast}
+              onClear={clearQuery}
+              onFocus={() => setFocusedArea('keyboard')}
+              focusRequest={keyboardFocusRequest}
+            />
+          </View>
         </View>
       </View>
     </View>

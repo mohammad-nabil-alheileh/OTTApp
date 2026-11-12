@@ -3,8 +3,8 @@ import { colors, screen, spacing } from '../../styles/theme';
 
 // Base sizes are designed at 1080p; shrink further when the window is too
 // narrow for the 10-key layout so nothing clips on small web viewports.
-const BASE_KEY_SIZE = 78;
-const BASE_KEY_GAP = 10;
+const BASE_KEY_SIZE = 72;
+const BASE_KEY_GAP = 12;
 const BASE_KEYBOARD_WIDTH =
   BASE_KEY_SIZE * 10 + BASE_KEY_GAP * 10 + BASE_KEY_SIZE * 0.75;
 const AVAILABLE_WIDTH =
