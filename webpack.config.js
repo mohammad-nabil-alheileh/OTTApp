@@ -1,5 +1,37 @@
+const fs = require('fs');
 const path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
+
+// Copies the app icons and web manifest next to index.html. They are plain
+// files rather than imports, so they keep their names for the manifest and
+// <link> tags to reference.
+class CopyWebAssetsPlugin {
+  constructor(directory) {
+    this.directory = directory;
+  }
+
+  apply(compiler) {
+    const { Compilation, sources } = compiler.webpack;
+    compiler.hooks.thisCompilation.tap('CopyWebAssetsPlugin', (compilation) => {
+      compilation.hooks.processAssets.tap(
+        {
+          name: 'CopyWebAssetsPlugin',
+          stage: Compilation.PROCESS_ASSETS_STAGE_ADDITIONAL,
+        },
+        () => {
+          for (const file of fs.readdirSync(this.directory)) {
+            compilation.emitAsset(
+              file,
+              new sources.RawSource(
+                fs.readFileSync(path.join(this.directory, file)),
+              ),
+            );
+          }
+        },
+      );
+    });
+  }
+}
 
 module.exports = {
   entry: path.resolve(__dirname, 'index.web.ts'),
@@ -44,6 +76,7 @@ module.exports = {
   },
   plugins: [
     new HtmlWebpackPlugin({ template: path.resolve(__dirname, 'web/index.html') }),
+    new CopyWebAssetsPlugin(path.resolve(__dirname, 'web/static')),
   ],
   devServer: {
     port: 8080,
