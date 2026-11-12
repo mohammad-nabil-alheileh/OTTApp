@@ -13,8 +13,10 @@
     "web": "webpack serve --mode development",
     "web:build": "webpack --mode production",
     "typecheck": "tsc --noEmit",
-    "lint": "eslint src index.ts index.web.ts",
-    "test": "jest"
+    "lint": "eslint src testing index.ts index.web.ts",
+    "test": "jest",
+    "test:related": "bash testing/run-checks.sh quick",
+    "verify": "bash testing/run-checks.sh full"
   },
   "dependencies": {
     "@react-native-async-storage/async-storage": "^2.2.0",
