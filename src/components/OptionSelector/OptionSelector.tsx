@@ -14,6 +14,7 @@ export const OptionSelector: React.FC<OptionSelectorProps> = ({
   options,
   value,
   onChange,
+  focusProps,
 }) => {
   const [open, setOpen] = useState(false);
   // Flipping hasTVPreferredFocus to true is how Android TV moves focus back.
@@ -21,6 +22,14 @@ export const OptionSelector: React.FC<OptionSelectorProps> = ({
   const buttonRef = useRef<View>(null);
   const optionRefs = useRef<Record<number, View | null>>({});
   const focusedOption = useRef<number | null>(null);
+  const groupRef = focusProps?.ref;
+  const setButtonRef = useCallback(
+    (node: View | null) => {
+      buttonRef.current = node;
+      groupRef?.(node);
+    },
+    [groupRef],
+  );
 
   const openMenu = () => {
     setRefocusButton(false);
@@ -126,7 +135,9 @@ export const OptionSelector: React.FC<OptionSelectorProps> = ({
         </View>
       )}
       <Pressable
-        ref={buttonRef}
+        ref={setButtonRef}
+        tabIndex={focusProps?.tabIndex}
+        onFocus={focusProps?.onFocus}
         hasTVPreferredFocus={refocusButton}
         onPress={open ? closeMenu : openMenu}
         accessibilityRole="button"

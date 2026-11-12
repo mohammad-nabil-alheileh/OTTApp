@@ -1,3 +1,5 @@
+import { FocusGroupItemProps } from '../../focus/useFocusGroup.types';
+
 export interface SelectorOption {
   value: number;
   label: string;
@@ -8,4 +10,6 @@ export interface OptionSelectorProps {
   options: SelectorOption[];
   value: number;
   onChange: (value: number) => void;
+  // Lets the button join a surrounding rail's arrow-key group (web only).
+  focusProps?: FocusGroupItemProps;
 }

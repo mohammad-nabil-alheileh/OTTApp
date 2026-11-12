@@ -1,10 +1,11 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useCallback, useEffect, useRef } from 'react';
 import { Platform, View } from 'react-native';
 import { AppPressable as Pressable } from '../AppPressable/AppPressable';
 import { AppText as Text } from '../AppText/AppText';
 import { ProgressBar } from '../ProgressBar/ProgressBar';
 import { OptionSelector } from '../OptionSelector/OptionSelector';
 import { SelectorOption } from '../OptionSelector/OptionSelector.types';
+import { useFocusGroup } from '../../focus/useFocusGroup';
 import { AUTO_QUALITY } from '../../types/quality';
 import { formatTime, skipBy } from '../../utils/time';
 import { sharedStyles } from '../../styles/theme';
@@ -17,6 +18,18 @@ const SPEED_OPTIONS: SelectorOption[] = [0.75, 1, 1.25, 1.5].map(rate => ({
   value: rate,
   label: `x${rate}`,
 }));
+
+// Fixed slots keep the indices stable whether or not the live-only controls
+// render; the group skips the empty ones.
+const SLOT = {
+  skipBack: 0,
+  play: 1,
+  skipForward: 2,
+  speed: 3,
+  quality: 4,
+  goLive: 5,
+} as const;
+const SLOT_COUNT = 6;
 
 export const PlayerControls: React.FC<PlayerControlsProps> = ({
   isLive,
@@ -37,6 +50,20 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
   const playButtonRef = useRef<View>(null);
   useAccessibilityFocusOnMount(playButtonRef);
 
+  // Keeps Up/Down between the transport bar and the paused shelf predictable:
+  // without a group the polyfill picks whatever sits nearest the focused card,
+  // which lands on the seek bar for cards past the right-most button.
+  const controls = useFocusGroup('player-controls', SLOT_COUNT);
+  const playItem = controls.getItemProps(SLOT.play);
+  const playGroupRef = playItem.ref;
+  const setPlayRef = useCallback(
+    (node: View | null) => {
+      playButtonRef.current = node;
+      playGroupRef?.(node);
+    },
+    [playGroupRef],
+  );
+
   // hasTVPreferredFocus is native-only, so the web needs an explicit focus.
   useEffect(() => {
     if (Platform.OS === 'web') {
@@ -56,7 +83,7 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
   };
 
   return (
-    <View style={styles.container}>
+    <View style={styles.container} ref={controls.containerRef}>
       {!isLive && (
         <ProgressBar
           currentTime={currentTime}
@@ -68,6 +95,7 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
       <View style={styles.buttons}>
         {!isLive && (
           <Pressable
+            {...controls.getItemProps(SLOT.skipBack)}
             accessibilityRole="button"
             accessibilityLabel="Skip back 10 seconds"
             style={({ focused }) => [
@@ -80,7 +108,8 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
           </Pressable>
         )}
         <Pressable
-          ref={playButtonRef}
+          {...playItem}
+          ref={setPlayRef}
           hasTVPreferredFocus
           accessibilityRole="button"
           accessibilityLabel={paused ? 'Play' : 'Pause'}
@@ -97,6 +126,7 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
         </Pressable>
         {!isLive && (
           <Pressable
+            {...controls.getItemProps(SLOT.skipForward)}
             accessibilityRole="button"
             accessibilityLabel="Skip forward 10 seconds"
             style={({ focused }) => [
@@ -110,6 +140,7 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
         )}
         {!isLive && (
           <OptionSelector
+            focusProps={controls.getItemProps(SLOT.speed)}
             title="Speed"
             options={SPEED_OPTIONS}
             value={playbackRate}
@@ -118,6 +149,7 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
         )}
         {!isLive && qualities.length > 1 && (
           <OptionSelector
+            focusProps={controls.getItemProps(SLOT.quality)}
             title="Quality"
             options={qualityOptions}
             value={quality}
@@ -126,6 +158,7 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
         )}
         {isLive && (
           <Pressable
+            {...controls.getItemProps(SLOT.goLive)}
             accessibilityRole="button"
             accessibilityLabel={
               liveState.isBehindLive
