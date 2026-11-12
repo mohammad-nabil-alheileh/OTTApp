@@ -46,3 +46,11 @@ export const searchVideos = (videos: VODItem[], query: string): VODItem[] => {
     .sort((a, b) => b.score - a.score)
     .map(result => result.video);
 };
+
+// A dead-end search still needs somewhere to go, so suggest the best-rated
+// titles. Copy before sorting so the caller's list keeps its order.
+export const getRecommendedVideos = (
+  videos: VODItem[],
+  limit = 12,
+): VODItem[] =>
+  [...videos].sort((a, b) => b.rating - a.rating).slice(0, limit);

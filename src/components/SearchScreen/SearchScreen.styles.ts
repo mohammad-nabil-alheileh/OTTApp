@@ -205,9 +205,4 @@ export const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: spacing.xs,
   },
-  emptyHint: {
-    ...typography.caption,
-    color: colors.textSecondary,
-    textAlign: 'center',
-  },
 });

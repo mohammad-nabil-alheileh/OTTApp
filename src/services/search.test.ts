@@ -1,4 +1,4 @@
-import { searchVideos } from './search';
+import { getRecommendedVideos, searchVideos } from './search';
 import { VODItem } from '../types/vod';
 
 const video = (
@@ -87,5 +87,28 @@ describe('searchVideos', () => {
 
   it('returns nothing when no video matches', () => {
     expect(searchVideos(videos, 'dragon')).toEqual([]);
+  });
+});
+
+describe('getRecommendedVideos', () => {
+  it('ranks by rating without reordering the caller’s list', () => {
+    const input = [
+      video('low', 'Low', '', '2020-01-01', 5),
+      video('high', 'High', '', '2020-01-01', 9),
+      video('mid', 'Mid', '', '2020-01-01', 7),
+    ];
+    expect(ids(getRecommendedVideos(input))).toEqual(['high', 'mid', 'low']);
+    expect(ids(input)).toEqual(['low', 'high', 'mid']);
+  });
+
+  it('caps the rail at the requested limit', () => {
+    const many = Array.from({ length: 20 }, (_, index) =>
+      video(`v${index}`, `Video ${index}`, '', '2020-01-01', index),
+    );
+    expect(ids(getRecommendedVideos(many, 4))).toEqual(['v19', 'v18', 'v17', 'v16']);
+  });
+
+  it('returns nothing when there are no videos', () => {
+    expect(getRecommendedVideos([])).toEqual([]);
   });
 });

@@ -16,16 +16,17 @@ import { AppText as Text } from '../AppText/AppText';
 import { useBackHandler } from '../../hooks/useBackHandler';
 import { useFocusGroup } from '../../focus/useFocusGroup';
 import { SearchInputMethod, trackSearch } from '../../services/analytics';
-import { searchVideos } from '../../services/search';
+import { getRecommendedVideos, searchVideos } from '../../services/search';
 import { VODItem } from '../../types/vod';
 import { formatDuration } from '../../utils/time';
 import { SearchKeyboard } from '../SearchKeyboard/SearchKeyboard';
+import { SearchNoResults } from '../SearchNoResults/SearchNoResults';
 import { SearchScreenProps } from './SearchScreen.types';
 import { useSearchTyping } from './useSearchTyping';
 import { useVoiceSearch } from './useVoiceSearch';
 import { styles } from './SearchScreen.styles';
 
-type FocusedArea = 'back' | 'mic' | 'keyboard' | 'results';
+type FocusedArea = 'back' | 'mic' | 'keyboard' | 'results' | 'recommended';
 
 export const SearchScreen: React.FC<SearchScreenProps> = ({
   videos,
@@ -36,6 +37,7 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({
   onBack,
 }) => {
   const results = useMemo(() => searchVideos(videos, query), [videos, query]);
+  const recommended = useMemo(() => getRecommendedVideos(videos), [videos]);
   const hasQuery = query.trim().length > 0;
 
   const { containerRef: backContainerRef, getItemProps: getBackItemProps } =
@@ -62,6 +64,7 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({
 
   const [focusedArea, setFocusedArea] = useState<FocusedArea>('keyboard');
   const [keyboardFocusRequest, setKeyboardFocusRequest] = useState(0);
+  const [recommendedFocusRequest, setRecommendedFocusRequest] = useState(0);
   // Which input produced the current query, reported with search analytics.
   const inputMethod = useRef<SearchInputMethod>('typed');
 
@@ -109,21 +112,30 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({
 
   useSearchTyping(true, appendChar, deleteLast);
 
-  // Filtering shrinks the rail while it has focus; move focus somewhere valid.
+  // Filtering shrinks the rail while it has focus. Move focus to whatever
+  // replaced it, so it never snaps back to the top of the keyboard.
   const previousResults = useRef(results);
   useEffect(() => {
     const changed = previousResults.current !== results;
     previousResults.current = results;
-    if (!changed || focusedArea !== 'results') {
+    if (!changed) {
       return;
     }
-    if (results.length > 0) {
+    if (focusedArea === 'results') {
+      if (results.length > 0) {
+        focusFirstResult();
+      } else if (recommended.length > 0) {
+        setFocusedArea('recommended');
+        setRecommendedFocusRequest(request => request + 1);
+      } else {
+        setFocusedArea('keyboard');
+        setKeyboardFocusRequest(request => request + 1);
+      }
+    } else if (focusedArea === 'recommended' && results.length > 0) {
+      setFocusedArea('results');
       focusFirstResult();
-    } else {
-      setFocusedArea('keyboard');
-      setKeyboardFocusRequest(request => request + 1);
     }
-  }, [results, focusedArea, focusFirstResult]);
+  }, [results, focusedArea, focusFirstResult, recommended.length]);
 
   // Report the query once typing or speaking pauses, tagged with how it was
   // entered so voice searches can be measured separately.
@@ -292,19 +304,21 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({
         </Text>
 
         <View style={styles.resultsSection} ref={resultsContainerRef}>
-          <View style={styles.resultsHeader}>
-            <Text style={styles.resultsTitle} accessibilityRole="header">
-              {hasQuery ? 'Results' : 'All Videos'}
-            </Text>
-            {!isLoading && (
-              <Text
-                style={styles.resultsCount}
-                accessibilityLiveRegion="polite"
-              >
-                {results.length} {results.length === 1 ? 'video' : 'videos'}
+          {(isLoading || results.length > 0) && (
+            <View style={styles.resultsHeader}>
+              <Text style={styles.resultsTitle} accessibilityRole="header">
+                {hasQuery ? 'Results' : 'All Videos'}
               </Text>
-            )}
-          </View>
+              {!isLoading && (
+                <Text
+                  style={styles.resultsCount}
+                  accessibilityLiveRegion="polite"
+                >
+                  {results.length} {results.length === 1 ? 'video' : 'videos'}
+                </Text>
+              )}
+            </View>
+          )}
 
           {isLoading ? (
             <View style={styles.emptyState}>
@@ -323,18 +337,13 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({
               contentContainerStyle={styles.resultsList}
             />
           ) : (
-            <View style={styles.emptyState}>
-              <Text style={styles.emptyTitle} accessibilityLiveRegion="polite">
-                {hasQuery
-                  ? `No videos match “${query.trim()}”`
-                  : 'No videos available'}
-              </Text>
-              {hasQuery && (
-                <Text style={styles.emptyHint}>
-                  Try a different title, description, or year.
-                </Text>
-              )}
-            </View>
+            <SearchNoResults
+              query={query}
+              recommended={recommended}
+              onSelectVOD={onSelectVOD}
+              recommendedFocusRequest={recommendedFocusRequest}
+              onRecommendedFocus={() => setFocusedArea('recommended')}
+            />
           )}
         </View>
       </View>
