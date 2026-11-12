@@ -3,10 +3,10 @@ import {
   FlatList,
   Image,
   ListRenderItem,
-  Pressable,
   Text,
   View,
 } from 'react-native';
+import { AppPressable as Pressable } from '../AppPressable/AppPressable';
 import { useBackHandler } from '../../hooks/useBackHandler';
 import { useFocusGroup } from '../../focus/useFocusGroup';
 import { PodcastEpisode } from '../../types/podcast';
@@ -72,6 +72,7 @@ export const PodcastDetails: React.FC<PodcastDetailsProps> = ({
       <Pressable
         {...episodeRail.getItemProps(index)}
         onPress={() => onPlayEpisode(podcast, episode)}
+        accessibilityRole="button"
         style={({ focused }) => [
           styles.episodeCard,
           focused && styles.episodeCardFocused,
@@ -135,6 +136,12 @@ export const PodcastDetails: React.FC<PodcastDetailsProps> = ({
                   focused && sharedStyles.controlButtonFocused,
                 ]}
                 onPress={() => onPlayEpisode(podcast, latest)}
+                accessibilityRole="button"
+                accessibilityLabel={
+                  latestPosition !== undefined && latestPosition > 0
+                    ? `Resume latest episode at ${formatTime(latestPosition)}`
+                    : 'Play latest episode'
+                }
               >
                 <Text style={sharedStyles.controlButtonText}>
                   {latestPosition !== undefined && latestPosition > 0

@@ -31,22 +31,30 @@ const handleKeyDown = (e: KeyboardEvent) => {
     return;
   }
   const up = e.key === 'ArrowUp';
-  const from = current.element.getBoundingClientRect();
-  const [next] = [...groups]
-    .filter(group => group !== current && isShown(group.element))
-    .map(group => ({ group, rect: group.element.getBoundingClientRect() }))
-    .filter(({ rect }) =>
-      up ? rect.bottom <= from.top : rect.top >= from.bottom,
+  // Document order, not on-screen position: rows scroll underneath the fixed
+  // header, so a row partly scrolled above the viewport has a higher top than
+  // the header and Up would skip straight past it to the header.
+  const ordered = [...groups]
+    .filter(
+      group =>
+        group === current ||
+        (isShown(group.element) && cardsIn(group.element).length > 0),
     )
-    .sort((a, b) => (up ? b.rect.top - a.rect.top : a.rect.top - b.rect.top));
+    .sort((a, b) =>
+      // eslint-disable-next-line no-bitwise
+      a.element.compareDocumentPosition(b.element) &
+      Node.DOCUMENT_POSITION_FOLLOWING
+        ? -1
+        : 1,
+    );
+  const next = ordered[ordered.indexOf(current) + (up ? -1 : 1)];
 
   if (!next) {
     return;
   }
-  const target =
-    next.group.lastFocused?.isConnected
-      ? next.group.lastFocused
-      : cardsIn(next.group.element)[0];
+  const target = next.lastFocused?.isConnected
+    ? next.lastFocused
+    : cardsIn(next.element)[0];
   if (!target) {
     return;
   }

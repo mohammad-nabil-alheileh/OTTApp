@@ -3,10 +3,10 @@ import {
   ActivityIndicator,
   Image,
   Platform,
-  Pressable,
   Text,
   View,
 } from 'react-native';
+import { AppPressable as Pressable } from '../AppPressable/AppPressable';
 import { ProgressBar } from '../ProgressBar/ProgressBar';
 import { OptionSelector } from '../OptionSelector/OptionSelector';
 import { SelectorOption } from '../OptionSelector/OptionSelector.types';
@@ -104,6 +104,8 @@ export const NowPlaying: React.FC<NowPlayingProps> = ({
                 focused && sharedStyles.controlButtonFocused,
               ]}
               onPress={() => skip(-SKIP_BACK_SECONDS)}
+              accessibilityRole="button"
+              accessibilityLabel={`Skip back ${SKIP_BACK_SECONDS} seconds`}
             >
               <Text style={sharedStyles.controlButtonText}>
                 −{SKIP_BACK_SECONDS}s
@@ -117,6 +119,8 @@ export const NowPlaying: React.FC<NowPlayingProps> = ({
                 focused && sharedStyles.controlButtonFocused,
               ]}
               onPress={onTogglePlay}
+              accessibilityRole="button"
+              accessibilityLabel={paused ? 'Play' : 'Pause'}
             >
               <Text style={sharedStyles.controlButtonText}>
                 {paused ? '▶ Play' : '❚❚ Pause'}
@@ -128,6 +132,8 @@ export const NowPlaying: React.FC<NowPlayingProps> = ({
                 focused && sharedStyles.controlButtonFocused,
               ]}
               onPress={() => skip(SKIP_FORWARD_SECONDS)}
+              accessibilityRole="button"
+              accessibilityLabel={`Skip forward ${SKIP_FORWARD_SECONDS} seconds`}
             >
               <Text style={sharedStyles.controlButtonText}>
                 +{SKIP_FORWARD_SECONDS}s

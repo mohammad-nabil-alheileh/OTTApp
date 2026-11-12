@@ -18,6 +18,7 @@ export const ProgressBar: React.FC<ProgressBarProps> = ({
   duration,
   onSeek,
   markers = [],
+  onFocusChange,
 }) => {
   const [focused, setFocused] = useState(false);
   const [scrubTime, setScrubTime] = useState<number | null>(null);
@@ -55,6 +56,18 @@ export const ProgressBar: React.FC<ProgressBarProps> = ({
   useRemoteKeys(handleKey, focused && duration > 0);
   useEffect(() => () => clearTimeout(commitTimer.current), []);
 
+  // The cleanup also runs when the bar unmounts while focused (an ad break
+  // starting, the overlay hiding), where onBlur does not fire.
+  const onFocusChangeRef = useRef(onFocusChange);
+  onFocusChangeRef.current = onFocusChange;
+  useEffect(() => {
+    if (!focused) {
+      return;
+    }
+    onFocusChangeRef.current?.(true);
+    return () => onFocusChangeRef.current?.(false);
+  }, [focused]);
+
   const seekToPointer = (e: GestureResponderEvent) => {
     if (hitAreaWidth.current > 0 && duration > 0) {
       const ratio = clamp(e.nativeEvent.locationX / hitAreaWidth.current, 0, 1);
@@ -83,7 +96,13 @@ export const ProgressBar: React.FC<ProgressBarProps> = ({
         onPress={commitScrub}
         accessibilityRole="adjustable"
         accessibilityLabel="Playback position"
-        accessibilityHint="Left and right skip 10 seconds"
+        // TalkBack takes the D-pad for its own navigation: left and right
+        // only adjust the slider after select puts it in adjust mode.
+        accessibilityHint={
+          screenReaderEnabled
+            ? 'Press select to adjust, then left or right to skip 10 seconds. Press select when done.'
+            : 'Left and right skip 10 seconds'
+        }
         accessibilityValue={{
           min: 0,
           max: Math.round(duration),

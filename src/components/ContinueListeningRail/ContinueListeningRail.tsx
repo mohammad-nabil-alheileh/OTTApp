@@ -3,10 +3,10 @@ import {
   FlatList,
   Image,
   ListRenderItem,
-  Pressable,
   Text,
   View,
 } from 'react-native';
+import { AppPressable as Pressable } from '../AppPressable/AppPressable';
 import { useFocusGroup } from '../../focus/useFocusGroup';
 import { EpisodeProgress } from '../../services/podcasts';
 import { clamp, formatDuration } from '../../utils/time';
@@ -43,6 +43,11 @@ export const ContinueListeningRail: React.FC<ContinueListeningRailProps> = ({
         {...getItemProps(index)}
         hasTVPreferredFocus={autoFocus && index === 0}
         onPress={() => onPlayEpisode(podcast, episode)}
+        accessibilityRole="button"
+        accessibilityLabel={`${episode.title}, ${podcast.title}, ${formatDuration(
+          Math.max(0, duration - position),
+        )} left`}
+        accessibilityHint="Resumes playback"
         style={({ focused }) => [
           styles.podcastItem,
           focused && styles.vodItemFocused,

@@ -3,10 +3,10 @@ import {
   FlatList,
   Image,
   ListRenderItem,
-  Pressable,
   Text,
   View,
 } from 'react-native';
+import { AppPressable as Pressable } from '../AppPressable/AppPressable';
 import { useFocusGroup } from '../../focus/useFocusGroup';
 import { Podcast } from '../../types/podcast';
 import { styles } from './PodcastRail.styles';
@@ -40,6 +40,9 @@ export const PodcastRail: React.FC<PodcastRailProps> = ({
       {...getItemProps(index)}
       hasTVPreferredFocus={autoFocus && index === 0}
       onPress={() => onSelectPodcast(item)}
+      accessibilityRole="button"
+      accessibilityLabel={`${item.title}, by ${item.author}`}
+      accessibilityHint="Opens episodes"
       style={({ focused }) => [
         styles.podcastItem,
         focused && styles.vodItemFocused,

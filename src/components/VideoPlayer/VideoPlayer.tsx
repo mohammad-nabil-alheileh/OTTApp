@@ -20,6 +20,7 @@ import { AdPlayer } from '../AdPlayer/AdPlayer';
 import { useLiveState } from '../../hooks/useLiveState';
 import { useBackHandler } from '../../hooks/useBackHandler';
 import { useAutoHide } from '../../hooks/useAutoHide';
+import { useScreenReaderEnabled } from '../../accessibility/useScreenReaderEnabled';
 import { useMidRollAds } from '../../hooks/useMidRollAds';
 import { useWatchProgress } from '../../hooks/useWatchProgress';
 import { AUTO_QUALITY } from '../../types/quality';
@@ -62,7 +63,15 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
   }, [onBack]);
   useBackHandler(handleBack);
 
-  const overlay = useAutoHide(paused || !!error || ended);
+  // With TalkBack, the progress bar is adjusted in TalkBack's adjust mode
+  // (select, then left/right). Entering it reaches the app as nothing, so
+  // a viewer pausing there would see no activity and lose the controls, and
+  // adjust mode with them. Keep the controls up while the bar has focus.
+  const screenReaderEnabled = useScreenReaderEnabled();
+  const [seekbarFocused, setSeekbarFocused] = useState(false);
+  const overlay = useAutoHide(
+    paused || !!error || ended || (screenReaderEnabled && seekbarFocused),
+  );
   // While paused, the same titles sit in a shelf above the controls.
   const showsPausedRail =
     overlay.visible && paused && !ended && hasRecommendations;
@@ -168,6 +177,10 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
         }
         resizeMode="contain"
         progressUpdateInterval={250}
+        // ExoPlayer's view is focusable by default; when a focused control
+        // unmounts (e.g. an ad break starts) Android would park focus on it,
+        // where it is invisible. Focus belongs to the overlay only.
+        focusable={false}
         // Nothing to do on the video itself: a full-screen TalkBack stop
         // only pulls its focus away from the controls. The title is read
         // from the top bar.
@@ -243,6 +256,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
                 onSeek={seek}
                 onGoLive={goLive}
                 adMarkers={ads.markers}
+                onSeekbarFocusChange={setSeekbarFocused}
               />
             ) : (
               <IdleCatcher onWake={overlay.show} />
