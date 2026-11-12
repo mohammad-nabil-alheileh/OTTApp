@@ -31,16 +31,16 @@ class VoiceSearchModule(
 
   @ReactMethod
   fun isAvailable(promise: Promise) {
-    val available = try {pactl set-default-source alsa_input.pci-0000_00_1f.3-platform-skl_hda_dsp_generic.HiFi__Mic1__source
-
+    val available = try {
       SpeechRecognizer.isRecognitionAvailable(reactContext) &&
         reactContext.packageManager
-          .queryIntentActivities(Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH), 0)
+          .queryIntentActivities(
+            Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH), 0
+          )
           .isNotEmpty()
     } catch (error: Exception) {
       false
     }
-    promise.resolve(available)
   }
 
   @ReactMethod
