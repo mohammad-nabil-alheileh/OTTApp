@@ -1,6 +1,7 @@
 import { VODItem } from '../types/vod';
 import { LiveChannel } from '../types/live';
 import { Ad } from '../types/ads';
+import { Podcast } from '../types/podcast';
 
 const image = (seed: string, w: number, h: number) =>
   `https://picsum.photos/seed/${seed}/${w}/${h}`;
@@ -333,5 +334,261 @@ export const mockLiveChannels: LiveChannel[] = [
       'https://demo.unified-streaming.com/k8s/live/trunk/live.isml/.m3u8',
     isLive: true,
     category: 'Sports',
+  },
+];
+
+// Public sample MP3s (SoundHelix). The podcasts and episodes are fictional and
+// reuse these tracks; durations match the real files.
+const tracks = [
+  { n: 1, duration: 372 },
+  { n: 2, duration: 425 },
+  { n: 3, duration: 344 },
+  { n: 4, duration: 302 },
+  { n: 5, duration: 353 },
+  { n: 6, duration: 279 },
+  { n: 7, duration: 420 },
+  { n: 8, duration: 325 },
+  { n: 9, duration: 389 },
+  { n: 10, duration: 527 },
+];
+
+const episode = (
+  id: string,
+  track: number,
+  title: string,
+  description: string,
+  releaseDate: string,
+) => {
+  const { n, duration } = tracks[(track - 1) % tracks.length];
+  return {
+    id,
+    title,
+    description,
+    releaseDate,
+    duration,
+    audioUrl: `https://www.soundhelix.com/examples/mp3/SoundHelix-Song-${n}.mp3`,
+  };
+};
+
+export const mockPodcasts: Podcast[] = [
+  {
+    id: 'pod-1',
+    title: 'Signal & Noise',
+    author: 'Lena Ortiz',
+    description:
+      'Weekly conversations with engineers about the tools and trade-offs behind the apps we use every day.',
+    artwork: image('signal', 600, 600),
+    category: 'Technology',
+    episodes: [
+      episode(
+        'pod-1-ep-4',
+        1,
+        'Shipping to Ten Screens',
+        'Building one app for phones, TVs and browsers.',
+        '2026-10-28',
+      ),
+      episode(
+        'pod-1-ep-3',
+        2,
+        'The Cost of a Millisecond',
+        'Why latency budgets shape product decisions.',
+        '2026-10-21',
+      ),
+      episode(
+        'pod-1-ep-2',
+        3,
+        'Streaming at Scale',
+        'How video reaches millions of living rooms.',
+        '2026-10-14',
+      ),
+      episode(
+        'pod-1-ep-1',
+        4,
+        'Hello, World',
+        'Meet the host and what the show is about.',
+        '2026-10-07',
+      ),
+    ],
+  },
+  {
+    id: 'pod-2',
+    title: 'Byte Sized',
+    author: 'Omar Haddad',
+    description: 'Quick, friendly explainers on one tech idea per episode.',
+    artwork: image('bytesized', 600, 600),
+    category: 'Technology',
+    episodes: [
+      episode(
+        'pod-2-ep-3',
+        5,
+        'What Is a CDN?',
+        'Why your movie loads from a server down the street.',
+        '2026-11-02',
+      ),
+      episode(
+        'pod-2-ep-2',
+        6,
+        'Codecs, Explained',
+        'Squeezing video without losing the picture.',
+        '2026-10-26',
+      ),
+      episode(
+        'pod-2-ep-1',
+        7,
+        'Bits and Bytes',
+        'The smallest units of everything digital.',
+        '2026-10-19',
+      ),
+    ],
+  },
+  {
+    id: 'pod-3',
+    title: 'Morning Briefing',
+    author: 'Daily Desk',
+    description: 'The stories that matter, in about five minutes.',
+    artwork: image('briefing', 600, 600),
+    category: 'News',
+    episodes: [
+      episode(
+        'pod-3-ep-3',
+        8,
+        'Wednesday Briefing',
+        'Markets, weather and the day ahead.',
+        '2026-11-11',
+      ),
+      episode(
+        'pod-3-ep-2',
+        9,
+        'Tuesday Briefing',
+        'Elections, energy and a space launch.',
+        '2026-11-10',
+      ),
+      episode(
+        'pod-3-ep-1',
+        10,
+        'Monday Briefing',
+        'The week ahead in five minutes.',
+        '2026-11-09',
+      ),
+    ],
+  },
+  {
+    id: 'pod-4',
+    title: 'Laugh Track',
+    author: 'Sam & Rita',
+    description: 'Two comedians, one microphone and absolutely no plan.',
+    artwork: image('laughtrack', 600, 600),
+    category: 'Comedy',
+    episodes: [
+      episode(
+        'pod-4-ep-3',
+        2,
+        'The Great Toaster Debate',
+        'Settling the most important question of our time.',
+        '2026-11-05',
+      ),
+      episode(
+        'pod-4-ep-2',
+        4,
+        'Holiday Disasters',
+        'Listeners share their worst trips.',
+        '2026-10-29',
+      ),
+      episode(
+        'pod-4-ep-1',
+        6,
+        'Pilot',
+        'Where it all went wrong.',
+        '2026-10-22',
+      ),
+    ],
+  },
+  {
+    id: 'pod-5',
+    title: 'Deep Field',
+    author: 'Dr. Mara Quinn',
+    description:
+      'An astronomer takes you on a tour of the universe, one discovery at a time.',
+    artwork: image('deepfield', 600, 600),
+    category: 'Science',
+    episodes: [
+      episode(
+        'pod-5-ep-4',
+        3,
+        'Rogue Planets',
+        'Worlds that drift without a star.',
+        '2026-11-03',
+      ),
+      episode(
+        'pod-5-ep-3',
+        5,
+        'Listening to Black Holes',
+        'What gravitational waves tell us.',
+        '2026-10-20',
+      ),
+      episode(
+        'pod-5-ep-2',
+        7,
+        'The Moon Is Leaving',
+        'Why the Moon drifts a few centimetres a year.',
+        '2026-10-06',
+      ),
+      episode(
+        'pod-5-ep-1',
+        9,
+        'First Light',
+        'How telescopes changed what we know.',
+        '2026-09-22',
+      ),
+    ],
+  },
+  {
+    id: 'pod-6',
+    title: 'Cold Case Files',
+    author: 'Nadia Brooks',
+    description:
+      'Revisiting unsolved mysteries with fresh eyes and new evidence.',
+    artwork: image('coldcase', 600, 600),
+    category: 'True Crime',
+    episodes: [
+      episode(
+        'pod-6-ep-2',
+        10,
+        'The Lighthouse Keeper',
+        'A keeper vanishes from a locked tower.',
+        '2026-11-01',
+      ),
+      episode(
+        'pod-6-ep-1',
+        8,
+        'The Missing Painting',
+        'A masterpiece disappears during a gala.',
+        '2026-10-18',
+      ),
+    ],
+  },
+  {
+    id: 'pod-7',
+    title: 'Small Wonders',
+    author: 'Theo Grant',
+    description: 'The surprising science hiding in everyday things.',
+    artwork: image('wonders', 600, 600),
+    category: 'Science',
+    episodes: [
+      episode(
+        'pod-7-ep-2',
+        1,
+        'Why Bread Rises',
+        'Yeast, gas and a little patience.',
+        '2026-10-30',
+      ),
+      episode(
+        'pod-7-ep-1',
+        2,
+        'The Physics of Coffee',
+        'What happens in your morning cup.',
+        '2026-10-16',
+      ),
+    ],
   },
 ];

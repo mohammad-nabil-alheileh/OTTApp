@@ -21,9 +21,19 @@ import { ShowDetails } from './components/ShowDetails/ShowDetails';
 import { FocusGroup } from './components/FocusGroup/FocusGroup';
 import { useFocusGroup } from './focus/useFocusGroup';
 import { SearchScreen } from './components/SearchScreen/SearchScreen';
-import { mockVODData, mockLiveChannels } from './services/mockData';
+import { ListenScreen } from './components/ListenScreen/ListenScreen';
+import { PodcastDetails } from './components/PodcastDetails/PodcastDetails';
+import { AudioPlayer } from './components/AudioPlayer/AudioPlayer';
+import { getListenHistory, loadListenHistory } from './services/listenHistory';
+import { getContinueListening, toAudioPlayable } from './services/podcasts';
+import {
+  mockVODData,
+  mockLiveChannels,
+  mockPodcasts,
+} from './services/mockData';
 import { VODItem } from './types/vod';
 import { LiveChannel } from './types/live';
+import { AudioPlayable, Podcast, PodcastEpisode } from './types/podcast';
 import { SelectedContent } from './App.types';
 import { styles } from './App.styles';
 
@@ -51,14 +61,43 @@ const AppContent = () => {
   const [searchVisible, setSearchVisible] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [settingsVisible, setSettingsVisible] = useState(false);
+  // Audio: the Listen landing page, then a podcast's details, then the player.
+  // Each stays set under the next, so Back steps out one screen at a time.
+  const [podcasts, setPodcasts] = useState<Podcast[]>([]);
+  const [listenVisible, setListenVisible] = useState(false);
+  const [podcastDetails, setPodcastDetails] = useState<Podcast | null>(null);
+  const [playingAudio, setPlayingAudio] = useState<AudioPlayable | null>(null);
+  // Saved episode positions, most recently played first.
+  const [listenHistory, setListenHistory] = useState<WatchProgress[]>([]);
 
   const { containerRef: headerContainerRef, getItemProps: getHeaderItemProps } =
-    useFocusGroup('header-bar', 2);
+    useFocusGroup('header-bar', 3);
 
   useEffect(() => {
     loadWatchHistory().then(setWatchHistory);
     loadFavorites().then(setFavoriteIds);
+    loadListenHistory().then(setListenHistory);
   }, []);
+
+  // The audio player saves its final position while unmounting.
+  useEffect(() => {
+    if (!playingAudio) {
+      setListenHistory(getListenHistory());
+    }
+  }, [playingAudio]);
+
+  const continueListening = useMemo(
+    () => getContinueListening(listenHistory, podcasts),
+    [listenHistory, podcasts],
+  );
+
+  const playEpisode = useCallback(
+    (podcast: Podcast, episode: PodcastEpisode) => {
+      const saved = getListenHistory().find(entry => entry.id === episode.id);
+      setPlayingAudio(toAudioPlayable(podcast, episode, saved?.position));
+    },
+    [],
+  );
 
   // The player writes its final position while unmounting; passive effects
   // run after that, so returning home picks up the latest progress.
@@ -119,6 +158,7 @@ const AppContent = () => {
     const timer = setTimeout(() => {
       setVodList(mockVODData);
       setChannels(mockLiveChannels);
+      setPodcasts(mockPodcasts);
       setIsLoading(false);
     }, 500);
     return () => clearTimeout(timer);
@@ -126,6 +166,11 @@ const AppContent = () => {
 
   const handleBack = useCallback(() => setSelected(null), []);
   const handleDetailsBack = useCallback(() => setDetailsItem(null), []);
+
+  const handleAudioBack = useCallback(() => setPlayingAudio(null), []);
+  const handlePodcastBack = useCallback(() => setPodcastDetails(null), []);
+  const handleOpenListen = useCallback(() => setListenVisible(true), []);
+  const handleCloseListen = useCallback(() => setListenVisible(false), []);
 
   const handleOpenSearch = useCallback(() => setSearchVisible(true), []);
   const handleCloseSearch = useCallback(() => {
@@ -138,6 +183,22 @@ const AppContent = () => {
 
   if (selected) {
     return <VideoPlayer item={selected} onBack={handleBack} />;
+  }
+
+  if (playingAudio) {
+    return <AudioPlayer item={playingAudio} onBack={handleAudioBack} />;
+  }
+
+  if (podcastDetails) {
+    return (
+      <PodcastDetails
+        key={podcastDetails.id}
+        podcast={podcastDetails}
+        listenHistory={listenHistory}
+        onPlayEpisode={playEpisode}
+        onBack={handlePodcastBack}
+      />
+    );
   }
 
   if (detailsItem) {
@@ -185,6 +246,19 @@ const AppContent = () => {
     );
   }
 
+  if (listenVisible) {
+    return (
+      <ListenScreen
+        podcasts={podcasts}
+        isLoading={isLoading}
+        continueListening={continueListening}
+        onSelectPodcast={setPodcastDetails}
+        onPlayEpisode={playEpisode}
+        onBack={handleCloseListen}
+      />
+    );
+  }
+
   return (
     <View style={styles.container}>
       <FocusGroup style={styles.header}>
@@ -193,11 +267,28 @@ const AppContent = () => {
             <Text style={styles.title} accessibilityRole="header">
               OTT TV App
             </Text>
-            <Text style={styles.subtitle}>Videos & Live Channels</Text>
+            <Text style={styles.subtitle}>
+              Videos, Live Channels & Podcasts
+            </Text>
           </View>
           <View style={styles.headerActions}>
             <Pressable
               {...getHeaderItemProps(0)}
+              onPress={handleOpenListen}
+              accessibilityRole="button"
+              accessibilityLabel="Listen"
+              accessibilityHint="Opens podcasts"
+              style={({ focused }) => [
+                styles.searchButton,
+                styles.headerButtonSpacing,
+                focused && styles.searchButtonFocused,
+              ]}
+            >
+              <Text style={styles.searchButtonIcon}>🎧</Text>
+              <Text style={styles.searchButtonLabel}>Listen</Text>
+            </Pressable>
+            <Pressable
+              {...getHeaderItemProps(1)}
               onPress={handleOpenSearch}
               accessibilityRole="button"
               accessibilityLabel="Search"
@@ -212,7 +303,7 @@ const AppContent = () => {
               <Text style={styles.searchButtonLabel}>Search</Text>
             </Pressable>
             <Pressable
-              {...getHeaderItemProps(1)}
+              {...getHeaderItemProps(2)}
               onPress={handleOpenSettings}
               accessibilityRole="button"
               accessibilityLabel="Settings"
@@ -268,4 +359,4 @@ const AppContent = () => {
       </ScrollView>
     </View>
   );
-}
+};

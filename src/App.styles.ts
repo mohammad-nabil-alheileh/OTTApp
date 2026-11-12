@@ -42,6 +42,9 @@ export const styles = StyleSheet.create({
     borderColor: 'transparent',
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
   },
+  headerButtonSpacing: {
+    marginRight: spacing.sm,
+  },
   searchButtonFocused: {
     borderColor: colors.focus,
     backgroundColor: colors.primary,

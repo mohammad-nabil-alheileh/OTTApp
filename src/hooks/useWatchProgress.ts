@@ -1,19 +1,23 @@
 import { useCallback, useEffect, useRef } from 'react';
 import { Playable } from '../types/playable';
-import { clearProgress, saveProgress } from '../services/watchHistory';
+import { ProgressStore } from '../services/progressStore';
+import { watchHistoryStore } from '../services/watchHistory';
 
 const SAVE_INTERVAL_SECONDS = 5;
 const FINISHED_RATIO = 0.95;
 // Players confirm a resume seek within a couple of seconds of the target.
 const RESUME_TOLERANCE_SECONDS = 2;
 
-// Saves VOD playback position for Continue Watching. Live streams and
-// trailers have no id, so they are never saved. Returns the onEnd handler.
+// Saves playback position for Continue Watching (or, with another store,
+// Continue Listening). Live streams and trailers have no id, so they are never
+// saved. Returns the onEnd handler.
 export const useWatchProgress = (
-  item: Playable,
+  item: Pick<Playable, 'id' | 'isLive' | 'startPosition'>,
   currentTime: number,
   duration: number,
+  store: ProgressStore = watchHistoryStore,
 ): (() => void) => {
+  const { save: saveProgress, clear: clearProgress } = store;
   const id = item.isLive ? undefined : item.id;
   const latest = useRef({ currentTime, duration });
   latest.current = { currentTime, duration };
@@ -49,7 +53,14 @@ export const useWatchProgress = (
       lastSaved.current = currentTime;
       saveProgress(id, currentTime, duration);
     }
-  }, [id, item.startPosition, currentTime, duration]);
+  }, [
+    id,
+    item.startPosition,
+    currentTime,
+    duration,
+    saveProgress,
+    clearProgress,
+  ]);
 
   // Back/unmount between saves: keep the latest position, not the last tick.
   useEffect(() => {
@@ -66,11 +77,11 @@ export const useWatchProgress = (
         saveProgress(id, time, total);
       }
     };
-  }, [id]);
+  }, [id, saveProgress]);
 
   return useCallback(() => {
     if (id) {
       clearProgress(id);
     }
-  }, [id]);
+  }, [id, clearProgress]);
 };
