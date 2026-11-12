@@ -405,7 +405,7 @@ const AppContent = () => {
             homeRow={getHomeRow('vod')}
           />
         </FocusGroup>
-        <FocusGroup>
+        <FocusGroup trapFocusDown>
           <LiveChannelList
             channels={channels}
             isLoading={isLoading}

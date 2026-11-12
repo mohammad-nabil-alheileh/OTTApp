@@ -41,6 +41,10 @@ const handleKeyDown = (e: KeyboardEvent) => {
     .sort((a, b) => (up ? b.rect.top - a.rect.top : a.rect.top - b.rect.top));
 
   if (!next) {
+    if (!up) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
     return;
   }
   const target =

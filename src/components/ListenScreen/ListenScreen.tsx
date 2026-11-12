@@ -55,7 +55,10 @@ export const ListenScreen: React.FC<ListenScreenProps> = ({
           </FocusGroup>
         )}
         {categories.map(({ category, podcasts: items }, index) => (
-          <FocusGroup key={category}>
+          <FocusGroup
+            key={category}
+            trapFocusDown={index === categories.length - 1}
+          >
             <PodcastRail
               groupId={`podcast-rail-${category}`}
               title={category}

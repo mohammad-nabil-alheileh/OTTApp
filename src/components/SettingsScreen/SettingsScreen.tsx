@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { View } from 'react-native';
 import { AppPressable as Pressable } from '../AppPressable/AppPressable';
 import { AppText as Text } from '../AppText/AppText';
@@ -12,13 +12,20 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onBack }) => {
   const { isBoldText, toggleBoldText } = useBoldText();
   const { containerRef: backContainerRef, getItemProps: getBackItemProps } =
     useFocusGroup('settings-back', 1);
-  const { containerRef: boldContainerRef, getItemProps: getBoldItemProps } =
-    useFocusGroup('settings-bold', 1);
+  const {
+    containerRef: boldContainerRef,
+    getItemProps: getBoldItemProps,
+    focusFirst: focusFirstBoldOption,
+  } = useFocusGroup('settings-bold', 1);
 
   useBackHandler(() => {
     onBack();
     return true;
   });
+
+  useEffect(() => {
+    focusFirstBoldOption();
+  }, [focusFirstBoldOption]);
 
   const backItemProps = getBackItemProps(0);
   const boldItemProps = getBoldItemProps(0);
@@ -54,6 +61,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onBack }) => {
         <View ref={boldContainerRef}>
           <Pressable
             {...boldItemProps}
+            hasTVPreferredFocus
             onPress={toggleBoldText}
             accessibilityRole="button"
             accessibilityLabel="Bold text"

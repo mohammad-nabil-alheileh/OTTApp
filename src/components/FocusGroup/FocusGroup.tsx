@@ -3,7 +3,11 @@ import { TVFocusGuideView, View } from 'react-native';
 import { useScreenReaderEnabled } from '../../accessibility/useScreenReaderEnabled';
 import { FocusGroupProps } from './FocusGroup.types';
 
-export const FocusGroup: React.FC<FocusGroupProps> = ({ children, style }) => {
+export const FocusGroup: React.FC<FocusGroupProps> = ({
+  children,
+  style,
+  trapFocusDown = false,
+}) => {
   const screenReaderEnabled = useScreenReaderEnabled();
 
   // With TalkBack on, react-native-tvos makes every TVFocusGuideView focusable
@@ -16,7 +20,7 @@ export const FocusGroup: React.FC<FocusGroupProps> = ({ children, style }) => {
   }
 
   return (
-    <TVFocusGuideView autoFocus style={style}>
+    <TVFocusGuideView autoFocus trapFocusDown={trapFocusDown} style={style}>
       {children}
     </TVFocusGuideView>
   );
