@@ -1,5 +1,8 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { View, Text, ScrollView, Pressable } from 'react-native';
+import { View, ScrollView, Pressable } from 'react-native';
+import { AppText as Text } from './components/AppText/AppText';
+import { BoldTextProvider } from './accessibility/BoldTextProvider';
+import { SettingsScreen } from './components/SettingsScreen/SettingsScreen';
 import { VODList } from './components/VODList/VODList';
 import { ContinueWatchingRail } from './components/ContinueWatchingRail/ContinueWatchingRail';
 import { ContinueWatchingItem } from './components/ContinueWatchingRail/ContinueWatchingRail.types';
@@ -24,6 +27,14 @@ import { SelectedContent } from './App.types';
 import { styles } from './App.styles';
 
 export default function App() {
+  return (
+    <BoldTextProvider>
+      <AppContent />
+    </BoldTextProvider>
+  );
+}
+
+const AppContent = () => {
   const [vodList, setVodList] = useState<VODItem[]>([]);
   const [channels, setChannels] = useState<LiveChannel[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -38,9 +49,10 @@ export default function App() {
   // Search overlay state.
   const [searchVisible, setSearchVisible] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [settingsVisible, setSettingsVisible] = useState(false);
 
   const { containerRef: headerContainerRef, getItemProps: getHeaderItemProps } =
-    useFocusGroup('header-bar', 1);
+    useFocusGroup('header-bar', 2);
 
   useEffect(() => {
     loadWatchHistory().then(setWatchHistory);
@@ -120,6 +132,9 @@ export default function App() {
     setSearchQuery('');
   }, []);
 
+  const handleOpenSettings = useCallback(() => setSettingsVisible(true), []);
+  const handleCloseSettings = useCallback(() => setSettingsVisible(false), []);
+
   if (selected) {
     return <VideoPlayer item={selected} onBack={handleBack} />;
   }
@@ -152,6 +167,10 @@ export default function App() {
     );
   }
 
+  if (settingsVisible) {
+    return <SettingsScreen onBack={handleCloseSettings} />;
+  }
+
   if (searchVisible) {
     return (
       <SearchScreen
@@ -170,20 +189,41 @@ export default function App() {
       <FocusGroup style={styles.header}>
         <View ref={headerContainerRef} style={styles.headerRow}>
           <View style={styles.headerText}>
-            <Text style={styles.title}>OTT TV App</Text>
+            <Text style={styles.title} accessibilityRole="header">
+              OTT TV App
+            </Text>
             <Text style={styles.subtitle}>Videos & Live Channels</Text>
           </View>
-          <Pressable
-            {...getHeaderItemProps(0)}
-            onPress={handleOpenSearch}
-            style={({ focused }) => [
-              styles.searchButton,
-              focused && styles.searchButtonFocused,
-            ]}
-          >
-            <Text style={styles.searchButtonIcon}>🔍</Text>
-            <Text style={styles.searchButtonLabel}>Search</Text>
-          </Pressable>
+          <View style={styles.headerActions}>
+            <Pressable
+              {...getHeaderItemProps(0)}
+              onPress={handleOpenSearch}
+              accessibilityRole="button"
+              accessibilityLabel="Search"
+              accessibilityHint="Opens search"
+              style={({ focused }) => [
+                styles.searchButton,
+                styles.searchButtonSpacing,
+                focused && styles.searchButtonFocused,
+              ]}
+            >
+              <Text style={styles.searchButtonIcon}>🔍</Text>
+              <Text style={styles.searchButtonLabel}>Search</Text>
+            </Pressable>
+            <Pressable
+              {...getHeaderItemProps(1)}
+              onPress={handleOpenSettings}
+              accessibilityRole="button"
+              accessibilityLabel="Settings"
+              accessibilityHint="Opens settings"
+              style={({ focused }) => [
+                styles.iconButton,
+                focused && styles.searchButtonFocused,
+              ]}
+            >
+              <Text style={styles.settingsIcon}>{'\u2699\uFE0E'}</Text>
+            </Pressable>
+          </View>
         </View>
       </FocusGroup>
 

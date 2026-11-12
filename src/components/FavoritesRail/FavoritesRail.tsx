@@ -1,12 +1,12 @@
 import React from 'react';
 import {
   View,
-  Text,
   Image,
   Pressable,
   FlatList,
   ListRenderItem,
 } from 'react-native';
+import { AppText as Text } from '../AppText/AppText';
 import { VODItem } from '../../types/vod';
 import { useFocusGroup } from '../../focus/useFocusGroup';
 import { formatDuration } from '../../utils/time';
@@ -30,6 +30,11 @@ export const FavoritesRail: React.FC<FavoritesRailProps> = ({
     <Pressable
       {...getItemProps(index)}
       onPress={() => onSelectVOD(item)}
+      accessibilityRole="button"
+      accessibilityLabel={`${item.title}, favorite, rated ${item.rating} out of 5, ${formatDuration(
+        item.duration,
+      )}`}
+      accessibilityHint="Opens details"
       style={({ focused }) => [
         styles.vodItem,
         focused && styles.vodItemFocused,
@@ -39,8 +44,9 @@ export const FavoritesRail: React.FC<FavoritesRailProps> = ({
         source={{ uri: item.thumbnail }}
         style={styles.thumbnail}
         resizeMode="cover"
+        aria-hidden
       />
-      <View style={styles.cardOverlay}>
+      <View style={styles.cardOverlay} aria-hidden>
         <Text style={styles.title} numberOfLines={2} ellipsizeMode="tail">
           {item.title}
         </Text>
@@ -54,7 +60,9 @@ export const FavoritesRail: React.FC<FavoritesRailProps> = ({
 
   return (
     <View style={styles.container} ref={containerRef}>
-      <Text style={styles.sectionTitle}>Favorites</Text>
+      <Text style={styles.sectionTitle} accessibilityRole="header">
+        Favorites
+      </Text>
       <FlatList
         data={items}
         renderItem={renderItem}

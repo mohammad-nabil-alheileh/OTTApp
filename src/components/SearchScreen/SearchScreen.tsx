@@ -10,9 +10,9 @@ import {
   Image,
   ListRenderItem,
   Pressable,
-  Text,
   View,
 } from 'react-native';
+import { AppText as Text } from '../AppText/AppText';
 import { useBackHandler } from '../../hooks/useBackHandler';
 import { useFocusGroup } from '../../focus/useFocusGroup';
 import { SearchInputMethod, trackSearch } from '../../services/analytics';
@@ -155,6 +155,11 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({
           setFocusedArea('results');
         }}
         onPress={() => onSelectVOD(item)}
+        accessibilityRole="button"
+        accessibilityLabel={`${item.title}, rated ${item.rating} out of 5, ${formatDuration(
+          item.duration,
+        )}`}
+        accessibilityHint="Opens details"
         style={({ focused }) => [
           styles.resultCard,
           focused && styles.resultCardFocused,
@@ -164,8 +169,9 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({
           source={{ uri: item.thumbnail }}
           style={styles.resultThumbnail}
           resizeMode="cover"
+          aria-hidden
         />
-        <View style={styles.resultOverlay}>
+        <View style={styles.resultOverlay} aria-hidden>
           <Text style={styles.resultTitle} numberOfLines={1}>
             {item.title}
           </Text>
@@ -188,6 +194,9 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({
               setFocusedArea('back');
             }}
             onPress={onBack}
+            accessibilityRole="button"
+            accessibilityLabel="Back"
+            accessibilityHint="Closes search"
             style={({ focused }) => [
               styles.backButton,
               focused && styles.backButtonFocused,
@@ -197,12 +206,21 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({
             <Text style={styles.backText}>Back</Text>
           </Pressable>
         </View>
-        <Text style={styles.headerTitle}>Search</Text>
+        <Text style={styles.headerTitle} accessibilityRole="header">
+          Search
+        </Text>
       </View>
 
       <View style={styles.body}>
         <View style={styles.queryBar}>
-          <Text style={styles.queryIcon}>🔍</Text>
+          <Text
+            style={styles.queryIcon}
+            accessible={false}
+            importantForAccessibility="no"
+            accessibilityElementsHidden
+          >
+            🔍
+          </Text>
           <View style={styles.queryField}>
             {voiceListening && voicePartial ? (
               <Text
@@ -236,9 +254,13 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({
                   setFocusedArea('mic');
                 }}
                 onPress={handleVoiceSearch}
+                accessibilityRole="button"
                 accessibilityLabel={
                   voiceListening ? 'Listening' : 'Search by voice'
                 }
+                accessibilityHint="Starts voice search"
+                accessibilityState={{ busy: voiceListening }}
+                aria-busy={voiceListening}
                 style={({ focused }) => [
                   styles.micButton,
                   focused && styles.micButtonFocused,
@@ -261,7 +283,7 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({
           />
         </View>
 
-        <Text style={styles.hint}>
+        <Text style={styles.hint} accessibilityLiveRegion="polite">
           {voiceListening
             ? voiceCapturing
               ? 'Listening… speak now'
@@ -271,11 +293,14 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({
 
         <View style={styles.resultsSection} ref={resultsContainerRef}>
           <View style={styles.resultsHeader}>
-            <Text style={styles.resultsTitle}>
+            <Text style={styles.resultsTitle} accessibilityRole="header">
               {hasQuery ? 'Results' : 'All Videos'}
             </Text>
             {!isLoading && (
-              <Text style={styles.resultsCount}>
+              <Text
+                style={styles.resultsCount}
+                accessibilityLiveRegion="polite"
+              >
                 {results.length} {results.length === 1 ? 'video' : 'videos'}
               </Text>
             )}
@@ -283,7 +308,9 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({
 
           {isLoading ? (
             <View style={styles.emptyState}>
-              <Text style={styles.emptyTitle}>Loading videos…</Text>
+              <Text style={styles.emptyTitle} accessibilityLiveRegion="polite">
+                Loading videos…
+              </Text>
             </View>
           ) : results.length > 0 ? (
             <FlatList
@@ -297,7 +324,7 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({
             />
           ) : (
             <View style={styles.emptyState}>
-              <Text style={styles.emptyTitle}>
+              <Text style={styles.emptyTitle} accessibilityLiveRegion="polite">
                 {hasQuery
                   ? `No videos match “${query.trim()}”`
                   : 'No videos available'}

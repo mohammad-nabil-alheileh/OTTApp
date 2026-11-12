@@ -4,9 +4,9 @@ import {
   Image,
   ListRenderItem,
   Pressable,
-  Text,
   View,
 } from 'react-native';
+import { AppText as Text } from '../AppText/AppText';
 import { useBackHandler } from '../../hooks/useBackHandler';
 import { useFocusGroup } from '../../focus/useFocusGroup';
 import { VODItem } from '../../types/vod';
@@ -50,6 +50,9 @@ export const ShowDetails: React.FC<ShowDetailsProps> = ({
     <Pressable
       {...related.getItemProps(index)}
       onPress={() => onSelectVOD(vod)}
+      accessibilityRole="button"
+      accessibilityLabel={vod.title}
+      accessibilityHint="Opens details"
       style={({ focused }) => [
         styles.relatedItem,
         focused && styles.relatedItemFocused,
@@ -59,8 +62,9 @@ export const ShowDetails: React.FC<ShowDetailsProps> = ({
         source={{ uri: vod.thumbnail }}
         style={styles.relatedThumbnail}
         resizeMode="cover"
+        aria-hidden
       />
-      <View style={styles.relatedOverlay}>
+      <View style={styles.relatedOverlay} aria-hidden>
         <Text style={styles.relatedTitle} numberOfLines={1}>
           {vod.title}
         </Text>
@@ -74,15 +78,19 @@ export const ShowDetails: React.FC<ShowDetailsProps> = ({
         source={{ uri: item.thumbnail }}
         style={styles.backdrop}
         resizeMode="cover"
+        accessible={false}
+        importantForAccessibility="no-hide-descendants"
+        accessibilityElementsHidden
       />
       <View style={styles.content}>
         <Image
           source={{ uri: item.poster }}
           style={styles.poster}
           resizeMode="cover"
+          aria-hidden
         />
         <View style={styles.info}>
-          <Text style={styles.title} numberOfLines={2}>
+          <Text style={styles.title} numberOfLines={2} accessibilityRole="header">
             {item.title}
           </Text>
           <View style={styles.meta}>
@@ -97,6 +105,13 @@ export const ShowDetails: React.FC<ShowDetailsProps> = ({
             <Pressable
               {...buttons.getItemProps(0)}
               hasTVPreferredFocus
+              accessibilityRole="button"
+              accessibilityLabel={
+                resumePosition !== undefined && resumePosition > 0
+                  ? `Resume from ${formatTime(resumePosition)}`
+                  : 'Play'
+              }
+              accessibilityHint="Starts playback"
               style={({ focused }) => [
                 sharedStyles.controlButton,
                 focused && sharedStyles.controlButtonFocused,
@@ -112,6 +127,10 @@ export const ShowDetails: React.FC<ShowDetailsProps> = ({
             {trailer && (
               <Pressable
                 {...buttons.getItemProps(1)}
+                accessibilityRole="button"
+                accessibilityLabel={`Play trailer, ${formatTime(
+                  trailer.duration,
+                )}`}
                 style={({ focused }) => [
                   sharedStyles.controlButton,
                   focused && sharedStyles.controlButtonFocused,
@@ -126,6 +145,12 @@ export const ShowDetails: React.FC<ShowDetailsProps> = ({
             <Pressable
               {...buttons.getItemProps(trailer ? 2 : 1)}
               onPress={() => onToggleFavorite(item)}
+              accessibilityRole="button"
+              accessibilityLabel={
+                isFavorite ? 'Remove from favorites' : 'Add to favorites'
+              }
+              accessibilityState={{ selected: isFavorite }}
+              aria-selected={isFavorite}
               style={({ focused }) => [
                 sharedStyles.controlButton,
                 focused && sharedStyles.controlButtonFocused,
@@ -138,7 +163,9 @@ export const ShowDetails: React.FC<ShowDetailsProps> = ({
           </View>
           {relatedItems.length > 0 && (
             <View style={styles.related} ref={related.containerRef}>
-              <Text style={styles.relatedHeading}>More to Watch</Text>
+              <Text style={styles.relatedHeading} accessibilityRole="header">
+                More to Watch
+              </Text>
               <FlatList
                 data={relatedItems}
                 renderItem={renderRelatedItem}

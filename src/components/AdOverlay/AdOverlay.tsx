@@ -3,9 +3,9 @@ import {
   ActivityIndicator,
   Platform,
   Pressable,
-  Text,
   View,
 } from 'react-native';
+import { AppText as Text } from '../AppText/AppText';
 import { colors, sharedStyles } from '../../styles/theme';
 import { formatTime } from '../../utils/time';
 import { styles } from './AdOverlay.styles';
@@ -50,6 +50,9 @@ export const AdOverlay: React.FC<AdOverlayProps> = ({
     () => (ad.advertiser ? normalizeAdText(ad.advertiser) : ''),
     [ad.advertiser],
   );
+  const infoText = advertiserText
+    ? `This ad is from ${advertiserText}.`
+    : 'This is a sponsored message.';
 
   // Each ad starts with its details collapsed.
   useEffect(() => setInfoOpen(false), [ad.id, index]);
@@ -78,11 +81,7 @@ export const AdOverlay: React.FC<AdOverlayProps> = ({
           {infoOpen && (
             <View style={styles.infoPanel}>
               <Text style={styles.infoCaption}>Sponsored</Text>
-              <Text style={styles.infoPanelText}>
-                {advertiserText
-                  ? `This ad is from ${advertiserText}.`
-                  : 'This is a sponsored message.'}
-              </Text>
+              <Text style={styles.infoPanelText}>{infoText}</Text>
             </View>
           )}
           <Pressable
@@ -94,6 +93,10 @@ export const AdOverlay: React.FC<AdOverlayProps> = ({
               focused && sharedStyles.controlButtonFocused,
             ]}
             onPress={() => setInfoOpen(open => !open)}
+            accessibilityRole="button"
+            accessibilityLabel={`Ad details: ${ad.title}`}
+            accessibilityState={{ expanded: infoOpen }}
+            aria-expanded={infoOpen}
           >
             <Text style={sharedStyles.controlButtonText} numberOfLines={1}>
               {ad.title}
@@ -112,6 +115,13 @@ export const AdOverlay: React.FC<AdOverlayProps> = ({
               focused && canSkip && sharedStyles.controlButtonFocused,
             ]}
             onPress={canSkip ? onSkip : undefined}
+            accessibilityRole="button"
+            accessibilityLabel={
+              canSkip ? 'Skip ad' : `Skip ad in ${Math.max(skipIn, 1)} seconds`
+            }
+            accessibilityHint={
+              canSkip ? undefined : 'Available after the countdown'
+            }
           >
             <Text
               style={[

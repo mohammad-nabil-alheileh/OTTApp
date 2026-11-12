@@ -39,6 +39,8 @@ export const AdPlayer: React.FC<AdPlayerProps> = ({ adBreak, onComplete }) => {
         viewType={ViewType.TEXTURE}
         resizeMode="contain"
         progressUpdateInterval={250}
+        accessible
+        accessibilityLabel={`Advertisement: ${ad.title}`}
         onLoad={e => setDuration(e.duration)}
         onProgress={e => setPosition(e.currentTime)}
         onEnd={next}

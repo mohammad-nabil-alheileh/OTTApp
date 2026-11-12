@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, Text, Image, Pressable, FlatList, ListRenderItem } from 'react-native';
+import { View, Image, Pressable, FlatList, ListRenderItem } from 'react-native';
+import { AppText as Text } from '../AppText/AppText';
 import { LiveChannel } from '../../types/live';
 import { useFocusGroup } from '../../focus/useFocusGroup';
 import { styles } from './LiveChannelList.styles';
@@ -18,7 +19,9 @@ export const LiveChannelList: React.FC<LiveChannelListProps> = ({
   if (isLoading) {
     return (
       <View style={styles.loadingContainer}>
-        <Text style={styles.loadingText}>Loading live channels...</Text>
+        <Text style={styles.loadingText} accessibilityLiveRegion="polite">
+          Loading live channels...
+        </Text>
       </View>
     );
   }
@@ -27,16 +30,31 @@ export const LiveChannelList: React.FC<LiveChannelListProps> = ({
     <Pressable
       {...getItemProps(index)}
       onPress={() => onSelectChannel(item)}
+      accessibilityRole="button"
+      accessibilityLabel={`${item.name}, ${item.category}${
+        item.isLive ? ', live' : ''
+      }`}
+      accessibilityHint="Plays channel"
       style={({ focused }) => [styles.channelCard, focused && styles.channelCardFocused]}
     >
-      <Image source={{ uri: item.banner }} style={styles.banner} resizeMode="cover" />
+      <Image
+        source={{ uri: item.banner }}
+        style={styles.banner}
+        resizeMode="cover"
+        aria-hidden
+      />
       {item.isLive && (
-        <View style={styles.liveBadge}>
+        <View style={styles.liveBadge} aria-hidden>
           <Text style={styles.liveText}>● LIVE</Text>
         </View>
       )}
-      <Image source={{ uri: item.icon }} style={styles.icon} resizeMode="cover" />
-      <View style={styles.cardOverlay}>
+      <Image
+        source={{ uri: item.icon }}
+        style={styles.icon}
+        resizeMode="cover"
+        aria-hidden
+      />
+      <View style={styles.cardOverlay} aria-hidden>
         <Text style={styles.channelName} numberOfLines={2} ellipsizeMode="tail">
           {item.name}
         </Text>
@@ -49,7 +67,9 @@ export const LiveChannelList: React.FC<LiveChannelListProps> = ({
 
   return (
     <View style={styles.container} ref={containerRef}>
-      <Text style={styles.sectionTitle}>Live Channels</Text>
+      <Text style={styles.sectionTitle} accessibilityRole="header">
+        Live Channels
+      </Text>
       <FlatList
         data={channels}
         renderItem={renderChannel}

@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react';
-import { Platform, Pressable, Text, View } from 'react-native';
+import { Platform, Pressable, View } from 'react-native';
+import { AppText as Text } from '../AppText/AppText';
 import { ProgressBar } from '../ProgressBar/ProgressBar';
 import { OptionSelector } from '../OptionSelector/OptionSelector';
 import { SelectorOption } from '../OptionSelector/OptionSelector.types';
@@ -64,6 +65,8 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
       <View style={styles.buttons}>
         {!isLive && (
           <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Skip back 10 seconds"
             style={({ focused }) => [
               sharedStyles.controlButton,
               focused && sharedStyles.controlButtonFocused,
@@ -76,6 +79,9 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
         <Pressable
           ref={playButtonRef}
           hasTVPreferredFocus
+          accessibilityRole="button"
+          accessibilityLabel={paused ? 'Play' : 'Pause'}
+          accessibilityHint="Toggles playback"
           style={({ focused }) => [
             sharedStyles.controlButton,
             focused && sharedStyles.controlButtonFocused,
@@ -88,6 +94,8 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
         </Pressable>
         {!isLive && (
           <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Skip forward 10 seconds"
             style={({ focused }) => [
               sharedStyles.controlButton,
               focused && sharedStyles.controlButtonFocused,
@@ -115,6 +123,17 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
         )}
         {isLive && (
           <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={
+              liveState.isBehindLive
+                ? `Go live, ${formatTime(
+                    liveState.secondsBehindLive,
+                  )} behind live`
+                : 'Live'
+            }
+            accessibilityHint={
+              liveState.isBehindLive ? 'Jumps to the live edge' : undefined
+            }
             style={({ focused }) => [
               sharedStyles.controlButton,
               focused && sharedStyles.controlButtonFocused,

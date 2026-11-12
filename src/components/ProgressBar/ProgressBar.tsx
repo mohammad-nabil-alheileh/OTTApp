@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { GestureResponderEvent, LayoutChangeEvent, Pressable, Text, View } from 'react-native';
+import { GestureResponderEvent, LayoutChangeEvent, Pressable, View } from 'react-native';
+import { AppText as Text } from '../AppText/AppText';
 import { useRemoteKeys } from '../../hooks/useRemoteKeys';
 import { RemoteKey } from '../../types/remote';
 import { clamp, formatTime, skipBy } from '../../utils/time';
@@ -66,6 +67,33 @@ export const ProgressBar: React.FC<ProgressBarProps> = ({
           commitScrub();
         }}
         onPress={commitScrub}
+        accessibilityRole="adjustable"
+        accessibilityLabel="Playback position"
+        accessibilityHint="Left and right skip 10 seconds"
+        accessibilityValue={{
+          min: 0,
+          max: Math.round(duration),
+          now: Math.round(shownTime),
+          text: `${formatTime(shownTime)} of ${formatTime(duration)}`,
+        }}
+        aria-valuemin={0}
+        aria-valuemax={Math.round(duration)}
+        aria-valuenow={Math.round(shownTime)}
+        aria-valuetext={`${formatTime(shownTime)} of ${formatTime(duration)}`}
+        accessibilityActions={[
+          { name: 'increment', label: 'Forward 10 seconds' },
+          { name: 'decrement', label: 'Back 10 seconds' },
+        ]}
+        onAccessibilityAction={event => {
+          if (duration <= 0) {
+            return;
+          }
+          const step =
+            event.nativeEvent.actionName === 'increment'
+              ? SCRUB_STEP_SECONDS
+              : -SCRUB_STEP_SECONDS;
+          onSeek(skipBy(currentTime, step, duration));
+        }}
       >
         <View
           style={styles.hitArea}

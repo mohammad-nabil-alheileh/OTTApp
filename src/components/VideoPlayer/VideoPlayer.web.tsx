@@ -1,7 +1,8 @@
 /// <reference lib="dom" />
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
 import Hls from 'hls.js';
+import { AppText as Text } from '../AppText/AppText';
 import { PlayerControls } from '../PlayerControls/PlayerControls';
 import { PlayerStatus } from '../PlayerStatus/PlayerStatus';
 import { IdleCatcher } from '../IdleCatcher/IdleCatcher';
@@ -182,6 +183,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({ item, onBack }) => {
         ref={videoRef}
         style={webVideoStyle}
         playsInline
+        aria-label={`Now playing: ${item.title}`}
         onPlay={() => setPaused(false)}
         onPause={() => setPaused(true)}
         // 'waiting'/'seeking' = stalled; 'playing' (or 'canplay' when paused) = recovered.
@@ -216,7 +218,11 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({ item, onBack }) => {
         <View style={styles.overlay}>
           {overlay.visible && (
             <View style={styles.topBar}>
-              <Text style={styles.title} numberOfLines={1}>
+              <Text
+                style={styles.title}
+                numberOfLines={1}
+                accessibilityRole="header"
+              >
                 {item.title}
               </Text>
             </View>

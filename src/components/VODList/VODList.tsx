@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
-import { View, Text, Image, Pressable, FlatList, ListRenderItem } from 'react-native';
+import { View, Image, Pressable, FlatList, ListRenderItem } from 'react-native';
+import { AppText as Text } from '../AppText/AppText';
 import { VODItem } from '../../types/vod';
 import { useFocusGroup } from '../../focus/useFocusGroup';
 import { formatDuration } from '../../utils/time';
@@ -21,7 +22,9 @@ export const VODList: React.FC<VODListProps> = ({ vodList, onSelectVOD, isLoadin
   if (isLoading) {
     return (
       <View style={styles.loadingContainer}>
-        <Text style={styles.loadingText}>Loading VODs...</Text>
+        <Text style={styles.loadingText} accessibilityLiveRegion="polite">
+          Loading VODs...
+        </Text>
       </View>
     );
   }
@@ -31,10 +34,20 @@ export const VODList: React.FC<VODListProps> = ({ vodList, onSelectVOD, isLoadin
       {...getItemProps(index)}
       hasTVPreferredFocus={index === 0}
       onPress={() => onSelectVOD(item)}
+      accessibilityRole="button"
+      accessibilityLabel={`${item.title}, rated ${item.rating} out of 5, ${formatDuration(
+        item.duration,
+      )}`}
+      accessibilityHint="Opens details"
       style={({ focused }) => [styles.vodItem, focused && styles.vodItemFocused]}
     >
-      <Image source={{ uri: item.thumbnail }} style={styles.thumbnail} resizeMode="cover" />
-      <View style={styles.cardOverlay}>
+      <Image
+        source={{ uri: item.thumbnail }}
+        style={styles.thumbnail}
+        resizeMode="cover"
+        aria-hidden
+      />
+      <View style={styles.cardOverlay} aria-hidden>
         <Text style={styles.title} numberOfLines={2} ellipsizeMode="tail">
           {item.title}
         </Text>
@@ -48,7 +61,9 @@ export const VODList: React.FC<VODListProps> = ({ vodList, onSelectVOD, isLoadin
 
   return (
     <View style={styles.container} ref={containerRef}>
-      <Text style={styles.sectionTitle}>Videos On Demand</Text>
+      <Text style={styles.sectionTitle} accessibilityRole="header">
+        Videos On Demand
+      </Text>
       <FlatList
         data={vodList}
         renderItem={renderVODItem}

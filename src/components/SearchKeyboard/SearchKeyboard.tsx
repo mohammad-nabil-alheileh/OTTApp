@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { Pressable, View } from 'react-native';
+import { AppText as Text } from '../AppText/AppText';
 import { useFocusGroup } from '../../focus/useFocusGroup';
 import { SearchKeyboardProps } from './SearchKeyboard.types';
 import { ROW_INDENTS, keyWidth, styles } from './SearchKeyboard.styles';
@@ -16,6 +17,19 @@ const ACTIONS = [
   { id: 'space', label: 'SPACE', units: 4 },
   { id: 'clear', label: 'CLEAR', units: 2 },
 ];
+
+// Screen readers announce these keys as words, not symbols.
+const KEY_LABELS: Record<string, string> = {
+  '.': 'period',
+  ',': 'comma',
+  '-': 'dash',
+};
+
+const ACTION_LABELS: Record<string, string> = {
+  delete: 'Delete',
+  space: 'Space',
+  clear: 'Clear',
+};
 
 interface KeyboardRowProps {
   groupId: string;
@@ -63,6 +77,8 @@ const KeyboardRow: React.FC<KeyboardRowProps> = ({
             }}
             hasTVPreferredFocus={autoFocus && index === 0}
             onPress={() => onKeyPress(key)}
+            accessibilityRole="button"
+            accessibilityLabel={KEY_LABELS[key] ?? key}
             style={({ focused }) => [styles.key, focused && styles.keyFocused]}
           >
             {({ focused }) => (
@@ -116,9 +132,8 @@ const ActionRow: React.FC<ActionRowProps> = ({
           <Pressable
             key={action.id}
             {...itemProps}
-            accessibilityLabel={
-              action.id === 'delete' ? 'Delete' : action.label
-            }
+            accessibilityRole="button"
+            accessibilityLabel={ACTION_LABELS[action.id]}
             onFocus={() => {
               itemProps.onFocus?.();
               onFocus?.();

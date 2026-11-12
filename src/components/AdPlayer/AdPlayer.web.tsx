@@ -54,6 +54,7 @@ export const AdPlayer: React.FC<AdPlayerProps> = ({ adBreak, onComplete }) => {
         ref={videoRef}
         style={webVideoStyle}
         playsInline
+        aria-label={`Advertisement${displayAd ? `: ${displayAd.title}` : ''}`}
         onLoadedMetadata={e => {
           const d = e.currentTarget.duration;
           setDuration(Number.isFinite(d) ? d : 0);

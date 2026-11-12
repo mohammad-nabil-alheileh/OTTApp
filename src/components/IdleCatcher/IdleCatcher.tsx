@@ -21,6 +21,8 @@ export const IdleCatcher: React.FC<IdleCatcherProps> = ({ onWake }) => {
       hasTVPreferredFocus
       style={styles.catcher}
       onPress={onWake}
+      accessibilityRole="button"
+      accessibilityLabel="Show playback controls"
     />
   );
 };

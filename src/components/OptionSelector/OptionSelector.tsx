@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Platform, Pressable, Text, View } from 'react-native';
+import { Platform, Pressable, View } from 'react-native';
+import { AppText as Text } from '../AppText/AppText';
 import { useBackHandler } from '../../hooks/useBackHandler';
 import { useMenuKeys } from '../../hooks/useMenuKeys';
 import { sharedStyles } from '../../styles/theme';
@@ -96,6 +97,10 @@ export const OptionSelector: React.FC<OptionSelectorProps> = ({
                   onChange(option.value);
                   closeMenu();
                 }}
+                accessibilityRole="button"
+                accessibilityLabel={option.label}
+                accessibilityState={{ selected }}
+                aria-selected={selected}
                 style={({ focused }) => [
                   styles.option,
                   focused && styles.optionFocused,
@@ -123,6 +128,13 @@ export const OptionSelector: React.FC<OptionSelectorProps> = ({
         ref={buttonRef}
         hasTVPreferredFocus={refocusButton}
         onPress={open ? closeMenu : openMenu}
+        accessibilityRole="button"
+        accessibilityLabel={`${title}: ${
+          options.find(o => o.value === value)?.label
+        }`}
+        accessibilityHint={`Opens ${title.toLowerCase()} options`}
+        accessibilityState={{ expanded: open }}
+        aria-expanded={open}
         style={({ focused }) => [
           sharedStyles.controlButton,
           focused && sharedStyles.controlButtonFocused,

@@ -5,7 +5,8 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
+import { AppText as Text } from '../AppText/AppText';
 import Video, {
   SelectedVideoTrack,
   SelectedVideoTrackType,
@@ -152,6 +153,8 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({ item, onBack }) => {
         }
         resizeMode="contain"
         progressUpdateInterval={250}
+        accessible
+        accessibilityLabel={`Now playing: ${item.title}`}
         onLoad={e => {
           clearPendingSeek();
           setDuration(e.duration);
@@ -185,7 +188,11 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({ item, onBack }) => {
         <View style={styles.overlay}>
           {overlay.visible && (
             <View style={styles.topBar}>
-              <Text style={styles.title} numberOfLines={1}>
+              <Text
+                style={styles.title}
+                numberOfLines={1}
+                accessibilityRole="header"
+              >
                 {item.title}
               </Text>
             </View>
