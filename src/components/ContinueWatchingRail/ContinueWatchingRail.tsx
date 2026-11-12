@@ -4,6 +4,7 @@ import { AppPressable as Pressable } from '../AppPressable/AppPressable';
 import { AppText as Text } from '../AppText/AppText';
 import { clamp, formatDuration } from '../../utils/time';
 import { useFocusGroup } from '../../focus/useFocusGroup';
+import { withHomeRow } from '../../hooks/useHomeBack';
 import { styles } from './ContinueWatchingRail.styles';
 import {
   ContinueWatchingItem,
@@ -13,6 +14,7 @@ import {
 export const ContinueWatchingRail: React.FC<ContinueWatchingRailProps> = ({
   items,
   onSelectVOD,
+  homeRow,
 }) => {
   const { containerRef, getItemProps, activeIndex } = useFocusGroup(
     'continue-rail',
@@ -30,7 +32,7 @@ export const ContinueWatchingRail: React.FC<ContinueWatchingRailProps> = ({
     const remaining = Math.round(Math.max(0, duration - position));
     return (
       <Pressable
-        {...getItemProps(index)}
+        {...withHomeRow(getItemProps(index), index, homeRow)}
         onPress={() => onSelectVOD(vod)}
         accessibilityRole="button"
         accessibilityLabel={`${vod.title}, ${formatDuration(

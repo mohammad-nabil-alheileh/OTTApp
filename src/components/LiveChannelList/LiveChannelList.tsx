@@ -4,6 +4,7 @@ import { AppPressable as Pressable } from '../AppPressable/AppPressable';
 import { AppText as Text } from '../AppText/AppText';
 import { LiveChannel } from '../../types/live';
 import { useFocusGroup } from '../../focus/useFocusGroup';
+import { withHomeRow } from '../../hooks/useHomeBack';
 import { styles } from './LiveChannelList.styles';
 import { LiveChannelListProps } from './LiveChannelList.types';
 
@@ -11,6 +12,7 @@ export const LiveChannelList: React.FC<LiveChannelListProps> = ({
   channels,
   onSelectChannel,
   isLoading,
+  homeRow,
 }) => {
   const { containerRef, getItemProps, activeIndex } = useFocusGroup(
     'live-rail',
@@ -29,7 +31,7 @@ export const LiveChannelList: React.FC<LiveChannelListProps> = ({
 
   const renderChannel: ListRenderItem<LiveChannel> = ({ item, index }) => (
     <Pressable
-      {...getItemProps(index)}
+      {...withHomeRow(getItemProps(index), index, homeRow)}
       onPress={() => onSelectChannel(item)}
       accessibilityRole="button"
       accessibilityLabel={`${item.name}, ${item.category}${

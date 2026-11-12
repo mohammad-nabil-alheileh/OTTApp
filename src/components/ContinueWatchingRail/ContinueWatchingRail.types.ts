@@ -1,3 +1,4 @@
+import { HomeRow } from '../../hooks/useHomeBack';
 import { VODItem } from '../../types/vod';
 
 export interface ContinueWatchingItem {
@@ -10,4 +11,6 @@ export interface ContinueWatchingItem {
 export interface ContinueWatchingRailProps {
   items: ContinueWatchingItem[];
   onSelectVOD: (vod: VODItem) => void;
+  // Set on the home screen so Back can return focus to the first row.
+  homeRow?: HomeRow;
 }

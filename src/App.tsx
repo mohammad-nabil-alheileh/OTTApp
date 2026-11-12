@@ -1,4 +1,10 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { View, ScrollView } from 'react-native';
 import { AppPressable as Pressable } from './components/AppPressable/AppPressable';
 import { AppText as Text } from './components/AppText/AppText';
@@ -20,6 +26,7 @@ import { VideoPlayer } from './components/VideoPlayer/VideoPlayer';
 import { ShowDetails } from './components/ShowDetails/ShowDetails';
 import { FocusGroup } from './components/FocusGroup/FocusGroup';
 import { useFocusGroup } from './focus/useFocusGroup';
+import { useHomeBack, withHomeRow } from './hooks/useHomeBack';
 import { SearchScreen } from './components/SearchScreen/SearchScreen';
 import { ListenScreen } from './components/ListenScreen/ListenScreen';
 import { PodcastDetails } from './components/PodcastDetails/PodcastDetails';
@@ -164,6 +171,32 @@ const AppContent = () => {
     return () => clearTimeout(timer);
   }, []);
 
+  // Home rows top to bottom; Back returns focus to the first one before it
+  // exits the app.
+  const homeScrollRef = useRef<ScrollView>(null);
+  const homeRowKeys = useMemo(
+    () => [
+      ...(continueWatchingItems.length > 0 ? ['continue'] : []),
+      ...(favoriteItems.length > 0 ? ['favorites'] : []),
+      'vod',
+      'live',
+    ],
+    [continueWatchingItems.length, favoriteItems.length],
+  );
+  const isHomeVisible =
+    !selected &&
+    !playingAudio &&
+    !podcastDetails &&
+    !detailsItem &&
+    !settingsVisible &&
+    !searchVisible &&
+    !listenVisible;
+  const { getRow: getHomeRow } = useHomeBack(
+    homeRowKeys,
+    homeScrollRef,
+    isHomeVisible,
+  );
+
   const handleBack = useCallback(() => setSelected(null), []);
   const handleDetailsBack = useCallback(() => setDetailsItem(null), []);
 
@@ -273,7 +306,11 @@ const AppContent = () => {
           </View>
           <View style={styles.headerActions}>
             <Pressable
-              {...getHeaderItemProps(0)}
+              {...withHomeRow(
+                getHeaderItemProps(0),
+                0,
+                getHomeRow('header'),
+              )}
               onPress={handleOpenListen}
               accessibilityRole="button"
               accessibilityLabel="Listen"
@@ -288,7 +325,11 @@ const AppContent = () => {
               <Text style={styles.searchButtonLabel}>Listen</Text>
             </Pressable>
             <Pressable
-              {...getHeaderItemProps(1)}
+              {...withHomeRow(
+                getHeaderItemProps(1),
+                1,
+                getHomeRow('header'),
+              )}
               onPress={handleOpenSearch}
               accessibilityRole="button"
               accessibilityLabel="Search"
@@ -303,7 +344,11 @@ const AppContent = () => {
               <Text style={styles.searchButtonLabel}>Search</Text>
             </Pressable>
             <Pressable
-              {...getHeaderItemProps(2)}
+              {...withHomeRow(
+                getHeaderItemProps(2),
+                2,
+                getHomeRow('header'),
+              )}
               onPress={handleOpenSettings}
               accessibilityRole="button"
               accessibilityLabel="Settings"
@@ -320,6 +365,7 @@ const AppContent = () => {
       </FocusGroup>
 
       <ScrollView
+        ref={homeScrollRef}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
@@ -328,12 +374,17 @@ const AppContent = () => {
             <ContinueWatchingRail
               items={continueWatchingItems}
               onSelectVOD={setDetailsItem}
+              homeRow={getHomeRow('continue')}
             />
           </FocusGroup>
         )}
         {favoriteItems.length > 0 && (
           <FocusGroup>
-            <FavoritesRail items={favoriteItems} onSelectVOD={setDetailsItem} />
+            <FavoritesRail
+              items={favoriteItems}
+              onSelectVOD={setDetailsItem}
+              homeRow={getHomeRow('favorites')}
+            />
           </FocusGroup>
         )}
         <FocusGroup>
@@ -341,12 +392,14 @@ const AppContent = () => {
             vodList={vodList}
             isLoading={isLoading}
             onSelectVOD={setDetailsItem}
+            homeRow={getHomeRow('vod')}
           />
         </FocusGroup>
         <FocusGroup>
           <LiveChannelList
             channels={channels}
             isLoading={isLoading}
+            homeRow={getHomeRow('live')}
             onSelectChannel={channel =>
               setSelected({
                 title: channel.name,

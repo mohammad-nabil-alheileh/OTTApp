@@ -4,11 +4,17 @@ import { AppPressable as Pressable } from '../AppPressable/AppPressable';
 import { AppText as Text } from '../AppText/AppText';
 import { VODItem } from '../../types/vod';
 import { useFocusGroup } from '../../focus/useFocusGroup';
+import { withHomeRow } from '../../hooks/useHomeBack';
 import { formatDuration } from '../../utils/time';
 import { styles } from './VODList.styles';
 import { VODListProps } from './VODList.types';
 
-export const VODList: React.FC<VODListProps> = ({ vodList, onSelectVOD, isLoading }) => {
+export const VODList: React.FC<VODListProps> = ({
+  vodList,
+  onSelectVOD,
+  isLoading,
+  homeRow,
+}) => {
   const { containerRef, getItemProps, activeIndex, focusFirst } =
     useFocusGroup('vod-rail', vodList.length);
 
@@ -32,7 +38,7 @@ export const VODList: React.FC<VODListProps> = ({ vodList, onSelectVOD, isLoadin
 
   const renderVODItem: ListRenderItem<VODItem> = ({ item, index }) => (
     <Pressable
-      {...getItemProps(index)}
+      {...withHomeRow(getItemProps(index), index, homeRow)}
       hasTVPreferredFocus={index === 0}
       onPress={() => onSelectVOD(item)}
       accessibilityRole="button"
