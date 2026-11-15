@@ -11,6 +11,8 @@ import { AppText as Text } from './components/AppText/AppText';
 import { BoldTextProvider } from './accessibility/BoldTextProvider';
 import { SettingsScreen } from './components/SettingsScreen/SettingsScreen';
 import { VODList } from './components/VODList/VODList';
+import { AccountScreen } from './components/AccountScreen/AccountScreen';
+import { MOCK_ACCOUNT, initialsOf } from './services/account';
 import { ContinueWatchingRail } from './components/ContinueWatchingRail/ContinueWatchingRail';
 import { ContinueWatchingItem } from './components/ContinueWatchingRail/ContinueWatchingRail.types';
 import { FavoritesRail } from './components/FavoritesRail/FavoritesRail';
@@ -80,6 +82,7 @@ const AppContent = () => {
   const [searchVisible, setSearchVisible] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [settingsVisible, setSettingsVisible] = useState(false);
+  const [accountVisible, setAccountVisible] = useState(false);
   // Audio: the Listen landing page, then a podcast's details, then the player.
   // Each stays set under the next, so Back steps out one screen at a time.
   const [listenVisible, setListenVisible] = useState(false);
@@ -89,7 +92,7 @@ const AppContent = () => {
   const [listenHistory, setListenHistory] = useState<WatchProgress[]>([]);
 
   const { containerRef: headerContainerRef, getItemProps: getHeaderItemProps } =
-    useFocusGroup('header-bar', 3);
+    useFocusGroup('header-bar', 4);
 
   useEffect(() => {
     loadWatchHistory().then(setWatchHistory);
@@ -226,7 +229,8 @@ const AppContent = () => {
     !detailsItem &&
     !settingsVisible &&
     !searchVisible &&
-    !listenVisible;
+    !listenVisible &&
+    !accountVisible;
   const { getRow: getHomeRow } = useHomeBack(homeScrollRef, isHomeVisible);
 
   const handleBack = useCallback(() => setSelected(null), []);
@@ -254,6 +258,12 @@ const AppContent = () => {
     setSettingsVisible(true);
   }, []);
   const handleCloseSettings = useCallback(() => setSettingsVisible(false), []);
+
+  const handleOpenAccount = useCallback(() => {
+    setHomeFocusTarget(null);
+    setAccountVisible(true);
+  }, []);
+  const handleCloseAccount = useCallback(() => setAccountVisible(false), []);
 
   if (selected) {
     return (
@@ -315,6 +325,19 @@ const AppContent = () => {
 
   if (settingsVisible) {
     return <SettingsScreen onBack={handleCloseSettings} />;
+  }
+
+  if (accountVisible) {
+    return (
+      // Details opened from the favorites rail stack on top, so Back from a
+      // title returns here instead of all the way home.
+      <AccountScreen
+        profile={MOCK_ACCOUNT}
+        favorites={favoriteItems}
+        onSelectVOD={setDetailsItem}
+        onBack={handleCloseAccount}
+      />
+    );
   }
 
   if (searchVisible) {
@@ -402,6 +425,26 @@ const AppContent = () => {
               {...withHomeRow(
                 getHeaderItemProps(2),
                 2,
+                getHomeRow(HOME_HEADER_ROW),
+              )}
+              onPress={handleOpenAccount}
+              accessibilityRole="button"
+              accessibilityLabel="Account"
+              accessibilityHint="Opens account details"
+              style={({ focused }) => [
+                styles.iconButton,
+                styles.headerButtonSpacing,
+                focused && styles.searchButtonFocused,
+              ]}
+            >
+              <Text style={styles.accountInitials} aria-hidden>
+                {initialsOf(MOCK_ACCOUNT.name)}
+              </Text>
+            </Pressable>
+            <Pressable
+              {...withHomeRow(
+                getHeaderItemProps(3),
+                3,
                 getHomeRow(HOME_HEADER_ROW),
               )}
               onPress={handleOpenSettings}

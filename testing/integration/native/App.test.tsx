@@ -46,6 +46,19 @@ describe('App navigation (native TV)', () => {
     expect(screen.queryByRole('button', { name: 'Play' })).toBeNull();
     expect(await firstCard()).toBeTruthy();
   });
+
+  it('opens the account page from the header and returns home with Back', async () => {
+    await renderHome();
+
+    await fireEvent.press(screen.getByRole('button', { name: 'Account' }));
+    expect(await screen.findByText('Alex Carter')).toBeTruthy();
+    expect(screen.getByRole('header', { name: 'Account' })).toBeTruthy();
+
+    await pressBack();
+
+    expect(screen.queryByRole('header', { name: 'Account' })).toBeNull();
+    expect(await firstCard()).toBeTruthy();
+  });
 });
 
 describe('Focus after Player → Continue Watching (native TV)', () => {

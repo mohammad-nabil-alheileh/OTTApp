@@ -30,6 +30,21 @@ describe('App navigation (web TV)', () => {
     expect(screen.queryByRole('button', { name: 'Play' })).toBeNull();
     expect(await findFirstCard()).toBeTruthy();
   });
+
+  it('opens the account page from the header and returns home with Escape', async () => {
+    await renderApp();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Account' }));
+    expect(screen.getByText('Alex Carter')).toBeTruthy();
+    expect(document.activeElement).toBe(
+      screen.getByRole('button', { name: 'Back' }),
+    );
+
+    await pressKey('Escape');
+
+    expect(screen.queryByText('Alex Carter')).toBeNull();
+    expect(await findFirstCard()).toBeTruthy();
+  });
 });
 
 describe('Focus after Player → Continue Watching (web TV)', () => {

@@ -72,6 +72,11 @@ export const styles = StyleSheet.create({
     borderColor: 'transparent',
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
   },
+  // Initials stand in for a profile photo in the account button.
+  accountInitials: {
+    ...typography.subheading,
+    color: colors.text,
+  },
   // Text-presentation gear (U+FE0E) so it renders as a monochrome glyph, not
   // an emoji that some TV browsers leave out.
   settingsIcon: {
