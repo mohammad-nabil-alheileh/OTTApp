@@ -3,9 +3,9 @@ import {
   ActivityIndicator,
   Image,
   Platform,
-  Text,
   View,
 } from 'react-native';
+import { AppText as Text } from '../AppText/AppText';
 import { AppPressable as Pressable } from '../AppPressable/AppPressable';
 import { ProgressBar } from '../ProgressBar/ProgressBar';
 import { OptionSelector } from '../OptionSelector/OptionSelector';

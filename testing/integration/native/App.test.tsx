@@ -3,6 +3,7 @@ import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import App from '../../../src/App';
 import { mockVODData } from '../../../src/services/mockData';
 import { pressBack } from '../../helpers/native';
+import { mockStore } from '../../mocks/asyncStorage';
 
 // Whole-app flow under both android-tv and apple-tv: real components, real
 // state, only the native boundary (storage, video, remote) is faked.
@@ -44,5 +45,38 @@ describe('App navigation (native TV)', () => {
 
     expect(screen.queryByRole('button', { name: 'Play' })).toBeNull();
     expect(await firstCard()).toBeTruthy();
+  });
+});
+
+describe('Focus after Player → Continue Watching (native TV)', () => {
+  const [a, b, c] = mockVODData;
+  const continueCard = (title: string) =>
+    screen.findByRole('button', { name: new RegExp(`^${title}, .* left`) });
+
+  beforeEach(() => {
+    mockStore.clear();
+    mockStore.set(
+      'ott:watchHistory',
+      JSON.stringify(
+        [a, b, c].map(vod => ({ id: vod.id, position: 30, duration: 600 })),
+      ),
+    );
+  });
+
+  it('gives preferred focus to the played title by id, though it moved to the front', async () => {
+    await renderHome();
+
+    await fireEvent.press(await continueCard(b.title));
+    await fireEvent.press(await screen.findByRole('button', { name: /^Resume from/ }));
+    await pressBack(); // player → details
+    await pressBack(); // details → home
+
+    const preferred = screen
+      .getAllByRole('button')
+      .filter(button => button.props.hasTVPreferredFocus)
+      .map(button => button.props.accessibilityLabel);
+    expect(preferred).toEqual([
+      (await continueCard(b.title)).props.accessibilityLabel,
+    ]);
   });
 });

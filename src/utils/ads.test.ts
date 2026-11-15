@@ -1,4 +1,4 @@
-import { findCrossedBreaks } from './ads';
+import { findCrossedBreaks, formatAdvertiser } from './ads';
 import { AdBreak } from '../types/ads';
 
 const breaks: AdBreak[] = [
@@ -34,5 +34,39 @@ describe('findCrossedBreaks', () => {
 
   it('finds nothing on a backward seek', () => {
     expect(ids(findCrossedBreaks(breaks, new Set(), 400, 10))).toEqual([]);
+  });
+});
+
+describe('formatAdvertiser', () => {
+  it('keeps accented Latin letters', () => {
+    expect(formatAdvertiser('Café Média')).toBe('Café Média');
+  });
+
+  it('keeps non-Latin scripts', () => {
+    expect(formatAdvertiser('日本テレビ')).toBe('日本テレビ');
+    expect(formatAdvertiser('قناة الجزيرة')).toBe('قناة الجزيرة');
+  });
+
+  it('composes decomposed input into NFC', () => {
+    expect(formatAdvertiser('Café')).toBe('Café');
+  });
+
+  it('keeps symbols and punctuation that are part of a brand', () => {
+    expect(formatAdvertiser('AT&T')).toBe('AT&T');
+    expect(formatAdvertiser('Ben & Jerry’s')).toBe('Ben & Jerry’s');
+  });
+
+  it('drops control characters', () => {
+    expect(formatAdvertiser('Acme\u0000\u0007\u009F Ltd')).toBe('Acme Ltd');
+  });
+
+  it('collapses whitespace and trims', () => {
+    expect(formatAdvertiser('  MDN \n Web\tDocs ')).toBe('MDN Web Docs');
+  });
+
+  it('truncates without splitting a surrogate pair', () => {
+    const result = formatAdvertiser('😀'.repeat(500));
+    expect(Array.from(result)).toHaveLength(400);
+    expect(result.endsWith('😀…')).toBe(true);
   });
 });

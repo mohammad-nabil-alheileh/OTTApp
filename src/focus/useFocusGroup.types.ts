@@ -11,4 +11,5 @@ export interface FocusGroup {
   getItemProps: (index: number) => FocusGroupItemProps;
   activeIndex: number;
   focusFirst: () => void;
+  focusIndex: (index: number) => void;
 }

@@ -10,4 +10,7 @@ export interface VODListProps {
   onRetry: () => void;
   // Set on the home screen so Back can return focus to the first row.
   homeRow?: HomeRow;
+  // Card that takes focus when the rail loads; null when another home row
+  // holds focus.
+  preferredFocusIndex?: number | null;
 }

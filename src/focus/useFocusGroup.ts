@@ -7,6 +7,7 @@ const nativeGroup: FocusGroup = {
   getItemProps: () => ({}),
   activeIndex: 0,
   focusFirst: noop,
+  focusIndex: noop,
 };
 
 // Android TV / Apple TV have their own focus engine (and TV focus groups), so

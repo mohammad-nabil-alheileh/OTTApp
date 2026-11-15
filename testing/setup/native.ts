@@ -46,5 +46,10 @@ jest.mock('react-native-video', () => {
   const Video = React.forwardRef((props: object, ref: unknown) =>
     React.createElement('Video', { ...props, ref }),
   );
-  return { __esModule: true, default: Video };
+  return {
+    __esModule: true,
+    default: Video,
+    SelectedVideoTrackType: { AUTO: 'auto', RESOLUTION: 'resolution' },
+    ViewType: { TEXTURE: 0 },
+  };
 });

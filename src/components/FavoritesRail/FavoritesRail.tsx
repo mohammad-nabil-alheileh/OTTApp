@@ -9,6 +9,7 @@ import { AppPressable as Pressable } from '../AppPressable/AppPressable';
 import { AppText as Text } from '../AppText/AppText';
 import { VODItem } from '../../types/vod';
 import { useFocusGroup } from '../../focus/useFocusGroup';
+import { usePreferredFocus } from '../../focus/usePreferredFocus';
 import { withHomeRow } from '../../hooks/useHomeBack';
 import { formatDuration } from '../../utils/time';
 import { styles } from '../VODList/VODList.styles';
@@ -18,11 +19,13 @@ export const FavoritesRail: React.FC<FavoritesRailProps> = ({
   items,
   onSelectVOD,
   homeRow,
+  preferredFocusIndex,
 }) => {
-  const { containerRef, getItemProps, activeIndex } = useFocusGroup(
+  const { containerRef, getItemProps, activeIndex, focusIndex } = useFocusGroup(
     'favorites-rail',
     items.length,
   );
+  const initialNumToRender = usePreferredFocus(preferredFocusIndex, focusIndex);
 
   if (items.length === 0) {
     return null;
@@ -31,6 +34,7 @@ export const FavoritesRail: React.FC<FavoritesRailProps> = ({
   const renderItem: ListRenderItem<VODItem> = ({ item, index }) => (
     <Pressable
       {...withHomeRow(getItemProps(index), index, homeRow)}
+      hasTVPreferredFocus={index === preferredFocusIndex}
       onPress={() => onSelectVOD(item)}
       accessibilityRole="button"
       accessibilityLabel={`${item.title}, favorite, rated ${item.rating} out of 5, ${formatDuration(
@@ -70,6 +74,7 @@ export const FavoritesRail: React.FC<FavoritesRailProps> = ({
         renderItem={renderItem}
         keyExtractor={item => item.id}
         extraData={activeIndex}
+        initialNumToRender={initialNumToRender}
         horizontal
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.listContent}

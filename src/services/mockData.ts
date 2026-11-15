@@ -71,7 +71,7 @@ const ads: Record<'stock' | 'android' | 'flower', Ad> = {
   flower: {
     id: 'ad-flower',
     title: 'Flower',
-    advertiser: 'MDN Web Docs',
+    advertiser: 'MDN Wib Docs',
     url: 'https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4',
   },
 };

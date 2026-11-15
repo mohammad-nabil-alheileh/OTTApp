@@ -339,5 +339,15 @@ export const useFocusGroup = (
     }
   }, [group]);
 
-  return { containerRef, getItemProps, activeIndex, focusFirst };
+  const focusIndex = useCallback(
+    (index: number) => {
+      const target = availableIndex(group, index);
+      if (target !== null) {
+        focusItem(group, target);
+      }
+    },
+    [group],
+  );
+
+  return { containerRef, getItemProps, activeIndex, focusFirst, focusIndex };
 };

@@ -4,6 +4,7 @@ import { AppPressable as Pressable } from '../AppPressable/AppPressable';
 import { AppText as Text } from '../AppText/AppText';
 import { clamp, formatDuration } from '../../utils/time';
 import { useFocusGroup } from '../../focus/useFocusGroup';
+import { usePreferredFocus } from '../../focus/usePreferredFocus';
 import { withHomeRow } from '../../hooks/useHomeBack';
 import { styles } from './ContinueWatchingRail.styles';
 import {
@@ -15,11 +16,13 @@ export const ContinueWatchingRail: React.FC<ContinueWatchingRailProps> = ({
   items,
   onSelectVOD,
   homeRow,
+  preferredFocusIndex,
 }) => {
-  const { containerRef, getItemProps, activeIndex } = useFocusGroup(
+  const { containerRef, getItemProps, activeIndex, focusIndex } = useFocusGroup(
     'continue-rail',
     items.length,
   );
+  const initialNumToRender = usePreferredFocus(preferredFocusIndex, focusIndex);
 
   if (items.length === 0) {
     return null;
@@ -33,6 +36,7 @@ export const ContinueWatchingRail: React.FC<ContinueWatchingRailProps> = ({
     return (
       <Pressable
         {...withHomeRow(getItemProps(index), index, homeRow)}
+        hasTVPreferredFocus={index === preferredFocusIndex}
         onPress={() => onSelectVOD(vod)}
         accessibilityRole="button"
         accessibilityLabel={`${vod.title}, ${formatDuration(
@@ -71,6 +75,7 @@ export const ContinueWatchingRail: React.FC<ContinueWatchingRailProps> = ({
         renderItem={renderItem}
         keyExtractor={item => item.vod.id}
         extraData={activeIndex}
+        initialNumToRender={initialNumToRender}
         horizontal
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.listContent}

@@ -1,5 +1,6 @@
 import React, { useCallback, useMemo } from 'react';
-import { ScrollView, Text, View } from 'react-native';
+import { ScrollView, View } from 'react-native';
+import { AppText as Text } from '../AppText/AppText';
 import { ContinueListeningRail } from '../ContinueListeningRail/ContinueListeningRail';
 import { FocusGroup } from '../FocusGroup/FocusGroup';
 import { PageStatus } from '../PageStatus/PageStatus';

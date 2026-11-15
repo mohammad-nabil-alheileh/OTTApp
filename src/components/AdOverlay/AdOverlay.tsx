@@ -8,26 +8,11 @@ import {
 import { AppPressable as Pressable } from '../AppPressable/AppPressable';
 import { AppText as Text } from '../AppText/AppText';
 import { colors, sharedStyles } from '../../styles/theme';
+import { formatAdvertiser } from '../../utils/ads';
 import { formatTime } from '../../utils/time';
 import { useScreenReaderEnabled } from '../../accessibility/useScreenReaderEnabled';
 import { styles } from './AdOverlay.styles';
 import { AdOverlayProps } from './AdOverlay.types';
-
-const MAX_ADVERTISER_LENGTH = 400;
-
-// Ad feeds are inconsistent about Unicode forms, so compose the text into a
-// predictable shape before it reaches the info panel, and keep it to a
-// sensible length so long names don't push the panel off screen.
-const normalizeAdText = (text: string): string => {
-  const normalized = text
-    .normalize('NFKD')
-    .replace(/[^\w\s.,'-]/g, '')
-    .replace(/\s+/g, ' ')
-    .trim();
-  return normalized.length > MAX_ADVERTISER_LENGTH
-    ? `${normalized.slice(0, MAX_ADVERTISER_LENGTH - 1)}…`
-    : normalized;
-};
 
 // "Ad 1 of 2 · 0:12" badge, an ad info button (bottom left) and a Skip
 // button (bottom right) over the ad video.
@@ -66,7 +51,7 @@ export const AdOverlay: React.FC<AdOverlayProps> = ({
 
   // Computed once per ad rather than on every position tick.
   const advertiserText = useMemo(
-    () => (ad.advertiser ? normalizeAdText(ad.advertiser) : ''),
+    () => (ad.advertiser ? formatAdvertiser(ad.advertiser) : ''),
     [ad.advertiser],
   );
   const infoText = advertiserText

@@ -1,9 +1,10 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { View, Image, FlatList, ListRenderItem } from 'react-native';
 import { AppPressable as Pressable } from '../AppPressable/AppPressable';
 import { AppText as Text } from '../AppText/AppText';
 import { VODItem } from '../../types/vod';
 import { useFocusGroup } from '../../focus/useFocusGroup';
+import { usePreferredFocus } from '../../focus/usePreferredFocus';
 import { withHomeRow } from '../../hooks/useHomeBack';
 import { formatDuration } from '../../utils/time';
 import { styles } from './VODList.styles';
@@ -17,17 +18,15 @@ export const VODList: React.FC<VODListProps> = ({
   failure,
   onRetry,
   homeRow,
+  preferredFocusIndex = 0,
 }) => {
-  const { containerRef, getItemProps, activeIndex, focusFirst } =
+  const { containerRef, getItemProps, activeIndex, focusIndex } =
     useFocusGroup('vod-rail', vodList.length);
-
-  // Native uses hasTVPreferredFocus below; on web this is a no-op until the
-  // data arrives, then it puts focus on the rail.
-  useEffect(() => {
-    if (!isLoading && !failure) {
-      focusFirst();
-    }
-  }, [isLoading, failure, focusFirst]);
+  const initialNumToRender = usePreferredFocus(
+    preferredFocusIndex,
+    focusIndex,
+    !isLoading && !failure,
+  );
 
   // A failed rail keeps its title and takes only its own row; the rest of the
   // home page keeps working. Retry is the row's only focus stop.
@@ -43,7 +42,7 @@ export const VODList: React.FC<VODListProps> = ({
           subject="videos"
           retrying={isLoading}
           onRetry={onRetry}
-          autoFocus
+          autoFocus={preferredFocusIndex !== null}
         />
       </View>
     );
@@ -62,7 +61,7 @@ export const VODList: React.FC<VODListProps> = ({
   const renderVODItem: ListRenderItem<VODItem> = ({ item, index }) => (
     <Pressable
       {...withHomeRow(getItemProps(index), index, homeRow)}
-      hasTVPreferredFocus={index === 0}
+      hasTVPreferredFocus={index === preferredFocusIndex}
       onPress={() => onSelectVOD(item)}
       accessibilityRole="button"
       accessibilityLabel={`${item.title}, rated ${item.rating} out of 5, ${formatDuration(
@@ -99,6 +98,7 @@ export const VODList: React.FC<VODListProps> = ({
         renderItem={renderVODItem}
         keyExtractor={item => item.id}
         extraData={activeIndex}
+        initialNumToRender={initialNumToRender}
         horizontal
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.listContent}

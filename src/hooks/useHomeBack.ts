@@ -1,5 +1,5 @@
 import { RefObject, useCallback, useMemo, useRef, useState } from 'react';
-import { Platform, ScrollView, View } from 'react-native';
+import { AccessibilityInfo, Platform, ScrollView, View } from 'react-native';
 import { FocusGroupItemProps } from '../focus/useFocusGroup.types';
 import { useBackHandler } from './useBackHandler';
 
@@ -35,26 +35,31 @@ export const withHomeRow = (
   };
 };
 
+// The header row that Back returns focus to.
+export const HOME_HEADER_ROW = 'header';
+
 const focusNode = (node: View) => {
   if (Platform.OS === 'web') {
     (node as unknown as HTMLElement).focus();
-  } else {
-    (node as unknown as { requestTVFocus?: () => void }).requestTVFocus?.();
+    return;
+  }
+  (node as unknown as { requestTVFocus?: () => void }).requestTVFocus?.();
+  // TalkBack's focus doesn't follow requestTVFocus; tvOS VoiceOver does.
+  if (Platform.OS === 'android') {
+    AccessibilityInfo.sendAccessibilityEvent(node, 'focus');
   }
 };
 
-// Back on the home screen first returns focus to the first row; Back from the
-// first row is left unhandled, so the app exits as usual (on Apple TV this
-// also keeps the menu key released there).
+// Back on the home screen first returns focus to the header; Back from the
+// header is left unhandled, so the app exits as usual (on Apple TV this also
+// keeps the menu key released there).
 export const useHomeBack = (
-  rowKeys: string[],
   scrollRef: RefObject<ScrollView | null>,
   enabled: boolean,
 ) => {
   const [focusedRow, setFocusedRow] = useState<string | null>(null);
   const firstItems = useRef(new Map<string, View | null>());
   const rows = useRef(new Map<string, HomeRow>());
-  const firstRow = rowKeys[0];
 
   const getRow = useCallback((key: string): HomeRow => {
     let row = rows.current.get(key);
@@ -71,19 +76,19 @@ export const useHomeBack = (
   }, []);
 
   const handleBack = useCallback(() => {
-    const target = firstRow ? firstItems.current.get(firstRow) : null;
+    const target = firstItems.current.get(HOME_HEADER_ROW);
     if (!target) {
       return false;
     }
     scrollRef.current?.scrollTo({ y: 0, animated: true });
     focusNode(target);
-    setFocusedRow(firstRow);
+    setFocusedRow(HOME_HEADER_ROW);
     return true;
-  }, [firstRow, scrollRef]);
+  }, [scrollRef]);
 
   useBackHandler(
     handleBack,
-    enabled && focusedRow !== null && focusedRow !== firstRow,
+    enabled && focusedRow !== null && focusedRow !== HOME_HEADER_ROW,
   );
 
   return useMemo(() => ({ getRow }), [getRow]);

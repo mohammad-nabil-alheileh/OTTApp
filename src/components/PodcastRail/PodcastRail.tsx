@@ -3,9 +3,9 @@ import {
   FlatList,
   Image,
   ListRenderItem,
-  Text,
   View,
 } from 'react-native';
+import { AppText as Text } from '../AppText/AppText';
 import { AppPressable as Pressable } from '../AppPressable/AppPressable';
 import { useFocusGroup } from '../../focus/useFocusGroup';
 import { Podcast } from '../../types/podcast';

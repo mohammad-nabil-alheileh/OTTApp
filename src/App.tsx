@@ -26,7 +26,7 @@ import { VideoPlayer } from './components/VideoPlayer/VideoPlayer';
 import { ShowDetails } from './components/ShowDetails/ShowDetails';
 import { FocusGroup } from './components/FocusGroup/FocusGroup';
 import { useFocusGroup } from './focus/useFocusGroup';
-import { useHomeBack, withHomeRow } from './hooks/useHomeBack';
+import { HOME_HEADER_ROW, useHomeBack, withHomeRow } from './hooks/useHomeBack';
 import { SearchScreen } from './components/SearchScreen/SearchScreen';
 import { ListenScreen } from './components/ListenScreen/ListenScreen';
 import { PodcastDetails } from './components/PodcastDetails/PodcastDetails';
@@ -34,17 +34,14 @@ import { AudioPlayer } from './components/AudioPlayer/AudioPlayer';
 import { PageStatus } from './components/PageStatus/PageStatus';
 import { getListenHistory, loadListenHistory } from './services/listenHistory';
 import { getContinueListening, toAudioPlayable } from './services/podcasts';
-import {
-  loadLiveChannels,
-  loadPodcasts,
-  loadVods,
-} from './services/catalog';
+import { loadLiveChannels, loadPodcasts, loadVods } from './services/catalog';
 import { useRemoteData } from './hooks/useRemoteData';
 import { VODItem } from './types/vod';
 import { LiveChannel } from './types/live';
 import { LoadFailure } from './types/load';
 import { AudioPlayable, Podcast, PodcastEpisode } from './types/podcast';
 import { SelectedContent } from './App.types';
+import { HomeFocusTarget, resolveHomeFocus } from './utils/homeFocus';
 import { styles } from './App.styles';
 
 const NO_VODS: VODItem[] = [];
@@ -71,6 +68,10 @@ const AppContent = () => {
   // from the player returns to the details screen.
   const [detailsItem, setDetailsItem] = useState<VODItem | null>(null);
   const [selected, setSelected] = useState<SelectedContent>(null);
+  // Home card that opened Details. Home is rebuilt on return, so focus goes
+  // back to it by video id; only changed while Home is hidden.
+  const [homeFocusTarget, setHomeFocusTarget] =
+    useState<HomeFocusTarget | null>(null);
   // Saved playback positions, most recently watched first.
   const [watchHistory, setWatchHistory] = useState<WatchProgress[]>([]);
   // Favorite VOD ids, most recently added first.
@@ -145,6 +146,30 @@ const AppContent = () => {
     [favoriteIds, vodList],
   );
 
+  const homeFocus = useMemo(
+    () =>
+      resolveHomeFocus(homeFocusTarget, {
+        continue: continueWatchingItems.map(item => item.vod.id),
+        favorites: favoriteItems.map(vod => vod.id),
+        vod: vodList.map(vod => vod.id),
+      }),
+    [homeFocusTarget, continueWatchingItems, favoriteItems, vodList],
+  );
+  const homeFocusIndex = (row: string) =>
+    homeFocus.row === row ? homeFocus.index : undefined;
+
+  const openFromHome = useMemo(() => {
+    const open = (row: string) => (vod: VODItem) => {
+      setHomeFocusTarget({ row, videoId: vod.id });
+      setDetailsItem(vod);
+    };
+    return {
+      continue: open('continue'),
+      favorites: open('favorites'),
+      vod: open('vod'),
+    };
+  }, []);
+
   // The service keeps the sync cache and storage in step, so the returned ids
   // are safe to render immediately.
   const handleToggleFavorite = useCallback((vod: VODItem) => {
@@ -192,18 +217,8 @@ const AppContent = () => {
     });
   }, []);
 
-  // Home rows top to bottom; Back returns focus to the first one before it
-  // exits the app.
+  // Back from any home row returns focus to the header before it exits.
   const homeScrollRef = useRef<ScrollView>(null);
-  const homeRowKeys = useMemo(
-    () => [
-      ...(continueWatchingItems.length > 0 ? ['continue'] : []),
-      ...(favoriteItems.length > 0 ? ['favorites'] : []),
-      'vod',
-      'live',
-    ],
-    [continueWatchingItems.length, favoriteItems.length],
-  );
   const isHomeVisible =
     !selected &&
     !playingAudio &&
@@ -212,27 +227,32 @@ const AppContent = () => {
     !settingsVisible &&
     !searchVisible &&
     !listenVisible;
-  const { getRow: getHomeRow } = useHomeBack(
-    homeRowKeys,
-    homeScrollRef,
-    isHomeVisible,
-  );
+  const { getRow: getHomeRow } = useHomeBack(homeScrollRef, isHomeVisible);
 
   const handleBack = useCallback(() => setSelected(null), []);
   const handleDetailsBack = useCallback(() => setDetailsItem(null), []);
 
   const handleAudioBack = useCallback(() => setPlayingAudio(null), []);
   const handlePodcastBack = useCallback(() => setPodcastDetails(null), []);
-  const handleOpenListen = useCallback(() => setListenVisible(true), []);
+  const handleOpenListen = useCallback(() => {
+    setHomeFocusTarget(null);
+    setListenVisible(true);
+  }, []);
   const handleCloseListen = useCallback(() => setListenVisible(false), []);
 
-  const handleOpenSearch = useCallback(() => setSearchVisible(true), []);
+  const handleOpenSearch = useCallback(() => {
+    setHomeFocusTarget(null);
+    setSearchVisible(true);
+  }, []);
   const handleCloseSearch = useCallback(() => {
     setSearchVisible(false);
     setSearchQuery('');
   }, []);
 
-  const handleOpenSettings = useCallback(() => setSettingsVisible(true), []);
+  const handleOpenSettings = useCallback(() => {
+    setHomeFocusTarget(null);
+    setSettingsVisible(true);
+  }, []);
   const handleCloseSettings = useCallback(() => setSettingsVisible(false), []);
 
   if (selected) {
@@ -344,7 +364,7 @@ const AppContent = () => {
               {...withHomeRow(
                 getHeaderItemProps(0),
                 0,
-                getHomeRow('header'),
+                getHomeRow(HOME_HEADER_ROW),
               )}
               onPress={handleOpenListen}
               accessibilityRole="button"
@@ -363,7 +383,7 @@ const AppContent = () => {
               {...withHomeRow(
                 getHeaderItemProps(1),
                 1,
-                getHomeRow('header'),
+                getHomeRow(HOME_HEADER_ROW),
               )}
               onPress={handleOpenSearch}
               accessibilityRole="button"
@@ -382,7 +402,7 @@ const AppContent = () => {
               {...withHomeRow(
                 getHeaderItemProps(2),
                 2,
-                getHomeRow('header'),
+                getHomeRow(HOME_HEADER_ROW),
               )}
               onPress={handleOpenSettings}
               accessibilityRole="button"
@@ -417,8 +437,9 @@ const AppContent = () => {
             <FocusGroup>
               <ContinueWatchingRail
                 items={continueWatchingItems}
-                onSelectVOD={setDetailsItem}
+                onSelectVOD={openFromHome.continue}
                 homeRow={getHomeRow('continue')}
+                preferredFocusIndex={homeFocusIndex('continue')}
               />
             </FocusGroup>
           )}
@@ -426,8 +447,9 @@ const AppContent = () => {
             <FocusGroup>
               <FavoritesRail
                 items={favoriteItems}
-                onSelectVOD={setDetailsItem}
+                onSelectVOD={openFromHome.favorites}
                 homeRow={getHomeRow('favorites')}
+                preferredFocusIndex={homeFocusIndex('favorites')}
               />
             </FocusGroup>
           )}
@@ -437,8 +459,9 @@ const AppContent = () => {
               isLoading={vods.isLoading}
               failure={vods.failure}
               onRetry={vods.retry}
-              onSelectVOD={setDetailsItem}
+              onSelectVOD={openFromHome.vod}
               homeRow={getHomeRow('vod')}
+              preferredFocusIndex={homeFocusIndex('vod') ?? null}
             />
           </FocusGroup>
           <FocusGroup trapFocusDown>
@@ -448,13 +471,14 @@ const AppContent = () => {
               failure={live.failure}
               onRetry={live.retry}
               homeRow={getHomeRow('live')}
-              onSelectChannel={channel =>
+              onSelectChannel={channel => {
+                setHomeFocusTarget(null);
                 setSelected({
                   title: channel.name,
                   url: channel.streamUrl,
                   isLive: channel.isLive,
-                })
-              }
+                });
+              }}
             />
           </FocusGroup>
         </ScrollView>
