@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import { SearchScreen } from '../../../src/components/SearchScreen/SearchScreen';
 import { mockVODData } from '../../../src/services/mockData';
+import { pressArrow } from '../../helpers/web';
 import {
   isVoiceSearchAvailable,
   startVoiceListening,
@@ -103,5 +104,71 @@ describe('SearchScreen voice session (web TV)', () => {
     expect(await screen.findByText('No videos match “zzz”')).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Q' })).toBeTruthy();
     view.unmount();
+  });
+});
+
+describe('SearchScreen results cache (web TV)', () => {
+  const cached = mockVODData.slice(0, 3);
+  const cards = () =>
+    screen.getAllByRole('button', { name: /, rated .* out of 5/ });
+
+  const search = (
+    videos: typeof cached,
+    failure: { kind: 'offline' } | null,
+    { isLoading = false, onRetry = jest.fn() } = {},
+  ) => (
+    <SearchScreen
+      videos={videos}
+      isLoading={isLoading}
+      failure={failure}
+      onRetry={onRetry}
+      query=""
+      onQueryChange={jest.fn()}
+      onSelectVOD={jest.fn()}
+      onBack={jest.fn()}
+    />
+  );
+
+  it('keeps loaded results on screen when the catalogue fails later', () => {
+    render(search(cached, { kind: 'offline' }));
+
+    expect(cards()).toHaveLength(cached.length);
+    expect(screen.queryByText("You're offline")).toBeNull();
+  });
+
+  it('falls back to the cached results when the rail comes back empty', () => {
+    const view = render(search(cached, null));
+
+    view.rerender(search([], { kind: 'offline' }));
+
+    expect(cards()).toHaveLength(cached.length);
+    expect(screen.queryByText("You're offline")).toBeNull();
+  });
+
+  it('still shows the page error when nothing was ever cached', () => {
+    render(search([], { kind: 'offline' }));
+
+    expect(screen.getByText("You're offline")).toBeTruthy();
+  });
+
+  it('keeps the cards and requests nothing when focus moves after the catalogue fails', async () => {
+    const onRetry = jest.fn();
+    render(search(cached, { kind: 'offline' }, { onRetry }));
+    const [first, second] = cards();
+
+    act(() => first.focus());
+    await pressArrow('right');
+
+    expect(document.activeElement).toBe(second);
+    expect(cards()).toHaveLength(cached.length);
+    expect(screen.queryByText("You're offline")).toBeNull();
+    expect(onRetry).not.toHaveBeenCalled();
+  });
+
+  it('keeps the cached cards on screen while a retry runs', () => {
+    render(search(cached, null, { isLoading: true }));
+
+    expect(cards()).toHaveLength(cached.length);
+    expect(screen.queryByText('Loading videos…')).toBeNull();
   });
 });

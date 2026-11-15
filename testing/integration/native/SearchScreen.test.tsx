@@ -140,3 +140,72 @@ describe('SearchScreen voice session (native TV)', () => {
     expect(screen.getByRole('button', { name: 'Q' })).toBeTruthy();
   });
 });
+
+describe('SearchScreen results cache (native TV)', () => {
+  const cached = videos;
+  const cards = () =>
+    screen.getAllByRole('button', { name: /, rated .* out of 5/ });
+
+  const search = (
+    items: typeof cached,
+    failure: { kind: 'offline' } | null,
+    { isLoading = false, onRetry = jest.fn() } = {},
+  ) => (
+    <SearchScreen
+      videos={items}
+      isLoading={isLoading}
+      failure={failure}
+      onRetry={onRetry}
+      query=""
+      onQueryChange={jest.fn()}
+      onSelectVOD={jest.fn()}
+      onBack={jest.fn()}
+    />
+  );
+
+  it('keeps loaded results on screen when the catalogue fails later', async () => {
+    await render(search(cached, { kind: 'offline' }));
+
+    expect(cards()).toHaveLength(cached.length);
+    expect(screen.queryByText("You're offline")).toBeNull();
+  });
+
+  it('falls back to the cached results when the rail comes back empty', async () => {
+    const view = await render(search(cached, null));
+
+    await view.rerender(search([], { kind: 'offline' }));
+
+    expect(cards()).toHaveLength(cached.length);
+    expect(screen.queryByText("You're offline")).toBeNull();
+  });
+
+  it('still shows the page error when nothing was ever cached', async () => {
+    await render(search([], { kind: 'offline' }));
+
+    expect(screen.getByText("You're offline")).toBeTruthy();
+  });
+
+  it('keeps the cards and requests nothing when focus moves after the catalogue fails', async () => {
+    const onRetry = jest.fn();
+    await render(search(cached, { kind: 'offline' }, { onRetry }));
+    const [first, second] = cards();
+
+    await act(async () => {
+      fireEvent(first, 'focus');
+      fireEvent(second, 'focus');
+    });
+
+    expect(cards()).toHaveLength(cached.length);
+    expect(screen.queryByText("You're offline")).toBeNull();
+    expect(onRetry).not.toHaveBeenCalled();
+  });
+
+  it('keeps the cached cards on screen while a retry runs', async () => {
+    await render(search(cached, null, { isLoading: true }));
+
+    expect(
+      await screen.findAllByRole('button', { name: /, rated .* out of 5/ }),
+    ).toHaveLength(cached.length);
+    expect(screen.queryByText('Loading videos…')).toBeNull();
+  });
+});
