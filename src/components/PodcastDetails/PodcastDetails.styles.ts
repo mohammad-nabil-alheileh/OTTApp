@@ -71,10 +71,14 @@ export const styles = StyleSheet.create({
     ...typography.subheading,
     color: colors.text,
   },
-  // Room for the focused card's border and scale-up.
+  // The list clips its children, so the left padding must cover the focused
+  // card's scale-up (~14px); the negative margin keeps the first card in place.
+  episodesList: {
+    marginLeft: spacing.xs - spacing.md,
+  },
   episodesListContent: {
     paddingVertical: spacing.sm,
-    paddingLeft: spacing.xs,
+    paddingLeft: spacing.md,
     paddingRight: spacing.xxl,
   },
   episodeCard: {

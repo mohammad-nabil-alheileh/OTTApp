@@ -161,6 +161,7 @@ export const PodcastDetails: React.FC<PodcastDetailsProps> = ({
                 extraData={[episodeRail.activeIndex, listenHistory]}
                 horizontal
                 showsHorizontalScrollIndicator={false}
+                style={styles.episodesList}
                 contentContainerStyle={styles.episodesListContent}
               />
             </View>
