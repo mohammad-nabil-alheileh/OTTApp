@@ -2,13 +2,16 @@ import { StyleSheet } from 'react-native';
 import { colors, spacing, borderRadius, typography, scaleSize } from '../../styles/theme';
 
 export const styles = StyleSheet.create({
+  // The menu is positioned relative to this wrapper.
   container: {
     position: 'relative',
   },
-  // The menu floats in its own modal layer; OptionSelector positions it from
-  // the measured trigger so it still opens directly above the button.
   menu: {
     position: 'absolute',
+    bottom: '100%',
+    left: spacing.xs,
+    right: spacing.xs,
+    marginBottom: spacing.sm,
     paddingVertical: spacing.xs,
     borderRadius: borderRadius.md,
     backgroundColor: 'rgba(20, 20, 20, 0.95)',

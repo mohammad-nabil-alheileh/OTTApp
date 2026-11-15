@@ -46,7 +46,6 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
   onGoLive,
   adMarkers,
   onSeekbarFocusChange,
-  onMenuOpenChange,
   initialFocus = 'play',
 }) => {
   const playButtonRef = useRef<View>(null);
@@ -150,7 +149,6 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
             options={SPEED_OPTIONS}
             value={playbackRate}
             onChange={onPlaybackRateChange}
-            onOpenChange={onMenuOpenChange}
           />
         )}
         {!isLive && qualities.length > 1 && (
@@ -160,7 +158,6 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
             options={qualityOptions}
             value={quality}
             onChange={onQualityChange}
-            onOpenChange={onMenuOpenChange}
           />
         )}
         {isLive && (
