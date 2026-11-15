@@ -48,7 +48,6 @@ export const styles = StyleSheet.create({
   },
   backChevron: {
     ...typography.subheading,
-    lineHeight: scaleSize(30),
     color: colors.text,
     marginRight: spacing.xs,
   },
@@ -107,7 +106,6 @@ export const styles = StyleSheet.create({
   },
   queryText: {
     ...typography.subheading,
-    lineHeight: scaleSize(36),
     color: colors.text,
   },
   // Still being recognized; not yet committed to the query.
@@ -119,7 +117,6 @@ export const styles = StyleSheet.create({
   },
   placeholder: {
     ...typography.subheading,
-    lineHeight: scaleSize(36),
     color: colors.textSecondary,
   },
   micButton: {
@@ -219,12 +216,10 @@ export const styles = StyleSheet.create({
   },
   resultTitle: {
     ...typography.subheading,
-    lineHeight: scaleSize(32),
     color: colors.text,
   },
   resultMeta: {
     ...typography.caption,
-    lineHeight: scaleSize(24),
     color: colors.textSecondary,
   },
   emptyState: {

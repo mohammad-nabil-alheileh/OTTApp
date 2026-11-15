@@ -46,12 +46,34 @@ export const borderRadius = {
   lg: scaleSize(16),
 };
 
+// Line heights stay at or above the system fonts' natural line box (Roboto
+// ~1.17x, SF Pro ~1.19x); anything tighter clips descenders on TV.
 export const typography = {
-  title: { fontSize: scaleSize(48), fontWeight: 'bold' as const },
-  heading: { fontSize: scaleSize(36), fontWeight: 'bold' as const },
-  subheading: { fontSize: scaleSize(28), fontWeight: '600' as const },
-  body: { fontSize: scaleSize(24), fontWeight: '400' as const },
-  caption: { fontSize: scaleSize(20), fontWeight: '400' as const },
+  title: {
+    fontSize: scaleSize(48),
+    lineHeight: scaleSize(60),
+    fontWeight: 'bold' as const,
+  },
+  heading: {
+    fontSize: scaleSize(36),
+    lineHeight: scaleSize(46),
+    fontWeight: 'bold' as const,
+  },
+  subheading: {
+    fontSize: scaleSize(28),
+    lineHeight: scaleSize(36),
+    fontWeight: '600' as const,
+  },
+  body: {
+    fontSize: scaleSize(24),
+    lineHeight: scaleSize(30),
+    fontWeight: '400' as const,
+  },
+  caption: {
+    fontSize: scaleSize(20),
+    lineHeight: scaleSize(25),
+    fontWeight: '400' as const,
+  },
 };
 
 // Styles shared by more than one component.
