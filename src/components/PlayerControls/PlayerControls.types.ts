@@ -19,4 +19,7 @@ export interface PlayerControlsProps {
   adMarkers?: number[];
   // Reports when the progress bar gains and loses focus.
   onSeekbarFocusChange?: (focused: boolean) => void;
+  // Reports a speed/quality menu opening or closing, so the player keeps its
+  // controls up while the trapped menu is in use.
+  onMenuOpenChange?: (open: boolean) => void;
 }

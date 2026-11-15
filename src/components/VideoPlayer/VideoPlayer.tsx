@@ -69,8 +69,15 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
   // adjust mode with them. Keep the controls up while the bar has focus.
   const screenReaderEnabled = useScreenReaderEnabled();
   const [seekbarFocused, setSeekbarFocused] = useState(false);
+  // A speed/quality menu renders in its own modal layer; letting the controls
+  // auto-hide would unmount the layer (and the menu) from under the viewer.
+  const [menuOpen, setMenuOpen] = useState(false);
   const overlay = useAutoHide(
-    paused || !!error || ended || (screenReaderEnabled && seekbarFocused),
+    paused ||
+      !!error ||
+      ended ||
+      menuOpen ||
+      (screenReaderEnabled && seekbarFocused),
   );
   // While paused, the same titles sit in a shelf above the controls.
   const showsPausedRail =
@@ -221,7 +228,15 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
         <AdPlayer adBreak={ads.activeBreak} onComplete={handleAdsComplete} />
       ) : (
         <>
-          <View style={styles.overlay}>
+          <View
+            style={styles.overlay}
+            // Up Next covers the whole player and traps focus itself, so the
+            // title bar underneath must not be a TalkBack stop.
+            importantForAccessibility={
+              showsUpNext ? 'no-hide-descendants' : 'auto'
+            }
+            accessibilityElementsHidden={showsUpNext}
+          >
             {overlay.visible && (
               <View style={styles.topBar}>
                 <Text
@@ -257,6 +272,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
                 onGoLive={goLive}
                 adMarkers={ads.markers}
                 onSeekbarFocusChange={setSeekbarFocused}
+                onMenuOpenChange={setMenuOpen}
               />
             ) : (
               <IdleCatcher onWake={overlay.show} />

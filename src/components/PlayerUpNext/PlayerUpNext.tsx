@@ -73,6 +73,10 @@ export const PlayerUpNext: React.FC<PlayerUpNextProps> = ({
     <View
       style={isFullScreen ? styles.fullScreen : styles.bottom}
       ref={containerRef}
+      // The full-screen rail covers the finished frame and is the only thing
+      // reachable; telling VoiceOver it is modal keeps the player behind it
+      // out of the reading order.
+      accessibilityViewIsModal={isFullScreen}
     >
       {isFullScreen ? (
         <Text style={styles.title} accessibilityRole="header">
