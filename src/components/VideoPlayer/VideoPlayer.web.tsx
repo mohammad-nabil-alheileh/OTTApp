@@ -281,6 +281,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
                 onGoLive={goLive}
                 adMarkers={ads.markers}
                 onSeekbarFocusChange={setSeekbarFocused}
+                initialFocus={overlay.wokeWithUp ? 'seekbar' : 'play'}
               />
             ) : (
               <IdleCatcher onWake={overlay.show} />

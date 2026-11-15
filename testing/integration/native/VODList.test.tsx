@@ -22,6 +22,36 @@ describe('VODList (native TV)', () => {
     expect(screen.getByText('Loading VODs...')).toBeTruthy();
   });
 
+  it('holds preferred focus in the first card slot while loading', async () => {
+    await render(
+      <VODList vodList={[]} onSelectVOD={jest.fn()} isLoading {...railProps} />,
+    );
+
+    const placeholder = screen.getByRole('button', { name: 'Loading videos' });
+    expect(placeholder.props.hasTVPreferredFocus).toBe(true);
+  });
+
+  it('keeps the same focused view when the videos arrive', async () => {
+    const { rerender } = await render(
+      <VODList vodList={[]} onSelectVOD={jest.fn()} isLoading {...railProps} />,
+    );
+    const placeholder = screen.getByRole('button', { name: 'Loading videos' });
+
+    await rerender(
+      <VODList
+        vodList={items}
+        onSelectVOD={jest.fn()}
+        isLoading={false}
+        {...railProps}
+      />,
+    );
+
+    // A remount would drop native focus to the header before the card took it.
+    const firstCard = screen.getByRole('button', { name: cardLabel(first.title) });
+    // Compared as a boolean: a failing diff of host elements is circular.
+    expect(firstCard === placeholder).toBe(true);
+  });
+
   it('renders one labelled button per item under a header', async () => {
     await render(
       <VODList

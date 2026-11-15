@@ -47,8 +47,10 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
   adMarkers,
   onSeekbarFocusChange,
   onMenuOpenChange,
+  initialFocus = 'play',
 }) => {
   const playButtonRef = useRef<View>(null);
+  const focusSeekBar = initialFocus === 'seekbar' && !isLive;
 
   // Keeps Up/Down between the transport bar and the paused shelf predictable:
   // without a group the polyfill picks whatever sits nearest the focused card,
@@ -66,9 +68,10 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
 
   // hasTVPreferredFocus is native-only, so the web needs an explicit focus.
   useEffect(() => {
-    if (Platform.OS === 'web') {
+    if (Platform.OS === 'web' && !focusSeekBar) {
       playButtonRef.current?.focus();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- mount only
   }, []);
 
   const qualityOptions: SelectorOption[] = [
@@ -91,6 +94,7 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
           onSeek={onSeek}
           markers={adMarkers}
           onFocusChange={onSeekbarFocusChange}
+          autoFocus={focusSeekBar}
         />
       )}
       <View style={styles.buttons}>
@@ -111,7 +115,7 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
         <Pressable
           {...playItem}
           ref={setPlayRef}
-          hasTVPreferredFocus
+          hasTVPreferredFocus={!focusSeekBar}
           accessibilityRole="button"
           accessibilityLabel={paused ? 'Play' : 'Pause'}
           accessibilityHint="Toggles playback"

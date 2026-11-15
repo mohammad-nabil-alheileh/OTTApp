@@ -1,5 +1,10 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { GestureResponderEvent, LayoutChangeEvent, View } from 'react-native';
+import {
+  GestureResponderEvent,
+  LayoutChangeEvent,
+  Platform,
+  View,
+} from 'react-native';
 import { AppPressable as Pressable } from '../AppPressable/AppPressable';
 import { AppText as Text } from '../AppText/AppText';
 import { useRemoteKeys } from '../../hooks/useRemoteKeys';
@@ -19,8 +24,18 @@ export const ProgressBar: React.FC<ProgressBarProps> = ({
   onSeek,
   markers = [],
   onFocusChange,
+  autoFocus = false,
 }) => {
   const [focused, setFocused] = useState(false);
+  const barRef = useRef<View>(null);
+
+  // hasTVPreferredFocus is native-only, so the web needs an explicit focus.
+  useEffect(() => {
+    if (autoFocus && Platform.OS === 'web') {
+      barRef.current?.focus();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- mount only
+  }, []);
   const [scrubTime, setScrubTime] = useState<number | null>(null);
   const scrubTimeRef = useRef<number | null>(null);
   const commitTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
@@ -84,6 +99,8 @@ export const ProgressBar: React.FC<ProgressBarProps> = ({
   return (
     <View style={styles.container}>
       <Pressable
+        ref={barRef}
+        hasTVPreferredFocus={autoFocus}
         onFocus={() => {
           setFocused(true);
           setSpokenTime(currentTime);

@@ -68,8 +68,7 @@ export const styles = StyleSheet.create({
     lineHeight: scaleSize(18),
     color: colors.textSecondary,
   },
-  loadingContainer: {
-    height: scaleSize(240),
+  placeholder: {
     justifyContent: 'center',
     alignItems: 'center',
   },

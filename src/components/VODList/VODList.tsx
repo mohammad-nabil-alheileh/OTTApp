@@ -11,6 +11,12 @@ import { styles } from './VODList.styles';
 import { VODListProps } from './VODList.types';
 import { RailStatus } from '../RailStatus/RailStatus';
 
+// Stands in for the cards while the catalogue loads.
+const LOADING_SLOTS: (VODItem | null)[] = [null, null, null, null];
+// The first card keeps one key from loading to loaded, so native focus stays
+// on the same view instead of falling back to the header in between.
+const FIRST_SLOT_KEY = 'first-slot';
+
 export const VODList: React.FC<VODListProps> = ({
   vodList,
   onSelectVOD,
@@ -20,8 +26,11 @@ export const VODList: React.FC<VODListProps> = ({
   homeRow,
   preferredFocusIndex = 0,
 }) => {
-  const { containerRef, getItemProps, activeIndex, focusIndex } =
-    useFocusGroup('vod-rail', vodList.length);
+  const slots: (VODItem | null)[] = isLoading ? LOADING_SLOTS : vodList;
+  const { containerRef, getItemProps, activeIndex, focusIndex } = useFocusGroup(
+    'vod-rail',
+    isLoading ? 1 : vodList.length,
+  );
   const initialNumToRender = usePreferredFocus(
     preferredFocusIndex,
     focusIndex,
@@ -48,45 +57,66 @@ export const VODList: React.FC<VODListProps> = ({
     );
   }
 
-  if (isLoading) {
-    return (
-      <View style={styles.loadingContainer}>
-        <Text style={styles.loadingText} accessibilityLiveRegion="polite">
-          Loading VODs...
-        </Text>
-      </View>
-    );
-  }
-
-  const renderVODItem: ListRenderItem<VODItem> = ({ item, index }) => (
-    <Pressable
-      {...withHomeRow(getItemProps(index), index, homeRow)}
-      hasTVPreferredFocus={index === preferredFocusIndex}
-      onPress={() => onSelectVOD(item)}
-      accessibilityRole="button"
-      accessibilityLabel={`${item.title}, rated ${item.rating} out of 5, ${formatDuration(
-        item.duration,
-      )}`}
-      accessibilityHint="Opens details"
-      style={({ focused }) => [styles.vodItem, focused && styles.vodItemFocused]}
-    >
-      <Image
-        source={{ uri: item.thumbnail }}
-        style={styles.thumbnail}
-        resizeMode="cover"
-        aria-hidden
-      />
-      <View style={styles.cardOverlay} aria-hidden>
-        <Text style={styles.title} numberOfLines={2} ellipsizeMode="tail">
-          {item.title}
-        </Text>
-        <View style={styles.metaRow}>
-          <Text style={styles.rating}>★ {item.rating}</Text>
-          <Text style={styles.duration}>{formatDuration(item.duration)}</Text>
+  const renderVODItem: ListRenderItem<VODItem | null> = ({ item, index }) => {
+    if (!item) {
+      // Only the first placeholder is focusable: it holds the initial focus.
+      return index === 0 ? (
+        <Pressable
+          {...withHomeRow(getItemProps(0), 0, homeRow)}
+          hasTVPreferredFocus={preferredFocusIndex === 0}
+          accessibilityRole="button"
+          accessibilityLabel="Loading videos"
+          accessibilityState={{ busy: true }}
+          style={({ focused }) => [
+            styles.vodItem,
+            focused && styles.vodItemFocused,
+          ]}
+        >
+          <View style={[styles.thumbnail, styles.placeholder]}>
+            <Text style={styles.loadingText} accessibilityLiveRegion="polite">
+              Loading VODs...
+            </Text>
+          </View>
+        </Pressable>
+      ) : (
+        <View style={styles.vodItem} aria-hidden>
+          <View style={styles.thumbnail} />
         </View>
-      </View>
-    </Pressable>
-  );
+      );
+    }
+    return (
+      <Pressable
+        {...withHomeRow(getItemProps(index), index, homeRow)}
+        hasTVPreferredFocus={index === preferredFocusIndex}
+        onPress={() => onSelectVOD(item)}
+        accessibilityRole="button"
+        accessibilityLabel={`${item.title}, rated ${
+          item.rating
+        } out of 5, ${formatDuration(item.duration)}`}
+        accessibilityHint="Opens details"
+        style={({ focused }) => [
+          styles.vodItem,
+          focused && styles.vodItemFocused,
+        ]}
+      >
+        <Image
+          source={{ uri: item.thumbnail }}
+          style={styles.thumbnail}
+          resizeMode="cover"
+          aria-hidden
+        />
+        <View style={styles.cardOverlay} aria-hidden>
+          <Text style={styles.title} numberOfLines={2} ellipsizeMode="tail">
+            {item.title}
+          </Text>
+          <View style={styles.metaRow}>
+            <Text style={styles.rating}>★ {item.rating}</Text>
+            <Text style={styles.duration}>{formatDuration(item.duration)}</Text>
+          </View>
+        </View>
+      </Pressable>
+    );
+  };
 
   return (
     <View style={styles.container} ref={containerRef}>
@@ -94,9 +124,11 @@ export const VODList: React.FC<VODListProps> = ({
         Videos On Demand
       </Text>
       <FlatList
-        data={vodList}
+        data={slots}
         renderItem={renderVODItem}
-        keyExtractor={item => item.id}
+        keyExtractor={(item, index) =>
+          index === 0 ? FIRST_SLOT_KEY : item?.id ?? `loading-${index}`
+        }
         extraData={activeIndex}
         initialNumToRender={initialNumToRender}
         horizontal

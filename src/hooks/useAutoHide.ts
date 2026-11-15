@@ -8,8 +8,10 @@ const SCREEN_READER_HIDE_AFTER_MS = 15000;
 
 // Player overlay visibility: shown on any remote activity, hidden after a
 // timeout without any. Stays visible while keepVisible (e.g. paused).
+// wokeWithUp: Up brought the hidden overlay back, so focus can start on the seek bar.
 export const useAutoHide = (keepVisible: boolean) => {
   const [visible, setVisible] = useState(true);
+  const [wokeWithUp, setWokeWithUp] = useState(false);
   const visibleRef = useRef(true);
   const hideTimer = useRef<ReturnType<typeof setTimeout> | undefined>(
     undefined,
@@ -21,17 +23,24 @@ export const useAutoHide = (keepVisible: boolean) => {
     ? SCREEN_READER_HIDE_AFTER_MS
     : HIDE_AFTER_MS;
 
-  const show = useCallback(() => {
-    visibleRef.current = true;
-    setVisible(true);
-    clearTimeout(hideTimer.current);
-    hideTimer.current = setTimeout(() => {
-      if (!keepVisibleRef.current) {
-        visibleRef.current = false;
-        setVisible(false);
+  const wake = useCallback(
+    (key?: string) => {
+      if (!visibleRef.current) {
+        setWokeWithUp(key === 'up');
       }
-    }, hideAfterMs);
-  }, [hideAfterMs]);
+      visibleRef.current = true;
+      setVisible(true);
+      clearTimeout(hideTimer.current);
+      hideTimer.current = setTimeout(() => {
+        if (!keepVisibleRef.current) {
+          visibleRef.current = false;
+          setVisible(false);
+        }
+      }, hideAfterMs);
+    },
+    [hideAfterMs],
+  );
+  const show = useCallback(() => wake(), [wake]);
 
   // Moving between controls keeps them up (that is all TalkBack users
   // produce), but focus landing on the idle catcher as the overlay hides
@@ -42,7 +51,7 @@ export const useAutoHide = (keepVisible: boolean) => {
     }
   }, [show]);
 
-  useRemoteActivity(show, extend);
+  useRemoteActivity(wake, extend);
 
   // Pausing shows the overlay; resuming restarts the countdown.
   useEffect(() => {
@@ -51,5 +60,5 @@ export const useAutoHide = (keepVisible: boolean) => {
 
   useEffect(() => () => clearTimeout(hideTimer.current), []);
 
-  return { visible, show };
+  return { visible, show, wokeWithUp };
 };

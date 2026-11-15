@@ -6,4 +6,6 @@ export interface ProgressBarProps {
   markers?: number[];
   // Reports when the bar gains and loses focus (false also on unmount).
   onFocusChange?: (focused: boolean) => void;
+  // Takes focus when it mounts.
+  autoFocus?: boolean;
 }
