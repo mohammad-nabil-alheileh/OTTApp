@@ -35,10 +35,18 @@ const findGroup = (element: Element | null): GroupState | null => {
   return null;
 };
 
+// Content hidden from the accessibility tree (e.g. the screen behind a live
+// voice session) is out of reach for the remote too, so arrows cannot step
+// onto it and leave a trapped focus group.
+const isHidden = (element: FocusableElement) =>
+  element.closest('[aria-hidden="true"]') !== null;
+
 const orderedGroups = (): GroupState[] => {
   const withContainer = Array.from(groups.values()).filter(
     (group): group is GroupState & { container: FocusableElement } =>
-      group.container !== null && group.items.some(Boolean),
+      group.container !== null &&
+      group.items.some(Boolean) &&
+      !isHidden(group.container),
   );
   // Document order, not on-screen position: once the page scrolls, a rail
   // scrolled above the viewport would otherwise sort above the fixed header,

@@ -64,5 +64,11 @@ export const useVoiceSearch = () => {
     }
   }, []);
 
-  return { available, listening, capturing, partial, start };
+  // Web aborts its own recognizer and resolves start() with null; Android's
+  // system dialog owns the microphone, so it closes on its own.
+  const stop = useCallback(() => {
+    stopVoiceListening();
+  }, []);
+
+  return { available, listening, capturing, partial, start, stop };
 };

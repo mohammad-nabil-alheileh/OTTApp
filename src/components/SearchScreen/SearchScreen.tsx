@@ -10,6 +10,7 @@ import {
   Image,
   ListRenderItem,
   View,
+  ViewProps,
 } from 'react-native';
 import { AppPressable as Pressable } from '../AppPressable/AppPressable';
 import { AppText as Text } from '../AppText/AppText';
@@ -32,9 +33,27 @@ import { SearchNoResults } from '../SearchNoResults/SearchNoResults';
 import { SearchScreenProps } from './SearchScreen.types';
 import { useSearchTyping } from './useSearchTyping';
 import { useVoiceSearch } from './useVoiceSearch';
+import { useVoiceTrapKeys } from './useVoiceTrapKeys';
 import { styles } from './SearchScreen.styles';
 
 type FocusedArea = 'back' | 'mic' | 'keyboard' | 'results' | 'recommended';
+
+// react-native-tvos narrows focusSearch to the container's children whenever a
+// trapFocus* prop is set, on any native view, but its types declare them only
+// on TVFocusGuideView.
+const TRAP_FOCUS = {
+  trapFocusUp: true,
+  trapFocusDown: true,
+  trapFocusLeft: true,
+  trapFocusRight: true,
+} as unknown as ViewProps;
+
+// While the microphone is live the rest of the screen leaves TalkBack's
+// reading order, so a swipe cannot wander off the voice session.
+const OUTSIDE_VOICE_SESSION: ViewProps = {
+  importantForAccessibility: 'no-hide-descendants',
+  'aria-hidden': true,
+};
 
 export const SearchScreen: React.FC<SearchScreenProps> = ({
   videos,
@@ -70,6 +89,7 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({
     capturing: voiceCapturing,
     partial: voicePartial,
     start: startVoice,
+    stop: stopVoice,
   } = useVoiceSearch();
 
   const [focusedArea, setFocusedArea] = useState<FocusedArea>('keyboard');
@@ -100,11 +120,17 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({
     }
   }, [query]);
 
+  // Back belongs to the live session: it stops the recognizer instead of
+  // closing Search out from under it.
   const handleBack = useCallback(() => {
+    if (voiceListening) {
+      stopVoice();
+      return true;
+    }
     rememberQuery();
     onBack();
     return true;
-  }, [onBack, rememberQuery]);
+  }, [onBack, rememberQuery, stopVoice, voiceListening]);
   useBackHandler(handleBack);
 
   const appendChar = useCallback(
@@ -145,10 +171,16 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({
     if (!voiceAvailable || voiceListening) {
       return;
     }
+    // The mic becomes the session's only stop; hand focus to it before the
+    // recognizer takes over so TalkBack reads "Listening".
+    focusFirstMic();
     startVoice().then(text => {
       if (text) {
         inputMethod.current = 'voice';
+        // Results replace the session; land on them like a history pick.
+        setFocusedArea('results');
         onQueryChange(() => text);
+        return;
       }
       // Cancel and no-match land back on the mic, ready to try again.
       focusFirstMic();
@@ -162,6 +194,7 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({
   ]);
 
   useSearchTyping(true, appendChar, deleteLast);
+  useVoiceTrapKeys(voiceListening, focusFirstMic);
 
   // Filtering shrinks the rail while it has focus. Move focus to whatever
   // replaced it, so it never snaps back to the top of the keyboard.
@@ -258,10 +291,10 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({
             backItemProps.onFocus?.();
             setFocusedArea('back');
           }}
-          onPress={onBack}
+          onPress={handleBack}
           accessibilityRole="button"
           accessibilityLabel="Back"
-          accessibilityHint="Closes search"
+          accessibilityHint={voiceListening ? 'Stops voice search' : 'Closes search'}
           style={({ focused }) => [
             styles.backButton,
             focused && styles.backButtonFocused,
@@ -306,7 +339,10 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({
       {header}
 
       <View style={styles.body}>
-        <View style={[styles.queryBar, hasQuery && styles.queryBarActive]}>
+        <View
+          style={[styles.queryBar, hasQuery && styles.queryBarActive]}
+          {...(voiceListening ? TRAP_FOCUS : {})}
+        >
           <View style={styles.queryIconBadge} aria-hidden>
             <Text
               style={styles.queryIcon}
@@ -345,6 +381,7 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({
             <View ref={micContainerRef}>
               <Pressable
                 {...micItemProps}
+                hasTVPreferredFocus={voiceListening}
                 onFocus={() => {
                   micItemProps.onFocus?.();
                   setFocusedArea('mic');
@@ -354,7 +391,9 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({
                 accessibilityLabel={
                   voiceListening ? 'Listening' : 'Search by voice'
                 }
-                accessibilityHint="Starts voice search"
+                accessibilityHint={
+                  voiceListening ? 'Back stops listening' : 'Starts voice search'
+                }
                 accessibilityState={{ busy: voiceListening }}
                 aria-busy={voiceListening}
                 style={({ focused }) => [
@@ -369,7 +408,10 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({
           )}
         </View>
 
-        <View style={styles.resultsSection}>
+        <View
+          style={styles.resultsSection}
+          {...(voiceListening ? OUTSIDE_VOICE_SESSION : {})}
+        >
           {!hasQuery && history.length > 0 && (
             <SearchHistory
               entries={history}
@@ -429,7 +471,10 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({
           </View>
         </View>
 
-        <View style={styles.footer}>
+        <View
+          style={styles.footer}
+          {...(voiceListening ? OUTSIDE_VOICE_SESSION : {})}
+        >
           <View style={styles.keyboardWrap}>
             <SearchKeyboard
               onKeyPress={appendChar}
