@@ -49,6 +49,7 @@ dist/
 
 # Testing
 /coverage
+/test-results
 
 # Local assistant notes
 CLAUDE.md

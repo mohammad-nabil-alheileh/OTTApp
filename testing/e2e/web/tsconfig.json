@@ -1,0 +1,10 @@
+{
+  // Playwright runs in Node, not the app runtime, so it gets Node types
+  // instead of the app's Jest/React Native ones.
+  "extends": "@react-native/typescript-config",
+  "compilerOptions": {
+    "types": ["node"],
+    "lib": ["es2022", "dom"]
+  },
+  "include": ["./**/*.ts", "../../helpers/remote.ts"]
+}

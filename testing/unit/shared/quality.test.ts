@@ -1,4 +1,4 @@
-import { toQualities } from '../../src/utils/quality';
+import { toQualities } from '../../../src/utils/quality';
 
 describe('toQualities', () => {
   it('lists each height once, highest first', () => {

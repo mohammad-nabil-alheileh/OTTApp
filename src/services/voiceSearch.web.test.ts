@@ -36,13 +36,21 @@ class FakeRecognition {
 const latest = () =>
   FakeRecognition.instances[FakeRecognition.instances.length - 1];
 
-const globalWithWindow = globalThis as unknown as { window?: unknown };
-
+// Runs in jsdom (lg-webos / samsung-tizen projects), so the speech API is
+// installed on the real window rather than replacing it.
 const installWindow = (constructor: unknown, secure = true) => {
-  globalWithWindow.window = {
-    isSecureContext: secure,
-    SpeechRecognition: constructor,
-  };
+  Object.defineProperty(window, 'isSecureContext', {
+    value: secure,
+    configurable: true,
+  });
+  Object.defineProperty(window, 'SpeechRecognition', {
+    value: constructor,
+    configurable: true,
+  });
+};
+
+const removeSpeechApi = () => {
+  delete (window as { SpeechRecognition?: unknown }).SpeechRecognition;
 };
 
 // Starting now asks for microphone permission first (async), so the recognizer
@@ -62,7 +70,7 @@ describe('voice search (web)', () => {
 
   afterEach(() => {
     stopVoiceListening();
-    delete globalWithWindow.window;
+    removeSpeechApi();
   });
 
   it('is available when the browser exposes SpeechRecognition', async () => {

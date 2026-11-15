@@ -4,5 +4,5 @@
     "types": ["jest"]
   },
   "include": ["src", "testing", "index.ts", "index.web.ts"],
-  "exclude": ["node_modules", "android", "dist"]
+  "exclude": ["node_modules", "android", "dist", "testing/e2e"]
 }

@@ -1,8 +1,8 @@
-import { createProgressStore } from '../../src/services/progressStore';
-import { mockStore } from '../mocks/asyncStorage';
+import { createProgressStore } from '../../../src/services/progressStore';
+import { mockStore } from '../../mocks/asyncStorage';
 
 jest.mock('@react-native-async-storage/async-storage', () =>
-  require('../mocks/asyncStorage'),
+  require('../../mocks/asyncStorage'),
 );
 
 const KEY = 'test-progress';

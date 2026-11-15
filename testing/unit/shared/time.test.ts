@@ -1,4 +1,4 @@
-import { clamp, formatDuration, formatTime, skipBy } from '../../src/utils/time';
+import { clamp, formatDuration, formatTime, skipBy } from '../../../src/utils/time';
 
 describe('clamp', () => {
   it('keeps values inside the range unchanged', () => {
