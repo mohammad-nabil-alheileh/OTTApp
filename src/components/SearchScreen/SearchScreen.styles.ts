@@ -3,13 +3,20 @@ import {
   borderRadius,
   colors,
   scaleSize,
-  screen,
   spacing,
   typography,
 } from '../../styles/theme';
+import { KEYBOARD_WIDTH } from '../SearchKeyboard/SearchKeyboard.styles';
 
-const CONTENT_WIDTH = Math.min(scaleSize(1000), screen.width - spacing.xl * 2);
-const CARD_WIDTH = scaleSize(300);
+// One column shared by the header, field, results and keyboard, so every
+// element sits on the same vertical edges.
+const COLUMN_WIDTH = KEYBOARD_WIDTH;
+// Three result cards plus their gaps fill the column exactly.
+const CARD_WIDTH = Math.floor((COLUMN_WIDTH - spacing.md * 3) / 3);
+const CARD_BORDER = scaleSize(4);
+// The overlay is absolute, so a card is exactly its 16:9 thumbnail plus border.
+const CARD_HEIGHT =
+  Math.round(((CARD_WIDTH - CARD_BORDER * 2) * 9) / 16) + CARD_BORDER * 2;
 
 export const styles = StyleSheet.create({
   container: {
@@ -17,9 +24,10 @@ export const styles = StyleSheet.create({
     backgroundColor: '#0a0a0a',
   },
   header: {
+    width: COLUMN_WIDTH,
+    alignSelf: 'center',
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: spacing.xl,
     paddingTop: spacing.md,
     paddingBottom: spacing.sm,
   },
@@ -67,20 +75,32 @@ export const styles = StyleSheet.create({
     paddingHorizontal: spacing.xl,
   },
   queryBar: {
-    width: CONTENT_WIDTH,
-    height: scaleSize(84),
+    width: COLUMN_WIDTH,
+    height: scaleSize(88),
     flexDirection: 'row',
     alignItems: 'center',
     marginTop: spacing.xs,
-    paddingHorizontal: spacing.md,
+    paddingHorizontal: spacing.xs,
     borderRadius: borderRadius.lg,
     borderWidth: scaleSize(2),
-    borderColor: colors.border,
-    backgroundColor: colors.cardBackground,
+    borderColor: 'rgba(255, 255, 255, 0.14)',
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+  },
+  queryBarActive: {
+    borderColor: 'rgba(255, 255, 255, 0.32)',
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+  },
+  queryIconBadge: {
+    width: scaleSize(60),
+    height: scaleSize(60),
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: scaleSize(30),
+    backgroundColor: 'rgba(255, 255, 255, 0.06)',
+    marginRight: spacing.sm,
   },
   queryIcon: {
-    ...typography.subheading,
-    marginRight: spacing.sm,
+    fontSize: scaleSize(26),
   },
   queryField: {
     flex: 1,
@@ -105,36 +125,32 @@ export const styles = StyleSheet.create({
   micButton: {
     width: scaleSize(64),
     height: scaleSize(64),
-    marginLeft: spacing.sm,
+    marginLeft: spacing.xs,
     justifyContent: 'center',
     alignItems: 'center',
-    borderRadius: borderRadius.md,
+    borderRadius: scaleSize(32),
     borderWidth: scaleSize(2),
-    borderColor: '#4d4d4d',
-    borderBottomWidth: scaleSize(4),
-    borderBottomColor: '#0a0a0a',
-    backgroundColor: '#2e2e2e',
+    borderColor: '#4a4a52',
+    backgroundColor: '#2a2a2f',
   },
   micButtonFocused: {
     borderColor: colors.focus,
-    borderBottomColor: '#bdbdbd',
     backgroundColor: colors.focus,
     transform: [{ scale: 1.08 }],
   },
   micButtonListening: {
     borderColor: colors.primary,
-    borderBottomColor: '#8a050c',
     backgroundColor: colors.primary,
   },
   micIcon: {
-    fontSize: scaleSize(32),
+    fontSize: scaleSize(30),
   },
   keyboardWrap: {
     width: '100%',
     alignItems: 'center',
   },
   footer: {
-    width: CONTENT_WIDTH,
+    width: COLUMN_WIDTH,
     alignItems: 'center',
     marginTop: spacing.sm,
     paddingTop: spacing.sm,
@@ -143,9 +159,12 @@ export const styles = StyleSheet.create({
     borderTopColor: 'rgba(255, 255, 255, 0.08)',
   },
   resultsSection: {
-    width: CONTENT_WIDTH,
+    width: COLUMN_WIDTH,
     flex: 1,
     justifyContent: 'center',
+  },
+  resultsBlock: {
+    width: '100%',
   },
   resultsHeader: {
     flexDirection: 'row',
@@ -164,11 +183,18 @@ export const styles = StyleSheet.create({
   resultsList: {
     paddingVertical: spacing.xs,
   },
+  // Fixed to the card height (plus focus-scale room) so the rail never
+  // collapses and the results block can center between field and keyboard.
+  resultsListBox: {
+    flexGrow: 0,
+    height: CARD_HEIGHT + spacing.xs * 2,
+  },
   resultCard: {
     width: CARD_WIDTH,
+    alignSelf: 'flex-start',
     marginRight: spacing.md,
     borderRadius: borderRadius.md,
-    borderWidth: scaleSize(4),
+    borderWidth: CARD_BORDER,
     borderColor: 'transparent',
     overflow: 'hidden',
     backgroundColor: colors.cardBackground,

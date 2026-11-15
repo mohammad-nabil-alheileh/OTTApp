@@ -33,6 +33,13 @@ export const spacing = {
   xxl: scaleSize(64),
 };
 
+// The centered column shared by full-screen layouts, so the header, search
+// field, results and keyboard all line up on the same edges.
+export const contentWidth = Math.min(
+  scaleSize(1000),
+  screen.width - spacing.xl * 2,
+);
+
 export const borderRadius = {
   sm: scaleSize(4),
   md: scaleSize(8),

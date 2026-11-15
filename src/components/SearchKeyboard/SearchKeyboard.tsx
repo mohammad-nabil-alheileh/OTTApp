@@ -4,51 +4,69 @@ import { AppPressable as Pressable } from '../AppPressable/AppPressable';
 import { AppText as Text } from '../AppText/AppText';
 import { useFocusGroup } from '../../focus/useFocusGroup';
 import { SearchKeyboardProps } from './SearchKeyboard.types';
-import { ROW_INDENTS, keyWidth, styles } from './SearchKeyboard.styles';
+import { keyWidth, styles } from './SearchKeyboard.styles';
 
-const KEY_ROWS: string[][] = [
-  ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0'],
-  ['Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P'],
-  ['A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L'],
-  ['Z', 'X', 'C', 'V', 'B', 'N', 'M', '.', ',', '-'],
+type KeyAction = 'space' | 'clear';
+
+interface KeyDef {
+  id: string;
+  label: string;
+  // How many of the ten columns the key spans.
+  units?: number;
+  action?: KeyAction;
+  // Screen readers announce punctuation as words, not symbols.
+  spoken?: string;
+  muted?: boolean;
+}
+
+const letterKeys = (keys: string[], muted = false): KeyDef[] =>
+  keys.map(key => ({ id: key, label: key, muted }));
+
+// Five rows of ten units each: every row fills the same width, so all columns
+// line up and the backspace, space and clear keys sit on the right edge.
+const KEY_ROWS: KeyDef[][] = [
+  letterKeys(['1', '2', '3', '4', '5', '6', '7', '8', '9', '0'], true),
+  letterKeys(['Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P']),
+  [
+    ...letterKeys(['A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L']),
+    { id: 'delete', label: '⌫' },
+  ],
+  [
+    ...letterKeys(['Z', 'X', 'C', 'V', 'B', 'N', 'M']),
+    { id: 'period', label: '.', spoken: 'period' },
+    { id: 'comma', label: ',', spoken: 'comma' },
+    { id: 'dash', label: '-', spoken: 'dash' },
+  ],
+  [
+    { id: 'space', label: 'SPACE', units: 8, action: 'space' },
+    { id: 'clear', label: 'CLEAR', units: 2, action: 'clear' },
+  ],
 ];
 
-const ACTIONS = [
-  { id: 'delete', label: '⌫', units: 2 },
-  { id: 'space', label: 'SPACE', units: 4 },
-  { id: 'clear', label: 'CLEAR', units: 2 },
-];
-
-// Screen readers announce these keys as words, not symbols.
-const KEY_LABELS: Record<string, string> = {
-  '.': 'period',
-  ',': 'comma',
-  '-': 'dash',
-};
-
-const ACTION_LABELS: Record<string, string> = {
-  delete: 'Delete',
+const ACTION_LABELS: Record<KeyAction, string> = {
   space: 'Space',
   clear: 'Clear',
 };
 
 interface KeyboardRowProps {
   groupId: string;
-  keys: string[];
-  indent: number;
+  keys: KeyDef[];
   autoFocus?: boolean;
   focusRequest?: number;
   onKeyPress: (key: string) => void;
+  onDelete: () => void;
+  onClear: () => void;
   onFocus?: () => void;
 }
 
 const KeyboardRow: React.FC<KeyboardRowProps> = ({
   groupId,
   keys,
-  indent,
   autoFocus,
   focusRequest,
   onKeyPress,
+  onDelete,
+  onClear,
   onFocus,
 }) => {
   const { containerRef, getItemProps, focusFirst } = useFocusGroup(
@@ -64,94 +82,58 @@ const KeyboardRow: React.FC<KeyboardRowProps> = ({
     }
   }, [autoFocus, focusRequest, focusFirst]);
 
-  return (
-    <View ref={containerRef} style={[styles.row, { marginLeft: indent }]}>
-      {keys.map((key, index) => {
-        const itemProps = getItemProps(index);
-        return (
-          <Pressable
-            key={key}
-            {...itemProps}
-            onFocus={() => {
-              itemProps.onFocus?.();
-              onFocus?.();
-            }}
-            hasTVPreferredFocus={autoFocus && index === 0}
-            onPress={() => onKeyPress(key)}
-            accessibilityRole="button"
-            accessibilityLabel={KEY_LABELS[key] ?? key}
-            style={({ focused }) => [styles.key, focused && styles.keyFocused]}
-          >
-            {({ focused }) => (
-              <Text
-                style={[styles.keyText, focused && styles.keyTextFocused]}
-                numberOfLines={1}
-              >
-                {key}
-              </Text>
-            )}
-          </Pressable>
-        );
-      })}
-    </View>
-  );
-};
-
-interface ActionRowProps {
-  onKeyPress: (key: string) => void;
-  onDelete: () => void;
-  onClear: () => void;
-  onFocus?: () => void;
-}
-
-const ActionRow: React.FC<ActionRowProps> = ({
-  onKeyPress,
-  onDelete,
-  onClear,
-  onFocus,
-}) => {
-  const { containerRef, getItemProps } = useFocusGroup(
-    'search-actions',
-    ACTIONS.length,
-  );
-
-  const pressAction = (id: string) => {
-    if (id === 'delete') {
-      onDelete();
-    } else if (id === 'clear') {
+  const press = (def: KeyDef) => {
+    if (def.action === 'clear') {
       onClear();
-    } else {
+    } else if (def.action === 'space') {
       onKeyPress(' ');
+    } else if (def.id === 'delete') {
+      onDelete();
+    } else {
+      onKeyPress(def.label);
     }
   };
 
   return (
-    <View ref={containerRef} style={styles.actionRow}>
-      {ACTIONS.map((action, index) => {
+    <View ref={containerRef} style={styles.row}>
+      {keys.map((def, index) => {
         const itemProps = getItemProps(index);
+        const isAction = def.action !== undefined;
         return (
           <Pressable
-            key={action.id}
+            key={def.id}
             {...itemProps}
-            accessibilityRole="button"
-            accessibilityLabel={ACTION_LABELS[action.id]}
+            hasTVPreferredFocus={autoFocus && index === 0}
             onFocus={() => {
               itemProps.onFocus?.();
               onFocus?.();
             }}
-            onPress={() => pressAction(action.id)}
+            onPress={() => press(def)}
+            accessibilityRole="button"
+            accessibilityLabel={
+              def.action
+                ? ACTION_LABELS[def.action]
+                : def.id === 'delete'
+                  ? 'Delete'
+                  : def.spoken ?? def.label
+            }
             style={({ focused }) => [
-              styles.actionKey,
-              { width: keyWidth(action.units) },
+              styles.key,
+              isAction && styles.actionKey,
+              def.units !== undefined && { width: keyWidth(def.units) },
               focused && styles.keyFocused,
             ]}
           >
             {({ focused }) => (
               <Text
-                style={[styles.actionText, focused && styles.keyTextFocused]}
+                style={[
+                  isAction ? styles.actionText : styles.keyText,
+                  def.muted && styles.keyTextMuted,
+                  focused && styles.keyTextFocused,
+                ]}
                 numberOfLines={1}
               >
-                {action.label}
+                {def.label}
               </Text>
             )}
           </Pressable>
@@ -168,26 +150,19 @@ export const SearchKeyboard: React.FC<SearchKeyboardProps> = ({
   onFocus,
   focusRequest,
 }) => (
-  <View style={styles.plate}>
-    <View style={styles.keyboard}>
-      {KEY_ROWS.map((keys, row) => (
-        <KeyboardRow
-          key={`search-row-${row}`}
-          groupId={`search-row-${row}`}
-          keys={keys}
-          indent={ROW_INDENTS[row]}
-          autoFocus={row === 0}
-          focusRequest={row === 0 ? focusRequest : undefined}
-          onKeyPress={onKeyPress}
-          onFocus={onFocus}
-        />
-      ))}
-      <ActionRow
+  <View style={styles.keyboard}>
+    {KEY_ROWS.map((keys, row) => (
+      <KeyboardRow
+        key={`search-row-${row}`}
+        groupId={`search-row-${row}`}
+        keys={keys}
+        autoFocus={row === 0}
+        focusRequest={row === 0 ? focusRequest : undefined}
         onKeyPress={onKeyPress}
         onDelete={onDelete}
         onClear={onClear}
         onFocus={onFocus}
       />
-    </View>
+    ))}
   </View>
 );

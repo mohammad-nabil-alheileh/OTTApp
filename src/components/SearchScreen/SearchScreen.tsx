@@ -17,8 +17,15 @@ import { useBackHandler } from '../../hooks/useBackHandler';
 import { useFocusGroup } from '../../focus/useFocusGroup';
 import { SearchInputMethod, trackSearch } from '../../services/analytics';
 import { getRecommendedVideos, searchVideos } from '../../services/search';
+import {
+  clearSearchHistory,
+  getSearchHistory,
+  loadSearchHistory,
+  rememberSearch,
+} from '../../services/searchHistory';
 import { VODItem } from '../../types/vod';
 import { formatDuration } from '../../utils/time';
+import { SearchHistory } from '../SearchHistory/SearchHistory';
 import { SearchKeyboard } from '../SearchKeyboard/SearchKeyboard';
 import { SearchNoResults } from '../SearchNoResults/SearchNoResults';
 import { SearchScreenProps } from './SearchScreen.types';
@@ -65,13 +72,36 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({
   const [focusedArea, setFocusedArea] = useState<FocusedArea>('keyboard');
   const [keyboardFocusRequest, setKeyboardFocusRequest] = useState(0);
   const [recommendedFocusRequest, setRecommendedFocusRequest] = useState(0);
+  const [history, setHistory] = useState<string[]>(getSearchHistory);
   // Which input produced the current query, reported with search analytics.
   const inputMethod = useRef<SearchInputMethod>('typed');
 
+  useEffect(() => {
+    let mounted = true;
+    loadSearchHistory().then(entries => {
+      if (mounted) {
+        setHistory(entries);
+      }
+    });
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  // Keep the query once the user acts on it (opens a result or leaves the
+  // screen), but not for every keystroke, which would bury real searches.
+  const rememberQuery = useCallback(() => {
+    const trimmed = query.trim();
+    if (trimmed) {
+      setHistory(rememberSearch(trimmed));
+    }
+  }, [query]);
+
   const handleBack = useCallback(() => {
+    rememberQuery();
     onBack();
     return true;
-  }, [onBack]);
+  }, [onBack, rememberQuery]);
   useBackHandler(handleBack);
 
   const appendChar = useCallback(
@@ -89,6 +119,24 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({
     inputMethod.current = 'typed';
     onQueryChange(() => '');
   }, [onQueryChange]);
+
+  const selectHistoryEntry = useCallback(
+    (entry: string) => {
+      inputMethod.current = 'typed';
+      // Focus lands on the fresh results rather than the chip being removed.
+      setFocusedArea('results');
+      onQueryChange(() => entry);
+    },
+    [onQueryChange],
+  );
+
+  const handleClearHistory = useCallback(() => {
+    setHistory(clearSearchHistory());
+    // The section unmounts under the focused button; land on the rail below
+    // rather than leaving focus nowhere.
+    setFocusedArea('results');
+    focusFirstResult();
+  }, [focusFirstResult]);
 
   const handleVoiceSearch = useCallback(() => {
     if (!voiceAvailable || voiceListening) {
@@ -166,7 +214,10 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({
           itemProps.onFocus?.();
           setFocusedArea('results');
         }}
-        onPress={() => onSelectVOD(item)}
+        onPress={() => {
+          rememberQuery();
+          onSelectVOD(item);
+        }}
         accessibilityRole="button"
         accessibilityLabel={`${item.title}, rated ${item.rating} out of 5, ${formatDuration(
           item.duration,
@@ -231,15 +282,17 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({
       </View>
 
       <View style={styles.body}>
-        <View style={styles.queryBar}>
-          <Text
-            style={styles.queryIcon}
-            accessible={false}
-            importantForAccessibility="no"
-            accessibilityElementsHidden
-          >
-            🔍
-          </Text>
+        <View style={[styles.queryBar, hasQuery && styles.queryBarActive]}>
+          <View style={styles.queryIconBadge} aria-hidden>
+            <Text
+              style={styles.queryIcon}
+              accessible={false}
+              importantForAccessibility="no"
+              accessibilityElementsHidden
+            >
+              🔍
+            </Text>
+          </View>
           <View style={styles.queryField}>
             {voiceListening && voicePartial ? (
               <Text
@@ -292,48 +345,64 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({
           )}
         </View>
 
-        <View style={styles.resultsSection} ref={resultsContainerRef}>
-          {(isLoading || results.length > 0) && (
-            <View style={styles.resultsHeader}>
-              <Text style={styles.resultsTitle} accessibilityRole="header">
-                {hasQuery ? 'Results' : 'All Videos'}
-              </Text>
-              {!isLoading && (
-                <Text
-                  style={styles.resultsCount}
-                  accessibilityLiveRegion="polite"
-                >
-                  {results.length} {results.length === 1 ? 'video' : 'videos'}
-                </Text>
-              )}
-            </View>
+        <View style={styles.resultsSection}>
+          {!hasQuery && history.length > 0 && (
+            <SearchHistory
+              entries={history}
+              onSelect={selectHistoryEntry}
+              onClear={handleClearHistory}
+            />
           )}
 
-          {isLoading ? (
-            <View style={styles.emptyState}>
-              <Text style={styles.emptyTitle} accessibilityLiveRegion="polite">
-                Loading videos…
-              </Text>
-            </View>
-          ) : results.length > 0 ? (
-            <FlatList
-              data={results}
-              renderItem={renderResult}
-              keyExtractor={item => item.id}
-              extraData={activeResultIndex}
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.resultsList}
-            />
-          ) : (
-            <SearchNoResults
-              query={query}
-              recommended={recommended}
-              onSelectVOD={onSelectVOD}
-              recommendedFocusRequest={recommendedFocusRequest}
-              onRecommendedFocus={() => setFocusedArea('recommended')}
-            />
-          )}
+          {/* The rail owns its own focus group, so it must sit after the
+              history block in the tree: Up/Down then follows the screen. */}
+          <View ref={resultsContainerRef} style={styles.resultsBlock}>
+            {(isLoading || results.length > 0) && (
+              <View style={styles.resultsHeader}>
+                <Text style={styles.resultsTitle} accessibilityRole="header">
+                  {hasQuery ? 'Results' : 'All Videos'}
+                </Text>
+                {!isLoading && (
+                  <Text
+                    style={styles.resultsCount}
+                    accessibilityLiveRegion="polite"
+                  >
+                    {results.length} {results.length === 1 ? 'video' : 'videos'}
+                  </Text>
+                )}
+              </View>
+            )}
+
+            {isLoading ? (
+              <View style={styles.emptyState}>
+                <Text
+                  style={styles.emptyTitle}
+                  accessibilityLiveRegion="polite"
+                >
+                  Loading videos…
+                </Text>
+              </View>
+            ) : results.length > 0 ? (
+              <FlatList
+                data={results}
+                renderItem={renderResult}
+                keyExtractor={item => item.id}
+                extraData={activeResultIndex}
+                horizontal
+                style={styles.resultsListBox}
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.resultsList}
+              />
+            ) : (
+              <SearchNoResults
+                query={query}
+                recommended={recommended}
+                onSelectVOD={onSelectVOD}
+                recommendedFocusRequest={recommendedFocusRequest}
+                onRecommendedFocus={() => setFocusedArea('recommended')}
+              />
+            )}
+          </View>
         </View>
 
         <View style={styles.footer}>

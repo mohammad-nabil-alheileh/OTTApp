@@ -90,6 +90,34 @@ const indexUnder = (group: GroupState, element: FocusableElement) => {
   return closest;
 };
 
+const overlapWidth = (a: DOMRect, b: DOMRect) =>
+  Math.min(a.right, b.right) - Math.max(a.left, b.left);
+
+// Item in the target group that shares horizontal space with the current one
+// and sits closest to its centre, so moving up or down keeps the column the
+// user is in even when the two rails have different item widths or counts.
+const alignedIndex = (group: GroupState, element: FocusableElement) => {
+  const rect = element.getBoundingClientRect();
+  const center = rect.left + rect.width / 2;
+  let closest: number | null = null;
+  let closestDistance = Infinity;
+  group.items.forEach((item, index) => {
+    if (!item) {
+      return;
+    }
+    const itemRect = item.getBoundingClientRect();
+    if (overlapWidth(rect, itemRect) <= 0) {
+      return;
+    }
+    const distance = Math.abs(itemRect.left + itemRect.width / 2 - center);
+    if (distance < closestDistance) {
+      closest = index;
+      closestDistance = distance;
+    }
+  });
+  return closest;
+};
+
 const focusItem = (group: GroupState, index: number) => {
   const item = group.items[index];
   if (!item) {
@@ -219,11 +247,23 @@ const handleKeyDown = (event: KeyboardEvent) => {
   event.preventDefault();
   event.stopImmediatePropagation();
 
-  const remembered =
+  const rememberedIndex =
     nextGroup.lastFocusedIndex >= 0
       ? availableIndex(nextGroup, nextGroup.lastFocusedIndex)
       : null;
-  const next = remembered ?? indexUnder(nextGroup, active);
+  const rememberedItem =
+    rememberedIndex !== null ? nextGroup.items[rememberedIndex] : null;
+  // Keep the previous spot only while it still lines up under the current
+  // item; otherwise follow the column instead of jumping sideways.
+  const rememberedLinesUp =
+    rememberedItem !== null &&
+    overlapWidth(
+      active.getBoundingClientRect(),
+      rememberedItem.getBoundingClientRect(),
+    ) > 0;
+  const next = rememberedLinesUp
+    ? rememberedIndex
+    : alignedIndex(nextGroup, active) ?? rememberedIndex ?? indexUnder(nextGroup, active);
   if (next !== null) {
     focusItem(nextGroup, next);
   }

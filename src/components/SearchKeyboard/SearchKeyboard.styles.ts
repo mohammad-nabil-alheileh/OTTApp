@@ -1,74 +1,64 @@
 import { StyleSheet } from 'react-native';
-import { colors, screen, spacing } from '../../styles/theme';
+import { colors, contentWidth, screen } from '../../styles/theme';
 
-// Base sizes are designed at 1080p; shrink further when the window is too
-// narrow for the 10-key layout so nothing clips on small web viewports.
-const BASE_KEY_SIZE = 72;
-const BASE_KEY_GAP = 12;
-const BASE_KEYBOARD_WIDTH =
-  BASE_KEY_SIZE * 10 + BASE_KEY_GAP * 10 + BASE_KEY_SIZE * 0.75;
-const AVAILABLE_WIDTH =
-  Math.min(1000 * screen.scale, screen.width - spacing.xl * 2) - spacing.sm * 2;
-const SCALE = Math.min(screen.scale, AVAILABLE_WIDTH / BASE_KEYBOARD_WIDTH);
-
-const scale = (size: number) => Math.floor(size * SCALE);
-
-export const KEY_SIZE = scale(BASE_KEY_SIZE);
-export const KEY_GAP = scale(BASE_KEY_GAP);
-// Each row is offset a quarter key further right, like a physical keyboard.
-export const ROW_INDENTS = [0, 1, 2, 3].map(row =>
-  Math.round((KEY_SIZE * row) / 4),
+// Ten equal columns fill the shared content width. Every row adds up to the
+// same ten units, so the grid is a clean rectangle instead of staggered rows,
+// and the search bar above shares the same left and right edges.
+const COLUMN_UNITS = 10;
+export const KEY_GAP = Math.max(4, Math.round(10 * screen.scale));
+export const KEY_SIZE = Math.floor(
+  (contentWidth - KEY_GAP * (COLUMN_UNITS - 1)) / COLUMN_UNITS,
 );
-const KEYBOARD_WIDTH = KEY_SIZE * 10 + KEY_GAP * 10 + ROW_INDENTS[3];
+export const KEYBOARD_WIDTH =
+  KEY_SIZE * COLUMN_UNITS + KEY_GAP * (COLUMN_UNITS - 1);
 
+export const keyWidth = (units: number) =>
+  KEY_SIZE * units + KEY_GAP * (units - 1);
+
+// Wider than tall: five rows still leave room for the results rail above.
+const KEY_HEIGHT = Math.round(KEY_SIZE * 0.76);
 // Labels scale with the keycaps instead of the screen height, so they never
 // outgrow the keys on short/narrow windows.
-const KEY_FONT_SIZE = Math.max(9, Math.round(KEY_SIZE * 0.42));
-const ACTION_FONT_SIZE = Math.max(8, Math.round(KEY_SIZE * 0.32));
-const KEY_RADIUS = Math.max(3, Math.round(KEY_SIZE * 0.1));
+const KEY_FONT_SIZE = Math.max(9, Math.round(KEY_SIZE * 0.4));
+const ACTION_FONT_SIZE = Math.max(8, Math.round(KEY_SIZE * 0.26));
+const KEY_RADIUS = Math.max(3, Math.round(KEY_SIZE * 0.12));
 const KEY_BORDER = Math.max(1, Math.round(KEY_SIZE * 0.025));
-const KEY_DEPTH = Math.max(1, Math.round(KEY_SIZE * 0.06));
-
-export const keyWidth = (keyUnits: number) =>
-  KEY_SIZE * keyUnits + KEY_GAP * (keyUnits - 1);
+const KEY_DEPTH = Math.max(1, Math.round(KEY_SIZE * 0.055));
 
 export const styles = StyleSheet.create({
-  plate: {
-    width: '100%',
-    alignItems: 'center',
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.sm,
-    borderRadius: Math.max(6, Math.round(KEY_SIZE * 0.2)),
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.12)',
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-  },
   keyboard: {
     width: KEYBOARD_WIDTH,
+    gap: KEY_GAP,
   },
   row: {
+    width: KEYBOARD_WIDTH,
     flexDirection: 'row',
-    marginBottom: KEY_GAP,
+    gap: KEY_GAP,
   },
   key: {
     width: KEY_SIZE,
-    height: KEY_SIZE,
-    marginRight: KEY_GAP,
+    height: KEY_HEIGHT,
     justifyContent: 'center',
     alignItems: 'center',
     borderRadius: KEY_RADIUS,
     borderWidth: KEY_BORDER,
-    borderColor: '#4d4d4d',
+    borderColor: '#3c3c42',
     borderBottomWidth: KEY_DEPTH,
-    borderBottomColor: '#0a0a0a',
-    backgroundColor: '#2e2e2e',
+    borderBottomColor: '#101012',
+    backgroundColor: '#26262b',
+  },
+  // Action keys sit a shade darker so the alphabet grid reads as the surface.
+  actionKey: {
+    borderColor: '#333338',
+    borderBottomColor: '#0c0c0e',
+    backgroundColor: '#1c1c20',
   },
   keyFocused: {
     zIndex: 1,
     borderColor: colors.focus,
-    borderBottomColor: '#bdbdbd',
+    borderBottomColor: '#c8c8c8',
     backgroundColor: colors.focus,
-    transform: [{ scale: 1.08 }],
+    transform: [{ scale: 1.06 }],
   },
   keyText: {
     fontSize: KEY_FONT_SIZE,
@@ -76,30 +66,18 @@ export const styles = StyleSheet.create({
     color: colors.text,
     textAlign: 'center',
   },
+  // The number row reads as secondary to the letters.
+  keyTextMuted: {
+    fontWeight: '500',
+    color: '#c2c2c8',
+  },
   keyTextFocused: {
     color: '#000',
-  },
-  // Same width as the letter rows so SPACE sits centered under the keyboard.
-  actionRow: {
-    width: KEYBOARD_WIDTH,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: KEY_GAP,
-  },
-  actionKey: {
-    height: KEY_SIZE,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderRadius: KEY_RADIUS,
-    borderWidth: KEY_BORDER,
-    borderColor: '#4d4d4d',
-    borderBottomWidth: KEY_DEPTH,
-    borderBottomColor: '#0a0a0a',
-    backgroundColor: '#232323',
   },
   actionText: {
     fontSize: ACTION_FONT_SIZE,
     fontWeight: '700',
+    letterSpacing: 1,
     color: colors.text,
     textAlign: 'center',
   },
