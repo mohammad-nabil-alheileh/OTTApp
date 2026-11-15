@@ -1,7 +1,14 @@
 import { StyleSheet } from 'react-native';
+import { RailLayout } from '../../focus/railReveal';
 import { colors, spacing, borderRadius, typography, scaleSize } from '../../styles/theme';
 
 const CARD_WIDTH = scaleSize(320);
+
+export const railLayout: RailLayout = {
+  cardWidth: CARD_WIDTH,
+  cardGap: spacing.md,
+  gutter: spacing.xl,
+};
 const ICON_SIZE = scaleSize(48);
 
 export const styles = StyleSheet.create({
@@ -15,12 +22,12 @@ export const styles = StyleSheet.create({
     marginHorizontal: spacing.xl,
   },
   listContent: {
-    paddingHorizontal: spacing.xl,
+    paddingHorizontal: railLayout.gutter,
     paddingVertical: spacing.md,
   },
   channelCard: {
-    width: CARD_WIDTH,
-    marginRight: spacing.md,
+    width: railLayout.cardWidth,
+    marginRight: railLayout.cardGap,
     borderRadius: borderRadius.md,
     borderWidth: scaleSize(4),
     borderColor: 'transparent',

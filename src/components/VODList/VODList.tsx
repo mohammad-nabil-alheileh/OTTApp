@@ -4,10 +4,11 @@ import { AppPressable as Pressable } from '../AppPressable/AppPressable';
 import { AppText as Text } from '../AppText/AppText';
 import { VODItem } from '../../types/vod';
 import { useFocusGroup } from '../../focus/useFocusGroup';
+import { useRailReveal } from '../../focus/useRailReveal';
 import { usePreferredFocus } from '../../focus/usePreferredFocus';
 import { withHomeRow } from '../../hooks/useHomeBack';
 import { formatDuration } from '../../utils/time';
-import { styles } from './VODList.styles';
+import { railLayout, styles } from './VODList.styles';
 import { VODListProps } from './VODList.types';
 import { RailStatus } from '../RailStatus/RailStatus';
 
@@ -31,6 +32,7 @@ export const VODList: React.FC<VODListProps> = ({
     'vod-rail',
     isLoading ? 1 : vodList.length,
   );
+  const { listProps, withReveal } = useRailReveal<VODItem | null>(railLayout);
   const initialNumToRender = usePreferredFocus(
     preferredFocusIndex,
     focusIndex,
@@ -86,7 +88,10 @@ export const VODList: React.FC<VODListProps> = ({
     }
     return (
       <Pressable
-        {...withHomeRow(getItemProps(index), index, homeRow)}
+        {...withReveal(
+          withHomeRow(getItemProps(index), index, homeRow),
+          index,
+        )}
         hasTVPreferredFocus={index === preferredFocusIndex}
         onPress={() => onSelectVOD(item)}
         accessibilityRole="button"
@@ -124,6 +129,7 @@ export const VODList: React.FC<VODListProps> = ({
         Videos On Demand
       </Text>
       <FlatList
+        {...listProps}
         data={slots}
         renderItem={renderVODItem}
         keyExtractor={(item, index) =>
