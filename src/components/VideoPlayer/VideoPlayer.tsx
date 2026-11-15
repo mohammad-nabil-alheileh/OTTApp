@@ -41,6 +41,9 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
   onSelectRecommended,
 }) => {
   const videoRef = useRef<VideoRef>(null);
+  // Last position the player reported, to detect that playback is moving
+  // again even when no onBuffer(false) arrives.
+  const lastProgressRef = useRef<number | null>(null);
   const [paused, setPaused] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
@@ -71,6 +74,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
   // A different title starts at its own resume point, not the last retry's.
   useEffect(() => {
     setResumeAt(null);
+    lastProgressRef.current = null;
   }, [item.url]);
 
   const ads = useMidRollAds(
@@ -232,6 +236,15 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
           }
         }}
         onProgress={e => {
+          // Position moved, so playback is running; do not let a missing
+          // onBuffer(false) leave the spinner over a playing video.
+          if (
+            lastProgressRef.current !== null &&
+            e.currentTime !== lastProgressRef.current
+          ) {
+            setBuffering(false);
+          }
+          lastProgressRef.current = e.currentTime;
           if (pendingSeekRef.current === null) {
             setCurrentTime(e.currentTime);
           }

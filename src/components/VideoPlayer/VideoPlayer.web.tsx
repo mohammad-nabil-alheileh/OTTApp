@@ -21,6 +21,9 @@ import { styles, webVideoStyle } from './VideoPlayer.styles';
 import { VideoPlayerProps } from './VideoPlayer.types';
 
 const STALL_MESSAGE = 'Playback stalled. Check your connection.';
+// How far the clock must move past the point buffering started before the
+// spinner is trusted to be stale.
+const BUFFERING_EPSILON_SECONDS = 0.25;
 
 export const VideoPlayer: React.FC<VideoPlayerProps> = ({
   item,
@@ -33,6 +36,9 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
   // Where the next source load should resume; set when retrying a stall so a
   // dropped VOD does not start over from the original resume point.
   const resumeAtRef = useRef<number | null>(null);
+  // Position at the moment buffering started, to tell a real stall (clock
+  // frozen) from a stale 'waiting' whose 'playing' never arrived.
+  const bufferingFromRef = useRef<number | null>(null);
   const [paused, setPaused] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
@@ -141,15 +147,25 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
     videoRef.current?.play().catch(() => setPaused(true));
   }, [finishBreak]);
 
+  const showBuffering = useCallback(() => {
+    bufferingFromRef.current = videoRef.current?.currentTime ?? null;
+    setBuffering(true);
+  }, []);
+
+  const hideBuffering = useCallback(() => {
+    bufferingFromRef.current = null;
+    setBuffering(false);
+  }, []);
+
   const retryPlayback = useCallback(() => {
     resumeAtRef.current = item.isLive
       ? null
       : videoRef.current?.currentTime ?? null;
     setPlaybackError(null);
-    setBuffering(true);
+    showBuffering();
     setPaused(false);
     setReloadKey(k => k + 1);
-  }, [item.isLive]);
+  }, [item.isLive, showBuffering]);
 
   useEffect(() => {
     const video = videoRef.current;
@@ -208,7 +224,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
     }
     if (video.paused && item.isLive && liveState.hasLeftDvrWindow) {
       setReloadKey(k => k + 1);
-      setBuffering(true);
+      showBuffering();
     } else if (video.paused) {
       video.play().catch(() => setPaused(true));
     } else {
@@ -239,18 +255,31 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
         onPlay={() => setPaused(false)}
         onPause={() => setPaused(true)}
         // 'waiting'/'seeking' = stalled; 'playing' (or 'canplay' when paused) = recovered.
-        onWaiting={() => setBuffering(true)}
-        onSeeking={() => setBuffering(true)}
-        onPlaying={() => setBuffering(false)}
-        onCanPlay={() => setBuffering(false)}
+        onWaiting={showBuffering}
+        onSeeking={showBuffering}
+        onPlaying={hideBuffering}
+        onCanPlay={hideBuffering}
         // Ignore positions reported mid-seek so the seeker doesn't jump back;
         // 'seeked' then reports where the seek actually landed.
         onTimeUpdate={e => {
           if (!e.currentTarget.seeking) {
+            const bufferingFrom = bufferingFromRef.current;
+            // Frames are moving again, so nothing is loading even when the
+            // matching 'playing' event never arrived.
+            if (
+              bufferingFrom !== null &&
+              e.currentTarget.currentTime >
+                bufferingFrom + BUFFERING_EPSILON_SECONDS
+            ) {
+              hideBuffering();
+            }
             setCurrentTime(e.currentTarget.currentTime);
           }
         }}
-        onSeeked={e => setCurrentTime(e.currentTarget.currentTime)}
+        onSeeked={e => {
+          hideBuffering();
+          setCurrentTime(e.currentTarget.currentTime);
+        }}
         onLoadedMetadata={e => {
           const resumeAt = resumeAtRef.current ?? item.startPosition;
           if (resumeAt !== undefined) {
