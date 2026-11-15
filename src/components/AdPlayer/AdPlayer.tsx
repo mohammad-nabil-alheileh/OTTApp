@@ -37,6 +37,11 @@ export const AdPlayer: React.FC<AdPlayerProps> = ({ adBreak, onComplete }) => {
         // The content player underneath is a SurfaceView on Android; two
         // stacked SurfaceViews can draw in the wrong order, a TextureView cannot.
         viewType={ViewType.TEXTURE}
+        // ExoPlayer's view is focusable by default. When the ad replaces the
+        // focused player control, Android hands focus to the first focusable
+        // view it finds, which is this invisible player, so the remote's
+        // highlight disappears. Only the overlay's buttons should take focus.
+        focusable={false}
         resizeMode="contain"
         progressUpdateInterval={250}
         // The overlay's badge and buttons describe the ad; a full-screen

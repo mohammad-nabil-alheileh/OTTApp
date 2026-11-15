@@ -7,12 +7,16 @@ const FOCUS_DELAY_MS = 100;
 
 // hasTVPreferredFocus moves the remote's focus, but TalkBack's own focus does
 // not always follow, leaving two highlights on different elements. This puts
-// TalkBack's focus on the same view when it mounts.
-export const useAccessibilityFocusOnMount = (ref: RefObject<View | null>) => {
+// TalkBack's focus on the same view when it mounts, and again whenever
+// `enabled` turns true (e.g. hasTVPreferredFocus flipping on later).
+export const useAccessibilityFocusOnMount = (
+  ref: RefObject<View | null>,
+  enabled = true,
+) => {
   const screenReaderEnabled = useScreenReaderEnabled();
 
   useEffect(() => {
-    if (!screenReaderEnabled || Platform.OS !== 'android') {
+    if (!enabled || !screenReaderEnabled || Platform.OS !== 'android') {
       return;
     }
     const timer = setTimeout(() => {
@@ -21,5 +25,5 @@ export const useAccessibilityFocusOnMount = (ref: RefObject<View | null>) => {
       }
     }, FOCUS_DELAY_MS);
     return () => clearTimeout(timer);
-  }, [screenReaderEnabled, ref]);
+  }, [enabled, screenReaderEnabled, ref]);
 };

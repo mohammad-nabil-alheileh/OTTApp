@@ -9,7 +9,6 @@ import { useFocusGroup } from '../../focus/useFocusGroup';
 import { AUTO_QUALITY } from '../../types/quality';
 import { formatTime, skipBy } from '../../utils/time';
 import { sharedStyles } from '../../styles/theme';
-import { useAccessibilityFocusOnMount } from '../../accessibility/useAccessibilityFocusOnMount';
 import { styles } from './PlayerControls.styles';
 import { PlayerControlsProps } from './PlayerControls.types';
 
@@ -46,9 +45,9 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
   onSeek,
   onGoLive,
   adMarkers,
+  onSeekbarFocusChange,
 }) => {
   const playButtonRef = useRef<View>(null);
-  useAccessibilityFocusOnMount(playButtonRef);
 
   // Keeps Up/Down between the transport bar and the paused shelf predictable:
   // without a group the polyfill picks whatever sits nearest the focused card,
@@ -90,6 +89,7 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
           duration={duration}
           onSeek={onSeek}
           markers={adMarkers}
+          onFocusChange={onSeekbarFocusChange}
         />
       )}
       <View style={styles.buttons}>

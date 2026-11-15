@@ -10,7 +10,6 @@ import { AppText as Text } from '../AppText/AppText';
 import { colors, sharedStyles } from '../../styles/theme';
 import { formatTime } from '../../utils/time';
 import { useScreenReaderEnabled } from '../../accessibility/useScreenReaderEnabled';
-import { useAccessibilityFocusOnMount } from '../../accessibility/useAccessibilityFocusOnMount';
 import { styles } from './AdOverlay.styles';
 import { AdOverlayProps } from './AdOverlay.types';
 
@@ -47,8 +46,6 @@ export const AdOverlay: React.FC<AdOverlayProps> = ({
   const skippable = ad.skipOffset !== undefined;
   const skipIn = skippable ? Math.ceil((ad.skipOffset ?? 0) - position) : 0;
   const canSkip = skippable && loaded && skipIn <= 0;
-  // TalkBack starts on the same button the remote does.
-  useAccessibilityFocusOnMount(skippable ? skipRef : infoRef);
   const screenReaderEnabled = useScreenReaderEnabled();
 
   // The countdown label changes every second, and TalkBack re-reads the
@@ -88,6 +85,19 @@ export const AdOverlay: React.FC<AdOverlayProps> = ({
     }
   }, [skippable]);
 
+  // On Android TV hasTVPreferredFocus calls requestFocus when the prop is
+  // first applied, before the view is attached, while the control that held
+  // focus is removed in the same commit. Focus can then end up nowhere.
+  // Turning the prop on a frame after mount requests focus on attached views.
+  const [claimFocus, setClaimFocus] = useState(Platform.OS !== 'android');
+  useEffect(() => {
+    if (Platform.OS !== 'android') {
+      return;
+    }
+    const frame = requestAnimationFrame(() => setClaimFocus(true));
+    return () => cancelAnimationFrame(frame);
+  }, []);
+
   return (
     <View style={styles.container}>
       {/* One stable label: the ticking time would be re-read every second. */}
@@ -115,7 +125,7 @@ export const AdOverlay: React.FC<AdOverlayProps> = ({
           )}
           <Pressable
             ref={infoRef}
-            hasTVPreferredFocus={!skippable}
+            hasTVPreferredFocus={claimFocus && !skippable}
             style={({ focused }) => [
               sharedStyles.controlButton,
               styles.infoButton,
@@ -137,7 +147,7 @@ export const AdOverlay: React.FC<AdOverlayProps> = ({
           // acts once the skip offset has passed.
           <Pressable
             ref={skipRef}
-            hasTVPreferredFocus
+            hasTVPreferredFocus={claimFocus}
             style={({ focused }) => [
               sharedStyles.controlButton,
               styles.skipButton,

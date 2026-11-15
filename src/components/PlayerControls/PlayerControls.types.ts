@@ -17,4 +17,6 @@ export interface PlayerControlsProps {
   onGoLive: () => void;
   // Ad break positions to mark on the progress bar.
   adMarkers?: number[];
+  // Reports when the progress bar gains and loses focus.
+  onSeekbarFocusChange?: (focused: boolean) => void;
 }

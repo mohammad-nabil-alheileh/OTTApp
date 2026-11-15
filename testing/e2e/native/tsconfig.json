@@ -1,0 +1,11 @@
+{
+  // WebdriverIO specs use Mocha + WDIO globals, which clash with Jest's
+  // global types, so they are type-checked on their own.
+  "extends": "@react-native/typescript-config",
+  "compilerOptions": {
+    "types": ["node", "@wdio/globals/types", "@wdio/mocha-framework"],
+    "module": "esnext",
+    "moduleResolution": "bundler"
+  },
+  "include": ["./**/*.ts", "../../helpers/remote.ts"]
+}
