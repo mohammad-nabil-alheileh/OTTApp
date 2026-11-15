@@ -61,9 +61,27 @@ const orderedGroups = (): GroupState[] => {
 };
 
 // Clamp to the group and skip items that are not mounted (virtualized lists).
-const availableIndex = (group: GroupState, index: number): number | null => {
+// `step` restricts the search to one direction of travel; without it the
+// nearest item either way wins.
+const availableIndex = (
+  group: GroupState,
+  index: number,
+  step = 0,
+): number | null => {
   const last = group.items.length - 1;
   if (last < 0) {
+    return null;
+  }
+  if (step !== 0) {
+    // Horizontal movement must never land back on the item it started from:
+    // in the player the controls sit in fixed slots, so a gap before the next
+    // rendered button (live has only Play and Go Live) would otherwise return
+    // the current slot and swallow the key press.
+    for (let i = index; i >= 0 && i <= last; i += step) {
+      if (group.items[i]) {
+        return i;
+      }
+    }
     return null;
   }
   const clamped = Math.min(Math.max(index, 0), last);
@@ -236,6 +254,7 @@ const handleKeyDown = (event: KeyboardEvent) => {
     const next = availableIndex(
       group,
       index + (direction === 'right' ? 1 : -1),
+      direction === 'right' ? 1 : -1,
     );
     if (next !== null && next !== index) {
       focusItem(group, next);
