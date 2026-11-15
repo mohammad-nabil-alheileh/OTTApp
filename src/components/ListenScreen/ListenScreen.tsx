@@ -2,6 +2,7 @@ import React, { useCallback, useMemo } from 'react';
 import { ScrollView, Text, View } from 'react-native';
 import { ContinueListeningRail } from '../ContinueListeningRail/ContinueListeningRail';
 import { FocusGroup } from '../FocusGroup/FocusGroup';
+import { PageStatus } from '../PageStatus/PageStatus';
 import { PodcastRail } from '../PodcastRail/PodcastRail';
 import { useBackHandler } from '../../hooks/useBackHandler';
 import { groupByCategory } from '../../services/podcasts';
@@ -12,6 +13,8 @@ import { ListenScreenProps } from './ListenScreen.types';
 export const ListenScreen: React.FC<ListenScreenProps> = ({
   podcasts,
   isLoading,
+  failure,
+  onRetry,
   continueListening,
   onSelectPodcast,
   onPlayEpisode,
@@ -27,7 +30,17 @@ export const ListenScreen: React.FC<ListenScreenProps> = ({
   useBackHandler(handleBack);
 
   let body: React.ReactNode;
-  if (isLoading) {
+  if (failure) {
+    body = (
+      <PageStatus
+        groupId="listen-status"
+        kind={failure.kind}
+        subject="podcasts"
+        retrying={isLoading}
+        onRetry={onRetry}
+      />
+    );
+  } else if (isLoading) {
     body = (
       <View style={styles.message}>
         <Text style={styles.messageText}>Loading podcasts...</Text>

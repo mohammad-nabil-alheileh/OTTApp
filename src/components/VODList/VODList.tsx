@@ -8,11 +8,14 @@ import { withHomeRow } from '../../hooks/useHomeBack';
 import { formatDuration } from '../../utils/time';
 import { styles } from './VODList.styles';
 import { VODListProps } from './VODList.types';
+import { RailStatus } from '../RailStatus/RailStatus';
 
 export const VODList: React.FC<VODListProps> = ({
   vodList,
   onSelectVOD,
   isLoading,
+  failure,
+  onRetry,
   homeRow,
 }) => {
   const { containerRef, getItemProps, activeIndex, focusFirst } =
@@ -21,10 +24,30 @@ export const VODList: React.FC<VODListProps> = ({
   // Native uses hasTVPreferredFocus below; on web this is a no-op until the
   // data arrives, then it puts focus on the rail.
   useEffect(() => {
-    if (!isLoading) {
+    if (!isLoading && !failure) {
       focusFirst();
     }
-  }, [isLoading, focusFirst]);
+  }, [isLoading, failure, focusFirst]);
+
+  // A failed rail keeps its title and takes only its own row; the rest of the
+  // home page keeps working. Retry is the row's only focus stop.
+  if (failure) {
+    return (
+      <View style={styles.container}>
+        <Text style={styles.sectionTitle} accessibilityRole="header">
+          Videos On Demand
+        </Text>
+        <RailStatus
+          groupId="vod-rail-status"
+          kind={failure.kind}
+          subject="videos"
+          retrying={isLoading}
+          onRetry={onRetry}
+          autoFocus
+        />
+      </View>
+    );
+  }
 
   if (isLoading) {
     return (

@@ -31,18 +31,25 @@ import { SearchScreen } from './components/SearchScreen/SearchScreen';
 import { ListenScreen } from './components/ListenScreen/ListenScreen';
 import { PodcastDetails } from './components/PodcastDetails/PodcastDetails';
 import { AudioPlayer } from './components/AudioPlayer/AudioPlayer';
+import { PageStatus } from './components/PageStatus/PageStatus';
 import { getListenHistory, loadListenHistory } from './services/listenHistory';
 import { getContinueListening, toAudioPlayable } from './services/podcasts';
 import {
-  mockVODData,
-  mockLiveChannels,
-  mockPodcasts,
-} from './services/mockData';
+  loadLiveChannels,
+  loadPodcasts,
+  loadVods,
+} from './services/catalog';
+import { useRemoteData } from './hooks/useRemoteData';
 import { VODItem } from './types/vod';
 import { LiveChannel } from './types/live';
+import { LoadFailure } from './types/load';
 import { AudioPlayable, Podcast, PodcastEpisode } from './types/podcast';
 import { SelectedContent } from './App.types';
 import { styles } from './App.styles';
+
+const NO_VODS: VODItem[] = [];
+const NO_CHANNELS: LiveChannel[] = [];
+const NO_PODCASTS: Podcast[] = [];
 
 export default function App() {
   return (
@@ -53,9 +60,13 @@ export default function App() {
 }
 
 const AppContent = () => {
-  const [vodList, setVodList] = useState<VODItem[]>([]);
-  const [channels, setChannels] = useState<LiveChannel[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  // Each dataset loads on its own, so one failed rail never blanks the page:
+  // the home screen keeps its other rows and every screen keeps its chrome.
+  const vods = useRemoteData(loadVods, NO_VODS);
+  const live = useRemoteData(loadLiveChannels, NO_CHANNELS);
+  const podcastCatalog = useRemoteData(loadPodcasts, NO_PODCASTS);
+  const vodList = vods.data;
+  const channels = live.data;
   // VOD whose details screen is open; it stays set while playing, so Back
   // from the player returns to the details screen.
   const [detailsItem, setDetailsItem] = useState<VODItem | null>(null);
@@ -70,7 +81,6 @@ const AppContent = () => {
   const [settingsVisible, setSettingsVisible] = useState(false);
   // Audio: the Listen landing page, then a podcast's details, then the player.
   // Each stays set under the next, so Back steps out one screen at a time.
-  const [podcasts, setPodcasts] = useState<Podcast[]>([]);
   const [listenVisible, setListenVisible] = useState(false);
   const [podcastDetails, setPodcastDetails] = useState<Podcast | null>(null);
   const [playingAudio, setPlayingAudio] = useState<AudioPlayable | null>(null);
@@ -94,8 +104,8 @@ const AppContent = () => {
   }, [playingAudio]);
 
   const continueListening = useMemo(
-    () => getContinueListening(listenHistory, podcasts),
-    [listenHistory, podcasts],
+    () => getContinueListening(listenHistory, podcastCatalog.data),
+    [listenHistory, podcastCatalog.data],
   );
 
   const playEpisode = useCallback(
@@ -141,6 +151,28 @@ const AppContent = () => {
     setFavoriteIds(toggleFavorite(vod.id));
   }, []);
 
+  // Only when no row has anything to show: otherwise each failed rail carries
+  // its own message and the rest of the page stays exactly as it was.
+  const homeFailure: LoadFailure | null =
+    continueWatchingItems.length === 0 &&
+    favoriteItems.length === 0 &&
+    vods.failure !== null &&
+    live.failure !== null
+      ? {
+          kind:
+            vods.failure.kind === 'offline' && live.failure.kind === 'offline'
+              ? 'offline'
+              : 'error',
+        }
+      : null;
+
+  const retryVods = vods.retry;
+  const retryLive = live.retry;
+  const retryHome = useCallback(() => {
+    retryVods();
+    retryLive();
+  }, [retryVods, retryLive]);
+
   const playVOD = useCallback((vod: VODItem) => {
     const saved = getWatchHistory().find(entry => entry.id === vod.id);
     setWatchHistory(
@@ -158,17 +190,6 @@ const AppContent = () => {
       id: vod.id,
       startPosition: saved && saved.position > 0 ? saved.position : undefined,
     });
-  }, []);
-
-  useEffect(() => {
-    // Simulates network latency; swap for a real fetch when an API exists.
-    const timer = setTimeout(() => {
-      setVodList(mockVODData);
-      setChannels(mockLiveChannels);
-      setPodcasts(mockPodcasts);
-      setIsLoading(false);
-    }, 500);
-    return () => clearTimeout(timer);
   }, []);
 
   // Home rows top to bottom; Back returns focus to the first one before it
@@ -280,7 +301,9 @@ const AppContent = () => {
     return (
       <SearchScreen
         videos={vodList}
-        isLoading={isLoading}
+        isLoading={vods.isLoading}
+        failure={vods.failure}
+        onRetry={vods.retry}
         query={searchQuery}
         onQueryChange={setSearchQuery}
         onSelectVOD={setDetailsItem}
@@ -292,8 +315,10 @@ const AppContent = () => {
   if (listenVisible) {
     return (
       <ListenScreen
-        podcasts={podcasts}
-        isLoading={isLoading}
+        podcasts={podcastCatalog.data}
+        isLoading={podcastCatalog.isLoading}
+        failure={podcastCatalog.failure}
+        onRetry={podcastCatalog.retry}
         continueListening={continueListening}
         onSelectPodcast={setPodcastDetails}
         onPlayEpisode={playEpisode}
@@ -374,52 +399,66 @@ const AppContent = () => {
         </View>
       </FocusGroup>
 
-      <ScrollView
-        ref={homeScrollRef}
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContent}
-      >
-        {continueWatchingItems.length > 0 && (
+      {homeFailure ? (
+        <PageStatus
+          groupId="home-status"
+          kind={homeFailure.kind}
+          subject="videos"
+          retrying={vods.isLoading || live.isLoading}
+          onRetry={retryHome}
+        />
+      ) : (
+        <ScrollView
+          ref={homeScrollRef}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.scrollContent}
+        >
+          {continueWatchingItems.length > 0 && (
+            <FocusGroup>
+              <ContinueWatchingRail
+                items={continueWatchingItems}
+                onSelectVOD={setDetailsItem}
+                homeRow={getHomeRow('continue')}
+              />
+            </FocusGroup>
+          )}
+          {favoriteItems.length > 0 && (
+            <FocusGroup>
+              <FavoritesRail
+                items={favoriteItems}
+                onSelectVOD={setDetailsItem}
+                homeRow={getHomeRow('favorites')}
+              />
+            </FocusGroup>
+          )}
           <FocusGroup>
-            <ContinueWatchingRail
-              items={continueWatchingItems}
+            <VODList
+              vodList={vodList}
+              isLoading={vods.isLoading}
+              failure={vods.failure}
+              onRetry={vods.retry}
               onSelectVOD={setDetailsItem}
-              homeRow={getHomeRow('continue')}
+              homeRow={getHomeRow('vod')}
             />
           </FocusGroup>
-        )}
-        {favoriteItems.length > 0 && (
-          <FocusGroup>
-            <FavoritesRail
-              items={favoriteItems}
-              onSelectVOD={setDetailsItem}
-              homeRow={getHomeRow('favorites')}
+          <FocusGroup trapFocusDown>
+            <LiveChannelList
+              channels={channels}
+              isLoading={live.isLoading}
+              failure={live.failure}
+              onRetry={live.retry}
+              homeRow={getHomeRow('live')}
+              onSelectChannel={channel =>
+                setSelected({
+                  title: channel.name,
+                  url: channel.streamUrl,
+                  isLive: channel.isLive,
+                })
+              }
             />
           </FocusGroup>
-        )}
-        <FocusGroup>
-          <VODList
-            vodList={vodList}
-            isLoading={isLoading}
-            onSelectVOD={setDetailsItem}
-            homeRow={getHomeRow('vod')}
-          />
-        </FocusGroup>
-        <FocusGroup trapFocusDown>
-          <LiveChannelList
-            channels={channels}
-            isLoading={isLoading}
-            homeRow={getHomeRow('live')}
-            onSelectChannel={channel =>
-              setSelected({
-                title: channel.name,
-                url: channel.streamUrl,
-                isLive: channel.isLive,
-              })
-            }
-          />
-        </FocusGroup>
-      </ScrollView>
+        </ScrollView>
+      )}
     </View>
   );
 };

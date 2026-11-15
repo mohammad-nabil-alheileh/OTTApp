@@ -25,6 +25,7 @@ import {
 } from '../../services/searchHistory';
 import { VODItem } from '../../types/vod';
 import { formatDuration } from '../../utils/time';
+import { PageStatus } from '../PageStatus/PageStatus';
 import { SearchHistory } from '../SearchHistory/SearchHistory';
 import { SearchKeyboard } from '../SearchKeyboard/SearchKeyboard';
 import { SearchNoResults } from '../SearchNoResults/SearchNoResults';
@@ -38,6 +39,8 @@ type FocusedArea = 'back' | 'mic' | 'keyboard' | 'results' | 'recommended';
 export const SearchScreen: React.FC<SearchScreenProps> = ({
   videos,
   isLoading,
+  failure,
+  onRetry,
   query,
   onQueryChange,
   onSelectVOD,
@@ -246,40 +249,61 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({
     );
   };
 
+  const header = (
+    <View style={styles.header}>
+      <View ref={backContainerRef}>
+        <Pressable
+          {...backItemProps}
+          onFocus={() => {
+            backItemProps.onFocus?.();
+            setFocusedArea('back');
+          }}
+          onPress={onBack}
+          accessibilityRole="button"
+          accessibilityLabel="Back"
+          accessibilityHint="Closes search"
+          style={({ focused }) => [
+            styles.backButton,
+            focused && styles.backButtonFocused,
+          ]}
+        >
+          <Text style={styles.backChevron}>‹</Text>
+          <Text style={styles.backText}>Back</Text>
+        </Pressable>
+      </View>
+      <Text style={styles.headerTitle} accessibilityRole="header">
+        Search
+      </Text>
+      <Text style={styles.hint} accessibilityLiveRegion="polite">
+        {voiceListening
+          ? voiceCapturing
+            ? 'Listening… speak now'
+            : 'Starting microphone… allow access if asked'
+          : 'Arrows to move · Enter to select · Back to close'}
+      </Text>
+    </View>
+  );
+
+  // Without the catalog there is nothing to type against, so the whole search
+  // body steps aside; Back stays available in the header.
+  if (failure) {
+    return (
+      <View style={styles.container}>
+        {header}
+        <PageStatus
+          groupId="search-status"
+          kind={failure.kind}
+          subject="search results"
+          retrying={isLoading}
+          onRetry={onRetry}
+        />
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <View ref={backContainerRef}>
-          <Pressable
-            {...backItemProps}
-            onFocus={() => {
-              backItemProps.onFocus?.();
-              setFocusedArea('back');
-            }}
-            onPress={onBack}
-            accessibilityRole="button"
-            accessibilityLabel="Back"
-            accessibilityHint="Closes search"
-            style={({ focused }) => [
-              styles.backButton,
-              focused && styles.backButtonFocused,
-            ]}
-          >
-            <Text style={styles.backChevron}>‹</Text>
-            <Text style={styles.backText}>Back</Text>
-          </Pressable>
-        </View>
-        <Text style={styles.headerTitle} accessibilityRole="header">
-          Search
-        </Text>
-        <Text style={styles.hint} accessibilityLiveRegion="polite">
-          {voiceListening
-            ? voiceCapturing
-              ? 'Listening… speak now'
-              : 'Starting microphone… allow access if asked'
-            : 'Arrows to move · Enter to select · Back to close'}
-        </Text>
-      </View>
+      {header}
 
       <View style={styles.body}>
         <View style={[styles.queryBar, hasQuery && styles.queryBarActive]}>

@@ -7,17 +7,37 @@ import { useFocusGroup } from '../../focus/useFocusGroup';
 import { withHomeRow } from '../../hooks/useHomeBack';
 import { styles } from './LiveChannelList.styles';
 import { LiveChannelListProps } from './LiveChannelList.types';
+import { RailStatus } from '../RailStatus/RailStatus';
 
 export const LiveChannelList: React.FC<LiveChannelListProps> = ({
   channels,
   onSelectChannel,
   isLoading,
+  failure,
+  onRetry,
   homeRow,
 }) => {
   const { containerRef, getItemProps, activeIndex } = useFocusGroup(
     'live-rail',
     channels.length,
   );
+
+  if (failure) {
+    return (
+      <View style={styles.container}>
+        <Text style={styles.sectionTitle} accessibilityRole="header">
+          Live Channels
+        </Text>
+        <RailStatus
+          groupId="live-rail-status"
+          kind={failure.kind}
+          subject="live channels"
+          retrying={isLoading}
+          onRetry={onRetry}
+        />
+      </View>
+    );
+  }
 
   if (isLoading) {
     return (

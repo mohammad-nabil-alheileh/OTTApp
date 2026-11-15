@@ -1,9 +1,12 @@
 import { Podcast, PodcastEpisode } from '../../types/podcast';
 import { EpisodeProgress } from '../../services/podcasts';
+import { LoadFailure } from '../../types/load';
 
 export interface ListenScreenProps {
   podcasts: Podcast[];
   isLoading: boolean;
+  failure: LoadFailure | null;
+  onRetry: () => void;
   // In-progress episodes, most recently played first.
   continueListening: EpisodeProgress[];
   onSelectPodcast: (podcast: Podcast) => void;
