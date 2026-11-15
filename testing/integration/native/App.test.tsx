@@ -20,9 +20,10 @@ afterEach(() => {
 
 const renderHome = async () => {
   await render(<App />);
-  // The catalogue arrives after a simulated 500 ms network delay.
+  // The catalogue arrives after a simulated 500 ms network delay that starts
+  // once the network status promise settles.
   await act(async () => {
-    jest.advanceTimersByTime(600);
+    await jest.advanceTimersByTimeAsync(600);
   });
 };
 

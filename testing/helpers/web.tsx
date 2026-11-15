@@ -28,12 +28,13 @@ export const pressKey = (key: string) =>
     webKeyDown({ key }, document.activeElement ?? window);
   });
 
-// Renders the whole app and lets the simulated 500 ms catalogue load finish.
-// Call jest.useFakeTimers() first.
+// Renders the whole app and lets the simulated catalogue load finish. Each
+// dataset waits for its own promise before starting its timer, so time and
+// microtasks have to advance together. Call jest.useFakeTimers() first.
 export const renderApp = async () => {
   render(<App />);
   await act(async () => {
-    jest.advanceTimersByTime(600);
+    await jest.advanceTimersByTimeAsync(600);
   });
 };
 

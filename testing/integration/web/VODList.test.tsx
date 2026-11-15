@@ -12,15 +12,29 @@ const [first, second, third] = items;
 const card = (title: string) =>
   screen.getByRole('button', { name: new RegExp(`^${title}, rated`) });
 
+const railProps = {
+  failure: null,
+  onRetry: jest.fn(),
+};
+
 describe('VODList (web TV)', () => {
   it('announces loading in a polite live region', () => {
-    render(<VODList vodList={[]} onSelectVOD={jest.fn()} isLoading />);
+    render(
+      <VODList vodList={[]} onSelectVOD={jest.fn()} isLoading {...railProps} />,
+    );
     const status = screen.getByText('Loading VODs...');
     expect(status.closest('[aria-live="polite"]')).not.toBeNull();
   });
 
   it('renders one labelled button per item under a heading', () => {
-    render(<VODList vodList={items} onSelectVOD={jest.fn()} isLoading={false} />);
+    render(
+      <VODList
+        vodList={items}
+        onSelectVOD={jest.fn()}
+        isLoading={false}
+        {...railProps}
+      />,
+    );
 
     expect(screen.getByRole('heading', { name: 'Videos On Demand' })).toBeTruthy();
     items.forEach(item => expect(card(item.title)).toBeTruthy());
@@ -28,22 +42,43 @@ describe('VODList (web TV)', () => {
 
   it('focuses the first card once data has loaded', () => {
     const { rerender } = render(
-      <VODList vodList={[]} onSelectVOD={jest.fn()} isLoading />,
+      <VODList vodList={[]} onSelectVOD={jest.fn()} isLoading {...railProps} />,
     );
-    rerender(<VODList vodList={items} onSelectVOD={jest.fn()} isLoading={false} />);
+    rerender(
+      <VODList
+        vodList={items}
+        onSelectVOD={jest.fn()}
+        isLoading={false}
+        {...railProps}
+      />,
+    );
 
     expect(document.activeElement).toBe(card(first.title));
   });
 
   it('keeps a single tab stop on the rail (roving tabindex)', () => {
-    render(<VODList vodList={items} onSelectVOD={jest.fn()} isLoading={false} />);
+    render(
+      <VODList
+        vodList={items}
+        onSelectVOD={jest.fn()}
+        isLoading={false}
+        {...railProps}
+      />,
+    );
 
     expect(card(first.title).tabIndex).toBe(0);
     expect(card(second.title).tabIndex).toBe(-1);
   });
 
   it('moves focus along the rail with Left/Right and stops at the ends', async () => {
-    render(<VODList vodList={items} onSelectVOD={jest.fn()} isLoading={false} />);
+    render(
+      <VODList
+        vodList={items}
+        onSelectVOD={jest.fn()}
+        isLoading={false}
+        {...railProps}
+      />,
+    );
 
     await pressArrow('right');
     expect(document.activeElement).toBe(card(second.title));
@@ -58,10 +93,38 @@ describe('VODList (web TV)', () => {
 
   it('selects the activated item', () => {
     const onSelectVOD = jest.fn();
-    render(<VODList vodList={items} onSelectVOD={onSelectVOD} isLoading={false} />);
+    render(
+      <VODList
+        vodList={items}
+        onSelectVOD={onSelectVOD}
+        isLoading={false}
+        {...railProps}
+      />,
+    );
 
     fireEvent.click(card(second.title));
 
     expect(onSelectVOD).toHaveBeenCalledWith(second);
+  });
+
+  it('keeps the row heading and retries from a single focus stop when the row fails', () => {
+    const onRetry = jest.fn();
+    render(
+      <VODList
+        vodList={[]}
+        onSelectVOD={jest.fn()}
+        isLoading={false}
+        failure={{ kind: 'offline' }}
+        onRetry={onRetry}
+      />,
+    );
+
+    expect(screen.getByRole('heading', { name: 'Videos On Demand' })).toBeTruthy();
+    const retry = screen.getByRole('button', { name: /^You're offline/ });
+    expect(retry.tabIndex).toBe(0);
+    expect(document.activeElement).toBe(retry);
+
+    fireEvent.click(retry);
+    expect(onRetry).toHaveBeenCalled();
   });
 });

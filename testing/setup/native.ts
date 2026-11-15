@@ -34,6 +34,11 @@ jest.mock('@react-native-async-storage/async-storage', () =>
   require('../mocks/asyncStorage'),
 );
 
+// Never let a test reach the real reachability probe.
+jest.mock('../../src/services/network', () =>
+  require('../mocks/network').onlineNetwork,
+);
+
 // react-native-video is a native view; render it as a plain host component
 // so tests can find it and read its props.
 jest.mock('react-native-video', () => {
