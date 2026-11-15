@@ -39,7 +39,6 @@ export const styles = StyleSheet.create({
   },
   backChevron: {
     ...typography.subheading,
-    lineHeight: scaleSize(30),
     color: colors.text,
     marginRight: spacing.xs,
   },

@@ -39,7 +39,7 @@ export const styles = StyleSheet.create({
   badgeMark: {
     ...typography.heading,
     fontSize: scaleSize(56),
-    lineHeight: scaleSize(64),
+    lineHeight: scaleSize(70),
     color: colors.text,
   },
   badgeMarkError: {

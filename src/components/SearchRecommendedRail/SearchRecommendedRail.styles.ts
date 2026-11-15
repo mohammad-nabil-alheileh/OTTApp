@@ -55,12 +55,10 @@ export const styles = StyleSheet.create({
   },
   cardTitle: {
     ...typography.body,
-    lineHeight: scaleSize(28),
     color: colors.text,
   },
   meta: {
     ...typography.caption,
-    lineHeight: scaleSize(24),
     color: colors.textSecondary,
   },
 });
