@@ -22,6 +22,7 @@ import { useBackHandler } from '../../hooks/useBackHandler';
 import { useAutoHide } from '../../hooks/useAutoHide';
 import { useScreenReaderEnabled } from '../../accessibility/useScreenReaderEnabled';
 import { useMidRollAds } from '../../hooks/useMidRollAds';
+import { useStallWatchdog } from '../../hooks/useStallWatchdog';
 import { useWatchProgress } from '../../hooks/useWatchProgress';
 import { AUTO_QUALITY } from '../../types/quality';
 import { toQualities } from '../../utils/quality';
@@ -31,6 +32,7 @@ import { VideoPlayerProps } from './VideoPlayer.types';
 // Players may land slightly off the requested time (keyframes/segments).
 const SEEK_MATCH_TOLERANCE_SECONDS = 2;
 const SEEK_CONFIRM_TIMEOUT_MS = 3000;
+const STALL_MESSAGE = 'Playback stalled. Check your connection.';
 
 export const VideoPlayer: React.FC<VideoPlayerProps> = ({
   item,
@@ -45,7 +47,10 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
   const [liveEdge, setLiveEdge] = useState(0);
   // Changing the Video key remounts it, which reloads the stream at live.
   const [sourceKey, setSourceKey] = useState(0);
-  const [error, setError] = useState<string | null>(null);
+  // Set when retrying a stall so a dropped VOD resumes where it stopped
+  // instead of at the original resume point.
+  const [resumeAt, setResumeAt] = useState<number | null>(null);
+  const [playbackError, setPlaybackError] = useState<string | null>(null);
   const [buffering, setBuffering] = useState(true);
   const [playbackRate, setPlaybackRate] = useState(1);
   const [qualities, setQualities] = useState<number[]>([]);
@@ -63,18 +68,10 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
   }, [onBack]);
   useBackHandler(handleBack);
 
-  // With TalkBack, the progress bar is adjusted in TalkBack's adjust mode
-  // (select, then left/right). Entering it reaches the app as nothing, so
-  // a viewer pausing there would see no activity and lose the controls, and
-  // adjust mode with them. Keep the controls up while the bar has focus.
-  const screenReaderEnabled = useScreenReaderEnabled();
-  const [seekbarFocused, setSeekbarFocused] = useState(false);
-  const overlay = useAutoHide(
-    paused || !!error || ended || (screenReaderEnabled && seekbarFocused),
-  );
-  // While paused, the same titles sit in a shelf above the controls.
-  const showsPausedRail =
-    overlay.visible && paused && !ended && hasRecommendations;
+  // A different title starts at its own resume point, not the last retry's.
+  useEffect(() => {
+    setResumeAt(null);
+  }, [item.url]);
 
   const ads = useMidRollAds(
     item.adBreaks,
@@ -82,8 +79,29 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
     !item.isLive,
     item.startPosition ?? 0,
   );
-  const markFinished = useWatchProgress(item, currentTime, duration);
+  const inAdBreak = !!ads.activeBreak;
   const { finishBreak } = ads;
+
+  // With TalkBack, the progress bar is adjusted in TalkBack's adjust mode
+  // (select, then left/right). Entering it reaches the app as nothing, so
+  // a viewer pausing there would see no activity and lose the controls, and
+  // adjust mode with them. Keep the controls up while the bar has focus.
+  const screenReaderEnabled = useScreenReaderEnabled();
+  const [seekbarFocused, setSeekbarFocused] = useState(false);
+  const stalled = useStallWatchdog(
+    !paused && !ended && !inAdBreak,
+    currentTime,
+    sourceKey,
+  );
+  const error = playbackError ?? (stalled ? STALL_MESSAGE : null);
+  const overlay = useAutoHide(
+    paused || !!error || ended || (screenReaderEnabled && seekbarFocused),
+  );
+  // While paused, the same titles sit in a shelf above the controls.
+  const showsPausedRail =
+    overlay.visible && paused && !ended && !error && hasRecommendations;
+
+  const markFinished = useWatchProgress(item, currentTime, duration);
   const handleAdsComplete = useCallback(() => {
     finishBreak();
     setPaused(false);
@@ -105,6 +123,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
 
   const togglePlay = () => {
     if (paused && item.isLive && liveState.hasLeftDvrWindow) {
+      setResumeAt(null);
       setSourceKey(k => k + 1);
       setBuffering(true);
       setPaused(false);
@@ -155,6 +174,16 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
     setPaused(false);
   };
 
+  const retryPlayback = useCallback(() => {
+    setResumeAt(item.isLive ? null : currentTime);
+    setPlaybackError(null);
+    setBuffering(true);
+    setPaused(false);
+    setSourceKey(k => k + 1);
+  }, [currentTime, item.isLive]);
+
+  const startSeconds = resumeAt ?? item.startPosition;
+
   return (
     <View style={styles.container}>
       <Video
@@ -164,8 +193,8 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
           uri: item.url,
           // react-native-video takes the resume point in milliseconds.
           startPosition:
-            item.startPosition !== undefined
-              ? Math.round(item.startPosition * 1000)
+            startSeconds !== undefined
+              ? Math.round(startSeconds * 1000)
               : undefined,
         }}
         style={styles.video}
@@ -209,7 +238,9 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
           // For live streams this is the length of the DVR window, i.e. the live edge.
           setLiveEdge(e.seekableDuration);
         }}
-        onError={e => setError(e.error.errorString ?? 'Playback failed')}
+        onError={e =>
+          setPlaybackError(e.error.errorString ?? 'Playback failed')
+        }
         onEnd={() => {
           markFinished();
           if (!item.isLive) {
@@ -238,9 +269,10 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
                 error={error}
                 buffering={buffering}
                 paused={paused}
+                onRetry={retryPlayback}
               />
             )}
-            {showsUpNext ? null : overlay.visible ? (
+            {showsUpNext || error ? null : overlay.visible ? (
               <PlayerControls
                 isLive={item.isLive}
                 paused={paused}

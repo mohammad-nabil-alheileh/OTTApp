@@ -13,11 +13,14 @@ import { useBackHandler } from '../../hooks/useBackHandler';
 import { useAutoHide } from '../../hooks/useAutoHide';
 import { useScreenReaderEnabled } from '../../accessibility/useScreenReaderEnabled';
 import { useMidRollAds } from '../../hooks/useMidRollAds';
+import { useStallWatchdog } from '../../hooks/useStallWatchdog';
 import { useWatchProgress } from '../../hooks/useWatchProgress';
 import { AUTO_QUALITY } from '../../types/quality';
 import { toQualities } from '../../utils/quality';
 import { styles, webVideoStyle } from './VideoPlayer.styles';
 import { VideoPlayerProps } from './VideoPlayer.types';
+
+const STALL_MESSAGE = 'Playback stalled. Check your connection.';
 
 export const VideoPlayer: React.FC<VideoPlayerProps> = ({
   item,
@@ -27,6 +30,9 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
 }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const hlsRef = useRef<Hls | null>(null);
+  // Where the next source load should resume; set when retrying a stall so a
+  // dropped VOD does not start over from the original resume point.
+  const resumeAtRef = useRef<number | null>(null);
   const [paused, setPaused] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
@@ -34,7 +40,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
   const [dvrWindowLength, setDvrWindowLength] = useState(0);
   // Bumping this re-runs the setup effect below, which starts the stream at live.
   const [reloadKey, setReloadKey] = useState(0);
-  const [error, setError] = useState<string | null>(null);
+  const [playbackError, setPlaybackError] = useState<string | null>(null);
   const [buffering, setBuffering] = useState(true);
   const [playbackRate, setPlaybackRate] = useState(1);
   const [qualities, setQualities] = useState<number[]>([]);
@@ -45,6 +51,11 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
   const hasRecommendations =
     !item.isLive && !!recommendedItems?.length && !!onSelectRecommended;
   const showsUpNext = ended && hasRecommendations;
+
+  // A different title starts at its own resume point, not the last retry's.
+  useEffect(() => {
+    resumeAtRef.current = null;
+  }, [item.url]);
 
   useEffect(() => {
     const video = videoRef.current;
@@ -60,7 +71,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
       hls = new Hls();
       hls.on(Hls.Events.ERROR, (_event, data) => {
         if (data.fatal) {
-          setError(`Stream failed: ${data.details}`);
+          setPlaybackError(`Stream failed: ${data.details}`);
         }
       });
       hls.on(Hls.Events.MANIFEST_PARSED, (_event, data) => {
@@ -88,28 +99,35 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
   }, [onBack]);
   useBackHandler(handleBack);
 
-  // With TalkBack, the progress bar is adjusted in TalkBack's adjust mode
-  // (select, then left/right). Entering it reaches the app as nothing, so
-  // a viewer pausing there would see no activity and lose the controls, and
-  // adjust mode with them. Keep the controls up while the bar has focus.
-  const screenReaderEnabled = useScreenReaderEnabled();
-  const [seekbarFocused, setSeekbarFocused] = useState(false);
-  const overlay = useAutoHide(
-    paused || !!error || ended || (screenReaderEnabled && seekbarFocused),
-  );
-  // While paused, the same titles sit in a shelf above the controls.
-  const showsPausedRail =
-    overlay.visible && paused && !ended && hasRecommendations;
-
   const ads = useMidRollAds(
     item.adBreaks,
     currentTime,
     !item.isLive,
     item.startPosition ?? 0,
   );
-  const markFinished = useWatchProgress(item, currentTime, duration);
   const inAdBreak = !!ads.activeBreak;
   const { finishBreak } = ads;
+
+  // With TalkBack, the progress bar is adjusted in TalkBack's adjust mode
+  // (select, then left/right). Entering it reaches the app as nothing, so
+  // a viewer pausing there would see no activity and lose the controls, and
+  // adjust mode with them. Keep the controls up while the bar has focus.
+  const screenReaderEnabled = useScreenReaderEnabled();
+  const [seekbarFocused, setSeekbarFocused] = useState(false);
+  const stalled = useStallWatchdog(
+    !paused && !ended && !inAdBreak,
+    currentTime,
+    reloadKey,
+  );
+  const error = playbackError ?? (stalled ? STALL_MESSAGE : null);
+  const overlay = useAutoHide(
+    paused || !!error || ended || (screenReaderEnabled && seekbarFocused),
+  );
+  // While paused, the same titles sit in a shelf above the controls.
+  const showsPausedRail =
+    overlay.visible && paused && !ended && !error && hasRecommendations;
+
+  const markFinished = useWatchProgress(item, currentTime, duration);
 
   // Hold the content while a break plays; the ad has its own <video>.
   useEffect(() => {
@@ -122,6 +140,16 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
     finishBreak();
     videoRef.current?.play().catch(() => setPaused(true));
   }, [finishBreak]);
+
+  const retryPlayback = useCallback(() => {
+    resumeAtRef.current = item.isLive
+      ? null
+      : videoRef.current?.currentTime ?? null;
+    setPlaybackError(null);
+    setBuffering(true);
+    setPaused(false);
+    setReloadKey(k => k + 1);
+  }, [item.isLive]);
 
   useEffect(() => {
     const video = videoRef.current;
@@ -224,9 +252,11 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
         }}
         onSeeked={e => setCurrentTime(e.currentTarget.currentTime)}
         onLoadedMetadata={e => {
-          if (item.startPosition !== undefined) {
-            e.currentTarget.currentTime = item.startPosition;
+          const resumeAt = resumeAtRef.current ?? item.startPosition;
+          if (resumeAt !== undefined) {
+            e.currentTarget.currentTime = resumeAt;
           }
+          resumeAtRef.current = null;
         }}
         onEnded={() => {
           markFinished();
@@ -239,7 +269,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
           const d = e.currentTarget.duration;
           setDuration(Number.isFinite(d) ? d : 0);
         }}
-        onError={() => setError('Playback failed')}
+        onError={() => setPlaybackError('Playback failed')}
       />
       {ads.activeBreak ? (
         <AdPlayer adBreak={ads.activeBreak} onComplete={handleAdsComplete} />
@@ -262,9 +292,10 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
                 error={error}
                 buffering={buffering}
                 paused={paused}
+                onRetry={retryPlayback}
               />
             )}
-            {showsUpNext ? null : overlay.visible ? (
+            {showsUpNext || error ? null : overlay.visible ? (
               <PlayerControls
                 isLive={item.isLive}
                 paused={paused}

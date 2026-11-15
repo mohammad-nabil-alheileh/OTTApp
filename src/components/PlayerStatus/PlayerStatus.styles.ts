@@ -15,12 +15,37 @@ export const styles = StyleSheet.create({
     borderRadius: borderRadius.lg,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
+  errorPanel: {
+    alignItems: 'center',
+    maxWidth: scaleSize(900),
+  },
   statusText: {
     ...typography.heading,
     color: colors.text,
+    textAlign: 'center',
     backgroundColor: 'rgba(0, 0, 0, 0.6)',
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
     borderRadius: borderRadius.md,
+  },
+  retry: {
+    minWidth: scaleSize(220),
+    alignItems: 'center',
+    marginTop: spacing.md,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.sm,
+    borderRadius: borderRadius.md,
+    borderWidth: scaleSize(4),
+    borderColor: 'transparent',
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+  },
+  retryFocused: {
+    borderColor: colors.focus,
+    backgroundColor: colors.primary,
+    transform: [{ scale: 1.08 }],
+  },
+  retryText: {
+    ...typography.subheading,
+    color: colors.text,
   },
 });
