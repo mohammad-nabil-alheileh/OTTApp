@@ -16,6 +16,7 @@ import { AppPressable as Pressable } from '../AppPressable/AppPressable';
 import { AppText as Text } from '../AppText/AppText';
 import { useBackHandler } from '../../hooks/useBackHandler';
 import { useFocusGroup } from '../../focus/useFocusGroup';
+import { useRailCache } from '../../hooks/useRailCache';
 import { SearchInputMethod, trackSearch } from '../../services/analytics';
 import { getRecommendedVideos, searchVideos } from '../../services/search';
 import {
@@ -65,8 +66,20 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({
   onSelectVOD,
   onBack,
 }) => {
-  const results = useMemo(() => searchVideos(videos, query), [videos, query]);
-  const recommended = useMemo(() => getRecommendedVideos(videos), [videos]);
+  // The rail keeps its last loaded results, so a failure while results are on
+  // screen does not replace them with the page error.
+  const rail = useRailCache(videos, failure);
+  const results = useMemo(
+    () => searchVideos(rail.items, query),
+    [rail.items, query],
+  );
+  const recommended = useMemo(
+    () => getRecommendedVideos(rail.items),
+    [rail.items],
+  );
+  // Only an empty rail shows the placeholder; a retry over cached results
+  // keeps them on screen while the request runs.
+  const showLoading = isLoading && rail.items.length === 0;
   const hasQuery = query.trim().length > 0;
 
   const { containerRef: backContainerRef, getItemProps: getBackItemProps } =
@@ -317,15 +330,15 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({
     </View>
   );
 
-  // Without the catalog there is nothing to type against, so the whole search
-  // body steps aside; Back stays available in the header.
-  if (failure) {
+  // Only a rail with nothing cached steps aside; loaded results stay on screen
+  // when the catalogue fails later.
+  if (rail.failure) {
     return (
       <View style={styles.container}>
         {header}
         <PageStatus
           groupId="search-status"
-          kind={failure.kind}
+          kind={rail.failure.kind}
           subject="search results"
           retrying={isLoading}
           onRetry={onRetry}
@@ -423,12 +436,12 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({
           {/* The rail owns its own focus group, so it must sit after the
               history block in the tree: Up/Down then follows the screen. */}
           <View ref={resultsContainerRef} style={styles.resultsBlock}>
-            {(isLoading || results.length > 0) && (
+            {(showLoading || results.length > 0) && (
               <View style={styles.resultsHeader}>
                 <Text style={styles.resultsTitle} accessibilityRole="header">
                   {hasQuery ? 'Results' : 'All Videos'}
                 </Text>
-                {!isLoading && (
+                {!showLoading && (
                   <Text
                     style={styles.resultsCount}
                     accessibilityLiveRegion="polite"
@@ -439,7 +452,7 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({
               </View>
             )}
 
-            {isLoading ? (
+            {showLoading ? (
               <View style={styles.emptyState}>
                 <Text
                   style={styles.emptyTitle}
