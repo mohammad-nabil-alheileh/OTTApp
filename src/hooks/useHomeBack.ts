@@ -1,6 +1,5 @@
 import { RefObject, useCallback, useMemo, useRef, useState } from 'react';
-import { ScrollView, View } from 'react-native';
-import { focusNode } from '../focus/focusNode';
+import { AccessibilityInfo, Platform, ScrollView, View } from 'react-native';
 import { FocusGroupItemProps } from '../focus/useFocusGroup.types';
 import { useBackHandler } from './useBackHandler';
 
@@ -38,6 +37,18 @@ export const withHomeRow = (
 
 // The header row that Back returns focus to.
 export const HOME_HEADER_ROW = 'header';
+
+const focusNode = (node: View) => {
+  if (Platform.OS === 'web') {
+    (node as unknown as HTMLElement).focus();
+    return;
+  }
+  (node as unknown as { requestTVFocus?: () => void }).requestTVFocus?.();
+  // TalkBack's focus doesn't follow requestTVFocus; tvOS VoiceOver does.
+  if (Platform.OS === 'android') {
+    AccessibilityInfo.sendAccessibilityEvent(node, 'focus');
+  }
+};
 
 // Back on the home screen first returns focus to the header; Back from the
 // header is left unhandled, so the app exits as usual (on Apple TV this also

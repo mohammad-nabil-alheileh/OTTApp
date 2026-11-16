@@ -9,7 +9,6 @@ import { AppPressable as Pressable } from '../AppPressable/AppPressable';
 import { AppText as Text } from '../AppText/AppText';
 import { VODItem } from '../../types/vod';
 import { useFocusGroup } from '../../focus/useFocusGroup';
-import { useRailEndStop } from '../../focus/useRailEndStop';
 import { useRailReveal } from '../../focus/useRailReveal';
 import { usePreferredFocus } from '../../focus/usePreferredFocus';
 import { withHomeRow } from '../../hooks/useHomeBack';
@@ -27,7 +26,6 @@ export const FavoritesRail: React.FC<FavoritesRailProps> = ({
     'favorites-rail',
     items.length,
   );
-  const { endStopProps, withEndStop } = useRailEndStop(items.length);
   const { listProps, withReveal } = useRailReveal<VODItem>(railLayout);
   const initialNumToRender = usePreferredFocus(preferredFocusIndex, focusIndex);
 
@@ -37,10 +35,7 @@ export const FavoritesRail: React.FC<FavoritesRailProps> = ({
 
   const renderItem: ListRenderItem<VODItem> = ({ item, index }) => (
     <Pressable
-      {...withEndStop(
-        withReveal(withHomeRow(getItemProps(index), index, homeRow), index),
-        index,
-      )}
+      {...withReveal(withHomeRow(getItemProps(index), index, homeRow), index)}
       hasTVPreferredFocus={index === preferredFocusIndex}
       onPress={() => onSelectVOD(item)}
       accessibilityRole="button"
@@ -75,7 +70,6 @@ export const FavoritesRail: React.FC<FavoritesRailProps> = ({
         Favorites
       </Text>
       <FlatList
-        {...endStopProps}
         {...listProps}
         data={items}
         renderItem={renderItem}

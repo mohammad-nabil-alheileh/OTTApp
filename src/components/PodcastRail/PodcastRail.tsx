@@ -8,7 +8,6 @@ import {
 import { AppText as Text } from '../AppText/AppText';
 import { AppPressable as Pressable } from '../AppPressable/AppPressable';
 import { useFocusGroup } from '../../focus/useFocusGroup';
-import { useRailEndStop } from '../../focus/useRailEndStop';
 import { Podcast } from '../../types/podcast';
 import { styles } from './PodcastRail.styles';
 import { PodcastRailProps } from './PodcastRail.types';
@@ -24,7 +23,6 @@ export const PodcastRail: React.FC<PodcastRailProps> = ({
     groupId,
     podcasts.length,
   );
-  const { endStopProps, withEndStop } = useRailEndStop(podcasts.length);
 
   // Native uses hasTVPreferredFocus below; the web needs an explicit focus.
   useEffect(() => {
@@ -39,7 +37,7 @@ export const PodcastRail: React.FC<PodcastRailProps> = ({
 
   const renderItem: ListRenderItem<Podcast> = ({ item, index }) => (
     <Pressable
-      {...withEndStop(getItemProps(index), index)}
+      {...getItemProps(index)}
       hasTVPreferredFocus={autoFocus && index === 0}
       onPress={() => onSelectPodcast(item)}
       accessibilityRole="button"
@@ -70,7 +68,6 @@ export const PodcastRail: React.FC<PodcastRailProps> = ({
     <View style={styles.container} ref={containerRef}>
       <Text style={styles.sectionTitle}>{title}</Text>
       <FlatList
-        {...endStopProps}
         data={podcasts}
         renderItem={renderItem}
         keyExtractor={item => item.id}

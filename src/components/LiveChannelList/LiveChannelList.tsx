@@ -4,7 +4,6 @@ import { AppPressable as Pressable } from '../AppPressable/AppPressable';
 import { AppText as Text } from '../AppText/AppText';
 import { LiveChannel } from '../../types/live';
 import { useFocusGroup } from '../../focus/useFocusGroup';
-import { useRailEndStop } from '../../focus/useRailEndStop';
 import { useRailReveal } from '../../focus/useRailReveal';
 import { withHomeRow } from '../../hooks/useHomeBack';
 import { railLayout, styles } from './LiveChannelList.styles';
@@ -23,7 +22,6 @@ export const LiveChannelList: React.FC<LiveChannelListProps> = ({
     'live-rail',
     channels.length,
   );
-  const { endStopProps, withEndStop } = useRailEndStop(channels.length);
   const { listProps, withReveal } = useRailReveal<LiveChannel>(railLayout);
 
   if (failure) {
@@ -55,10 +53,7 @@ export const LiveChannelList: React.FC<LiveChannelListProps> = ({
 
   const renderChannel: ListRenderItem<LiveChannel> = ({ item, index }) => (
     <Pressable
-      {...withEndStop(
-        withReveal(withHomeRow(getItemProps(index), index, homeRow), index),
-        index,
-      )}
+      {...withReveal(withHomeRow(getItemProps(index), index, homeRow), index)}
       onPress={() => onSelectChannel(item)}
       accessibilityRole="button"
       accessibilityLabel={`${item.name}, ${item.category}${
@@ -101,7 +96,6 @@ export const LiveChannelList: React.FC<LiveChannelListProps> = ({
         Live Channels
       </Text>
       <FlatList
-        {...endStopProps}
         {...listProps}
         data={channels}
         renderItem={renderChannel}
