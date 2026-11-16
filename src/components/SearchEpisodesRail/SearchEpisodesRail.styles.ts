@@ -10,7 +10,8 @@ import { KEYBOARD_WIDTH } from '../SearchKeyboard/SearchKeyboard.styles';
 
 // Four episode cards fill the search column, so they read as a step below
 // the three result cards above them.
-const CARD_WIDTH = Math.floor((KEYBOARD_WIDTH - spacing.sm * 4) / 4);
+export const EPISODE_CARD_WIDTH = Math.floor((KEYBOARD_WIDTH - spacing.sm * 4) / 4);
+export const FOCUSED_SCALE = 1.06;
 
 export const styles = StyleSheet.create({
   // Tight top margin: with Bold Text both rails only just fit above the keyboard.
@@ -34,11 +35,17 @@ export const styles = StyleSheet.create({
     color: colors.textSecondary,
     marginLeft: spacing.sm,
   },
+  // The gutter gives a focused card room to scale; the negative margin keeps
+  // the first card on the column edge at rest.
+  list: {
+    marginLeft: -spacing.sm,
+  },
   listContent: {
     paddingVertical: spacing.xs,
+    paddingHorizontal: spacing.sm,
   },
   card: {
-    width: CARD_WIDTH,
+    width: EPISODE_CARD_WIDTH,
     marginRight: spacing.sm,
     borderRadius: borderRadius.md,
     borderWidth: scaleSize(4),
@@ -48,7 +55,7 @@ export const styles = StyleSheet.create({
   },
   cardFocused: {
     borderColor: colors.focus,
-    transform: [{ scale: 1.06 }],
+    transform: [{ scale: FOCUSED_SCALE }],
   },
   thumbnail: {
     width: '100%',

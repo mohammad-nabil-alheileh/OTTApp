@@ -102,6 +102,7 @@ export const SearchEpisodesRail: React.FC<SearchEpisodesRailProps> = ({
         extraData={activeIndex}
         horizontal
         showsHorizontalScrollIndicator={false}
+        style={styles.list}
         contentContainerStyle={styles.listContent}
       />
     </View>

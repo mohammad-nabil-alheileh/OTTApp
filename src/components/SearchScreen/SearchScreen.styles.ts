@@ -12,11 +12,12 @@ import { KEYBOARD_WIDTH } from '../SearchKeyboard/SearchKeyboard.styles';
 // element sits on the same vertical edges.
 const COLUMN_WIDTH = KEYBOARD_WIDTH;
 // Three result cards plus their gaps fill the column exactly.
-const CARD_WIDTH = Math.floor((COLUMN_WIDTH - spacing.md * 3) / 3);
+export const RESULT_CARD_WIDTH = Math.floor((COLUMN_WIDTH - spacing.md * 3) / 3);
+export const FOCUSED_SCALE = 1.06;
 const CARD_BORDER = scaleSize(4);
 // The overlay is absolute, so a card is exactly its 16:9 thumbnail plus border.
 const CARD_HEIGHT =
-  Math.round(((CARD_WIDTH - CARD_BORDER * 2) * 9) / 16) + CARD_BORDER * 2;
+  Math.round(((RESULT_CARD_WIDTH - CARD_BORDER * 2) * 9) / 16) + CARD_BORDER * 2;
 
 export const styles = StyleSheet.create({
   container: {
@@ -177,17 +178,21 @@ export const styles = StyleSheet.create({
     ...typography.caption,
     color: colors.textSecondary,
   },
+  // The gutter gives a focused card room to scale; the negative margin keeps
+  // the first card on the column edge at rest.
   resultsList: {
     paddingVertical: spacing.xs,
+    paddingHorizontal: spacing.sm,
   },
   // Fixed to the card height (plus focus-scale room) so the rail never
   // collapses and the results block can center between field and keyboard.
   resultsListBox: {
     flexGrow: 0,
     height: CARD_HEIGHT + spacing.xs * 2,
+    marginLeft: -spacing.sm,
   },
   resultCard: {
-    width: CARD_WIDTH,
+    width: RESULT_CARD_WIDTH,
     alignSelf: 'flex-start',
     marginRight: spacing.md,
     borderRadius: borderRadius.md,
@@ -198,7 +203,7 @@ export const styles = StyleSheet.create({
   },
   resultCardFocused: {
     borderColor: colors.focus,
-    transform: [{ scale: 1.06 }],
+    transform: [{ scale: FOCUSED_SCALE }],
   },
   resultThumbnail: {
     width: '100%',
