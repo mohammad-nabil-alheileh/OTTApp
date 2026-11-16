@@ -4,6 +4,7 @@ import { AppPressable as Pressable } from '../AppPressable/AppPressable';
 import { AppText as Text } from '../AppText/AppText';
 import { RailStatus } from '../RailStatus/RailStatus';
 import { useFocusGroup } from '../../focus/useFocusGroup';
+import { useRailEndStop } from '../../focus/useRailEndStop';
 import { useRailReveal } from '../../focus/useRailReveal';
 import { withHomeRow } from '../../hooks/useHomeBack';
 import { archiveAccessibilityLabel, formatAiredAt } from '../../services/archive';
@@ -28,6 +29,7 @@ export const ArchiveRail: React.FC<ArchiveRailProps> = ({
     'archive-rail',
     programmes.length,
   );
+  const { endStopProps, withEndStop } = useRailEndStop(programmes.length);
   const { listProps, withReveal } = useRailReveal<ArchiveProgramme>(railLayout);
 
   if (failure) {
@@ -68,7 +70,10 @@ export const ArchiveRail: React.FC<ArchiveRailProps> = ({
     const channel = channelName(item.channelId);
     return (
       <Pressable
-        {...withReveal(withHomeRow(getItemProps(index), index, homeRow), index)}
+        {...withEndStop(
+          withReveal(withHomeRow(getItemProps(index), index, homeRow), index),
+          index,
+        )}
         onPress={() => onSelectProgramme(item, channel)}
         accessibilityRole="button"
         accessibilityLabel={archiveAccessibilityLabel(item, channel, now)}
@@ -99,6 +104,7 @@ export const ArchiveRail: React.FC<ArchiveRailProps> = ({
         {TITLE}
       </Text>
       <FlatList
+        {...endStopProps}
         {...listProps}
         data={programmes}
         renderItem={renderProgramme}
