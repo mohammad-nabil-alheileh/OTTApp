@@ -83,11 +83,11 @@ export const styles = StyleSheet.create({
     borderRadius: borderRadius.lg,
     borderWidth: scaleSize(2),
     borderColor: 'rgba(255, 255, 255, 0.14)',
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    backgroundColor: '#161616',
   },
   queryBarActive: {
     borderColor: 'rgba(255, 255, 255, 0.32)',
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    backgroundColor: '#1e1e1e',
   },
   queryIconBadge: {
     width: scaleSize(60),
