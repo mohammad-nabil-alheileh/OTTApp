@@ -13,10 +13,14 @@ afterEach(() => {
   jest.useRealTimers();
 });
 
+const appTitle = () =>
+  screen.getByRole('heading', { name: /OTT TV App/ });
+
 describe('App navigation (web TV)', () => {
-  it('lands focus on the first card after loading', async () => {
+  it('lands focus on the app title after loading', async () => {
     await renderApp();
-    expect(document.activeElement).toBe(await findFirstCard());
+    expect(await findFirstCard()).toBeTruthy();
+    expect(document.activeElement).toBe(appTitle());
   });
 
   it('opens details from a card and returns home with Escape', async () => {
@@ -81,6 +85,6 @@ describe('Focus after Player → Continue Watching (web TV)', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Search' }));
     await pressKey('Escape'); // search → home
 
-    expect(document.activeElement).toBe(await findFirstCard());
+    expect(document.activeElement).toBe(appTitle());
   });
 });

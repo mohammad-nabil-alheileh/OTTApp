@@ -91,8 +91,11 @@ const AppContent = () => {
   // Saved episode positions, most recently played first.
   const [listenHistory, setListenHistory] = useState<WatchProgress[]>([]);
 
-  const { containerRef: headerContainerRef, getItemProps: getHeaderItemProps } =
-    useFocusGroup('header-bar', 4);
+  const {
+    containerRef: headerContainerRef,
+    getItemProps: getHeaderItemProps,
+    focusFirst: focusFirstHeader,
+  } = useFocusGroup('header-bar', 5);
 
   useEffect(() => {
     loadWatchHistory().then(setWatchHistory);
@@ -158,8 +161,11 @@ const AppContent = () => {
       }),
     [homeFocusTarget, continueWatchingItems, favoriteItems, vodList],
   );
+  // The wordmark owns the initial focus, so rails only claim a card when Home
+  // is returning to one (after Details); the fallback row is not a target.
+  const titleIsFirstStop = homeFocusTarget === null;
   const homeFocusIndex = (row: string) =>
-    homeFocus.row === row ? homeFocus.index : undefined;
+    !titleIsFirstStop && homeFocus.row === row ? homeFocus.index : undefined;
 
   const openFromHome = useMemo(() => {
     const open = (row: string) => (vod: VODItem) => {
@@ -232,6 +238,15 @@ const AppContent = () => {
     !listenVisible &&
     !accountVisible;
   const { getRow: getHomeRow } = useHomeBack(homeScrollRef, isHomeVisible);
+
+  // Entering Home starts on the wordmark. On TV the view claims it through
+  // hasTVPreferredFocus; on web there is no such prop, so focus it directly.
+  const titleItemProps = getHeaderItemProps(0);
+  useEffect(() => {
+    if (isHomeVisible && titleIsFirstStop) {
+      focusFirstHeader();
+    }
+  }, [focusFirstHeader, isHomeVisible, titleIsFirstStop]);
 
   const handleBack = useCallback(() => setSelected(null), []);
   const handleDetailsBack = useCallback(() => setDetailsItem(null), []);
@@ -374,19 +389,26 @@ const AppContent = () => {
     <View style={styles.container}>
       <FocusGroup style={styles.header}>
         <View ref={headerContainerRef} style={styles.headerRow}>
-          <View style={styles.headerText}>
-            <Text style={styles.title} accessibilityRole="header">
-              OTT TV App
-            </Text>
+          <Pressable
+            {...withHomeRow(titleItemProps, 0, getHomeRow(HOME_HEADER_ROW))}
+            accessible
+            accessibilityRole="header"
+            hasTVPreferredFocus={titleIsFirstStop}
+            style={({ focused }) => [
+              styles.headerText,
+              focused && styles.headerTextFocused,
+            ]}
+          >
+            <Text style={styles.title}>OTT TV App</Text>
             <Text style={styles.subtitle}>
               Videos, Live Channels & Podcasts
             </Text>
-          </View>
+          </Pressable>
           <View style={styles.headerActions}>
             <Pressable
               {...withHomeRow(
-                getHeaderItemProps(0),
-                0,
+                getHeaderItemProps(1),
+                1,
                 getHomeRow(HOME_HEADER_ROW),
               )}
               onPress={handleOpenListen}
@@ -404,8 +426,8 @@ const AppContent = () => {
             </Pressable>
             <Pressable
               {...withHomeRow(
-                getHeaderItemProps(1),
-                1,
+                getHeaderItemProps(2),
+                2,
                 getHomeRow(HOME_HEADER_ROW),
               )}
               onPress={handleOpenSearch}
@@ -423,8 +445,8 @@ const AppContent = () => {
             </Pressable>
             <Pressable
               {...withHomeRow(
-                getHeaderItemProps(2),
-                2,
+                getHeaderItemProps(3),
+                3,
                 getHomeRow(HOME_HEADER_ROW),
               )}
               onPress={handleOpenAccount}
@@ -443,8 +465,8 @@ const AppContent = () => {
             </Pressable>
             <Pressable
               {...withHomeRow(
-                getHeaderItemProps(3),
-                3,
+                getHeaderItemProps(4),
+                4,
                 getHomeRow(HOME_HEADER_ROW),
               )}
               onPress={handleOpenSettings}
