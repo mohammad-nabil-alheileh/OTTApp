@@ -17,8 +17,23 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
   },
+  // The wordmark is a focus stop, so the ring's box is reserved outside the
+  // text: focus never shifts it off the rails' left edge or grows the header.
   headerText: {
-    flex: 1,
+    // Sized to the wordmark, not the row: a full-width stop centres over the
+    // middle of the rail, so Down would land in the middle instead of card one.
+    alignSelf: 'center',
+    marginHorizontal: -(spacing.sm + scaleSize(3)),
+    marginVertical: -(spacing.xs + scaleSize(3)),
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderWidth: scaleSize(3),
+    borderColor: 'transparent',
+    borderRadius: borderRadius.md,
+  },
+  headerTextFocused: {
+    borderColor: colors.focus,
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
   },
   title: {
     ...typography.title,
