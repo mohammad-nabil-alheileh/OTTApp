@@ -18,7 +18,8 @@ export interface ResumeEpisode extends EpisodeRef {
 export const isSeries = (vod: VODItem): vod is Series =>
   (vod.seasons?.length ?? 0) > 0;
 
-const episodeRefs = (series: Series): EpisodeRef[] =>
+// Every episode in airing order, season by season.
+export const episodeRefs = (series: Series): EpisodeRef[] =>
   series.seasons.flatMap(season =>
     season.episodes.map(episode => ({ season, episode })),
   );
@@ -106,6 +107,19 @@ export const episodeAccessibilityLabel = (
     ? `${label}, ${formatDuration(episode.duration - position)} left`
     : label;
 };
+
+// Search shows episodes outside Details, so the label names the show first.
+export const searchEpisodeAccessibilityLabel = (
+  series: Series,
+  { season, episode }: EpisodeRef,
+  position?: number,
+) => `${series.title}, ${episodeAccessibilityLabel(season, episode, position)}`;
+
+export const showEpisodesSummary = (series: Series) =>
+  `${seasonCountLabel(series)}, ${plural(
+    series.seasons.reduce((total, s) => total + s.episodes.length, 0),
+    'episode',
+  )}`;
 
 // What Play does for any title: a film resumes itself, a series its episode.
 export const toPlayable = (

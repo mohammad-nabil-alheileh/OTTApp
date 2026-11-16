@@ -11,6 +11,8 @@ import {
   Series,
   seasonAccessibilityLabel,
   seasonCountLabel,
+  searchEpisodeAccessibilityLabel,
+  showEpisodesSummary,
   toEpisodePlayable,
   toPlayable,
 } from './series';
@@ -204,5 +206,24 @@ describe('runtimeLabel', () => {
   it('gives a film its length and a series its season count', () => {
     expect(runtimeLabel(film)).toBe('10 min');
     expect(runtimeLabel(show)).toBe('2 seasons');
+  });
+});
+
+describe('search episode labels', () => {
+  it('names the show before the episode, since the card sits outside Details', () => {
+    const s2 = show.seasons[1];
+    expect(searchEpisodeAccessibilityLabel(show, { season: s2, episode: s2.episodes[2] })).toBe(
+      'Show, Season 2, episode 3 of 3, Title e, 25 min',
+    );
+    expect(
+      searchEpisodeAccessibilityLabel(show, { season: s2, episode: s2.episodes[0] }, 900),
+    ).toBe('Show, Season 2, episode 1 of 3, Title c, 25 min, 10 min left');
+  });
+
+  it('summarises seasons and episodes across the whole show', () => {
+    expect(showEpisodesSummary(show)).toBe('2 seasons, 5 episodes');
+    expect(showEpisodesSummary({ ...show, seasons: [season(1, ['a'])] })).toBe(
+      '1 season, 1 episode',
+    );
   });
 });

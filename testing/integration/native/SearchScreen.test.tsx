@@ -35,6 +35,8 @@ const Harness: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       query={query}
       onQueryChange={setQuery}
       onSelectVOD={jest.fn()}
+      onPlayEpisode={jest.fn()}
+      watchHistory={[]}
       onBack={onBack}
     />
   );
@@ -159,6 +161,8 @@ describe('SearchScreen results cache (native TV)', () => {
       query=""
       onQueryChange={jest.fn()}
       onSelectVOD={jest.fn()}
+      onPlayEpisode={jest.fn()}
+      watchHistory={[]}
       onBack={jest.fn()}
     />
   );

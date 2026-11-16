@@ -399,6 +399,8 @@ const AppContent = () => {
         query={searchQuery}
         onQueryChange={setSearchQuery}
         onSelectVOD={setDetailsItem}
+        onPlayEpisode={playVODEpisode}
+        watchHistory={watchHistory}
         onBack={handleCloseSearch}
       />
     );

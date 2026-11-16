@@ -18,7 +18,11 @@ import { useBackHandler } from '../../hooks/useBackHandler';
 import { useFocusGroup } from '../../focus/useFocusGroup';
 import { useRailCache } from '../../hooks/useRailCache';
 import { SearchInputMethod, trackSearch } from '../../services/analytics';
-import { getRecommendedVideos, searchVideos } from '../../services/search';
+import {
+  findSearchedShow,
+  getRecommendedVideos,
+  searchVideos,
+} from '../../services/search';
 import {
   clearSearchHistory,
   getSearchHistory,
@@ -26,8 +30,9 @@ import {
   rememberSearch,
 } from '../../services/searchHistory';
 import { VODItem } from '../../types/vod';
-import { runtimeLabel } from '../../services/series';
+import { EpisodeRef, runtimeLabel, Series } from '../../services/series';
 import { PageStatus } from '../PageStatus/PageStatus';
+import { SearchEpisodesRail } from '../SearchEpisodesRail/SearchEpisodesRail';
 import { SearchHistory } from '../SearchHistory/SearchHistory';
 import { SearchKeyboard } from '../SearchKeyboard/SearchKeyboard';
 import { SearchNoResults } from '../SearchNoResults/SearchNoResults';
@@ -37,7 +42,13 @@ import { useVoiceSearch } from './useVoiceSearch';
 import { useVoiceTrapKeys } from './useVoiceTrapKeys';
 import { styles } from './SearchScreen.styles';
 
-type FocusedArea = 'back' | 'mic' | 'keyboard' | 'results' | 'recommended';
+type FocusedArea =
+  | 'back'
+  | 'mic'
+  | 'keyboard'
+  | 'results'
+  | 'episodes'
+  | 'recommended';
 
 // react-native-tvos narrows focusSearch to the container's children whenever a
 // trapFocus* prop is set, on any native view, but its types declare them only
@@ -64,6 +75,8 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({
   query,
   onQueryChange,
   onSelectVOD,
+  onPlayEpisode,
+  watchHistory,
   onBack,
 }) => {
   // The rail keeps its last loaded results, so a failure while results are on
@@ -72,6 +85,10 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({
   const results = useMemo(
     () => searchVideos(rail.items, query),
     [rail.items, query],
+  );
+  const show = useMemo(
+    () => findSearchedShow(results, query),
+    [results, query],
   );
   const recommended = useMemo(
     () => getRecommendedVideos(rail.items),
@@ -108,6 +125,7 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({
   const [focusedArea, setFocusedArea] = useState<FocusedArea>('keyboard');
   const [keyboardFocusRequest, setKeyboardFocusRequest] = useState(0);
   const [recommendedFocusRequest, setRecommendedFocusRequest] = useState(0);
+  const [episodesFocusRequest, setEpisodesFocusRequest] = useState(0);
   const [history, setHistory] = useState<string[]>(getSearchHistory);
   // Which input produced the current query, reported with search analytics.
   const inputMethod = useRef<SearchInputMethod>('typed');
@@ -172,6 +190,14 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({
     [onQueryChange],
   );
 
+  const playEpisode = useCallback(
+    (series: Series, ref: EpisodeRef) => {
+      rememberQuery();
+      onPlayEpisode(series, ref);
+    },
+    [onPlayEpisode, rememberQuery],
+  );
+
   const handleClearHistory = useCallback(() => {
     setHistory(clearSearchHistory());
     // The section unmounts under the focused button; land on the rail below
@@ -218,8 +244,11 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({
     if (!changed) {
       return;
     }
-    if (focusedArea === 'results') {
+    if (focusedArea === 'episodes' && show) {
+      setEpisodesFocusRequest(request => request + 1);
+    } else if (focusedArea === 'results' || focusedArea === 'episodes') {
       if (results.length > 0) {
+        setFocusedArea('results');
         focusFirstResult();
       } else if (recommended.length > 0) {
         setFocusedArea('recommended');
@@ -232,7 +261,7 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({
       setFocusedArea('results');
       focusFirstResult();
     }
-  }, [results, focusedArea, focusFirstResult, recommended.length]);
+  }, [results, show, focusedArea, focusFirstResult, recommended.length]);
 
   // Report the query once typing or speaking pauses, tagged with how it was
   // entered so voice searches can be measured separately.
@@ -480,6 +509,17 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({
               />
             )}
           </View>
+
+          {/* After the results rail in the tree, so Down reaches it next. */}
+          {show && !showLoading && (
+            <SearchEpisodesRail
+              show={show}
+              watchHistory={watchHistory}
+              onPlayEpisode={playEpisode}
+              onFocus={() => setFocusedArea('episodes')}
+              focusRequest={episodesFocusRequest}
+            />
+          )}
         </View>
 
         <View
