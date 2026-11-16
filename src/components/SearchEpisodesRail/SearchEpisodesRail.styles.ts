@@ -13,9 +13,10 @@ import { KEYBOARD_WIDTH } from '../SearchKeyboard/SearchKeyboard.styles';
 const CARD_WIDTH = Math.floor((KEYBOARD_WIDTH - spacing.sm * 4) / 4);
 
 export const styles = StyleSheet.create({
+  // Tight top margin: with Bold Text both rails only just fit above the keyboard.
   container: {
     width: '100%',
-    marginTop: spacing.sm,
+    marginTop: spacing.xs,
   },
   header: {
     flexDirection: 'row',
@@ -66,6 +67,17 @@ export const styles = StyleSheet.create({
     fontWeight: '600',
     backgroundColor: 'rgba(0, 0, 0, 0.72)',
   },
+  // Title sits over the thumbnail, like the result cards, so both rails fit
+  // between the query bar and the keyboard on a 1080p screen.
+  overlay: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    paddingHorizontal: spacing.xs,
+    paddingVertical: scaleSize(4),
+    backgroundColor: 'rgba(0, 0, 0, 0.72)',
+  },
   progressTrack: {
     position: 'absolute',
     left: 0,
@@ -77,10 +89,6 @@ export const styles = StyleSheet.create({
   progressFill: {
     height: '100%',
     backgroundColor: colors.primary,
-  },
-  body: {
-    paddingHorizontal: spacing.xs,
-    paddingVertical: scaleSize(4),
   },
   episodeTitle: {
     ...typography.caption,

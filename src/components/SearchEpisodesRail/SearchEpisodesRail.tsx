@@ -62,21 +62,21 @@ export const SearchEpisodesRail: React.FC<SearchEpisodesRailProps> = ({
             resizeMode="cover"
           />
           <Text style={styles.code}>{episodeCode(ref)}</Text>
+          <View style={styles.overlay}>
+            <Text style={styles.episodeTitle} numberOfLines={1}>
+              {episode.title}
+            </Text>
+            <Text style={styles.meta} numberOfLines={1}>
+              {inProgress
+                ? `${formatDuration(Math.round(episode.duration - position))} left`
+                : formatDuration(episode.duration)}
+            </Text>
+          </View>
           {inProgress && (
             <View style={styles.progressTrack}>
               <View style={[styles.progressFill, { width: `${percent}%` }]} />
             </View>
           )}
-        </View>
-        <View style={styles.body} aria-hidden>
-          <Text style={styles.episodeTitle} numberOfLines={1}>
-            {episode.title}
-          </Text>
-          <Text style={styles.meta} numberOfLines={1}>
-            {inProgress
-              ? `${formatDuration(Math.round(episode.duration - position))} left`
-              : formatDuration(episode.duration)}
-          </Text>
         </View>
       </Pressable>
     );
