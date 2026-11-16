@@ -4,6 +4,7 @@ import { AppPressable as Pressable } from '../AppPressable/AppPressable';
 import { AppText as Text } from '../AppText/AppText';
 import { VODItem } from '../../types/vod';
 import { useFocusGroup } from '../../focus/useFocusGroup';
+import { useRailEndStop } from '../../focus/useRailEndStop';
 import { useRailReveal } from '../../focus/useRailReveal';
 import { usePreferredFocus } from '../../focus/usePreferredFocus';
 import { withHomeRow } from '../../hooks/useHomeBack';
@@ -32,6 +33,7 @@ export const VODList: React.FC<VODListProps> = ({
     'vod-rail',
     isLoading ? 1 : vodList.length,
   );
+  const { endStopProps, withEndStop } = useRailEndStop(isLoading ? 1 : vodList.length);
   const { listProps, withReveal } = useRailReveal<VODItem | null>(railLayout);
   const initialNumToRender = usePreferredFocus(
     preferredFocusIndex,
@@ -88,8 +90,8 @@ export const VODList: React.FC<VODListProps> = ({
     }
     return (
       <Pressable
-        {...withReveal(
-          withHomeRow(getItemProps(index), index, homeRow),
+        {...withEndStop(
+          withReveal(withHomeRow(getItemProps(index), index, homeRow), index),
           index,
         )}
         hasTVPreferredFocus={index === preferredFocusIndex}
@@ -129,6 +131,7 @@ export const VODList: React.FC<VODListProps> = ({
         Videos On Demand
       </Text>
       <FlatList
+        {...endStopProps}
         {...listProps}
         data={slots}
         renderItem={renderVODItem}

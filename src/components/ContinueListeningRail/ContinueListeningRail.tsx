@@ -8,6 +8,7 @@ import {
 import { AppText as Text } from '../AppText/AppText';
 import { AppPressable as Pressable } from '../AppPressable/AppPressable';
 import { useFocusGroup } from '../../focus/useFocusGroup';
+import { useRailEndStop } from '../../focus/useRailEndStop';
 import { EpisodeProgress } from '../../services/podcasts';
 import { clamp, formatDuration } from '../../utils/time';
 import { styles } from './ContinueListeningRail.styles';
@@ -22,6 +23,7 @@ export const ContinueListeningRail: React.FC<ContinueListeningRailProps> = ({
     'continue-listening-rail',
     items.length,
   );
+  const { endStopProps, withEndStop } = useRailEndStop(items.length);
 
   // Native uses hasTVPreferredFocus below; the web needs an explicit focus.
   useEffect(() => {
@@ -40,7 +42,7 @@ export const ContinueListeningRail: React.FC<ContinueListeningRailProps> = ({
       duration > 0 ? clamp((position / duration) * 100, 0, 100) : 0;
     return (
       <Pressable
-        {...getItemProps(index)}
+        {...withEndStop(getItemProps(index), index)}
         hasTVPreferredFocus={autoFocus && index === 0}
         onPress={() => onPlayEpisode(podcast, episode)}
         accessibilityRole="button"
@@ -80,6 +82,7 @@ export const ContinueListeningRail: React.FC<ContinueListeningRailProps> = ({
     <View style={styles.container} ref={containerRef}>
       <Text style={styles.sectionTitle}>Continue Listening</Text>
       <FlatList
+        {...endStopProps}
         data={items}
         renderItem={renderItem}
         keyExtractor={item => item.episode.id}
