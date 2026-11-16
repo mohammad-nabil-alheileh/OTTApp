@@ -34,6 +34,16 @@ describe('App navigation (native TV)', () => {
     expect(await firstCard()).toBeTruthy();
   });
 
+  it('starts on the app title, not the first card', async () => {
+    await renderHome();
+
+    expect(
+      screen.getByRole('header', { name: /OTT TV App/ }).props
+        .hasTVPreferredFocus,
+    ).toBe(true);
+    expect((await firstCard()).props.hasTVPreferredFocus).toBeFalsy();
+  });
+
   it('opens details from a card and returns home with Back', async () => {
     await renderHome();
 
