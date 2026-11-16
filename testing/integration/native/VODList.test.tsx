@@ -122,3 +122,15 @@ describe('VODList (native TV)', () => {
     expect(onRetry).toHaveBeenCalled();
   });
 });
+
+describe('VODList series cards (native TV)', () => {
+  it('reads the season count instead of a runtime', async () => {
+    const series = mockVODData.find(v => v.id === 'vod-17')!;
+    await render(
+      <VODList vodList={[series]} onSelectVOD={jest.fn()} isLoading={false} {...railProps} />,
+    );
+    expect(
+      screen.getByRole('button', { name: 'Harbour Lights, rated 7.9 out of 5, 2 seasons' }),
+    ).toBeTruthy();
+  });
+});

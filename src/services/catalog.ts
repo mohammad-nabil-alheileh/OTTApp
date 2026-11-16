@@ -1,4 +1,9 @@
-import { mockLiveChannels, mockPodcasts, mockVODData } from './mockData';
+import {
+  mockArchive,
+  mockLiveChannels,
+  mockPodcasts,
+  mockVODData,
+} from './mockData';
 import {
   ensureNetworkKnown,
   getNetworkStatus,
@@ -49,6 +54,8 @@ export const loadVods = () => request(mockVODData);
 export const loadLiveChannels = () => request(mockLiveChannels);
 
 export const loadPodcasts = () => request(mockPodcasts);
+
+export const loadArchive = () => request(mockArchive);
 
 // Shared by every screen so "no connection" and "the service failed" get the
 // same treatment everywhere, including errors thrown by real fetches later.

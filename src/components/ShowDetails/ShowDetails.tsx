@@ -10,6 +10,14 @@ import { AppText as Text } from '../AppText/AppText';
 import { useBackHandler } from '../../hooks/useBackHandler';
 import { useFocusGroup } from '../../focus/useFocusGroup';
 import { VODItem } from '../../types/vod';
+import {
+  getResumeEpisode,
+  isSeries,
+  playAccessibilityLabel,
+  playButtonText,
+  seasonCountLabel,
+} from '../../services/series';
+import { SeasonEpisodes } from '../SeasonEpisodes/SeasonEpisodes';
 import { formatDuration, formatTime } from '../../utils/time';
 import { sharedStyles } from '../../styles/theme';
 import { styles } from './ShowDetails.styles';
@@ -19,7 +27,9 @@ export const ShowDetails: React.FC<ShowDetailsProps> = ({
   item,
   resumePosition,
   relatedItems,
+  watchHistory,
   onPlay,
+  onPlayEpisode,
   onPlayTrailer,
   onSelectVOD,
   isFavorite,
@@ -27,6 +37,9 @@ export const ShowDetails: React.FC<ShowDetailsProps> = ({
   onBack,
 }) => {
   const { trailer } = item;
+  const series = isSeries(item) ? item : null;
+  const resume = series ? getResumeEpisode(series, watchHistory) : null;
+  const hasResume = resumePosition !== undefined && resumePosition > 0;
 
   // On web the buttons and the carousel are separate focus groups, so arrow
   // keys move along each row and Up/Down jump between them. Native TV focus
@@ -96,9 +109,12 @@ export const ShowDetails: React.FC<ShowDetailsProps> = ({
           <View style={styles.meta}>
             <Text style={styles.metaText}>{item.releaseDate.slice(0, 4)}</Text>
             <Text style={styles.rating}>★ {item.rating}</Text>
-            <Text style={styles.metaText}>{formatDuration(item.duration)}</Text>
+            <Text style={styles.metaText}>
+              {series ? seasonCountLabel(series) : formatDuration(item.duration)}
+            </Text>
           </View>
-          <Text style={styles.description} numberOfLines={4}>
+          {/* Two lines for a series leaves room for the seasons on screen. */}
+          <Text style={styles.description} numberOfLines={series ? 2 : 4}>
             {item.description}
           </Text>
           <View style={styles.buttons} ref={buttons.containerRef}>
@@ -107,7 +123,9 @@ export const ShowDetails: React.FC<ShowDetailsProps> = ({
               hasTVPreferredFocus
               accessibilityRole="button"
               accessibilityLabel={
-                resumePosition !== undefined && resumePosition > 0
+                resume
+                  ? playAccessibilityLabel(resume)
+                  : hasResume
                   ? `Resume from ${formatTime(resumePosition)}`
                   : 'Play'
               }
@@ -116,10 +134,14 @@ export const ShowDetails: React.FC<ShowDetailsProps> = ({
                 sharedStyles.controlButton,
                 focused && sharedStyles.controlButtonFocused,
               ]}
-              onPress={() => onPlay(item)}
+              onPress={() =>
+                series && resume ? onPlayEpisode(series, resume) : onPlay(item)
+              }
             >
               <Text style={sharedStyles.controlButtonText}>
-                {resumePosition !== undefined && resumePosition > 0
+                {resume
+                  ? playButtonText(resume)
+                  : hasResume
                   ? `▶ Resume · ${formatTime(resumePosition)}`
                   : '▶ Play'}
               </Text>
@@ -161,6 +183,14 @@ export const ShowDetails: React.FC<ShowDetailsProps> = ({
               </Text>
             </Pressable>
           </View>
+          {series && resume && (
+            <SeasonEpisodes
+              series={series}
+              watchHistory={watchHistory}
+              initialSeasonNumber={resume.season.seasonNumber}
+              onPlayEpisode={onPlayEpisode}
+            />
+          )}
           {relatedItems.length > 0 && (
             <View style={styles.related} ref={related.containerRef}>
               <Text style={styles.relatedHeading} accessibilityRole="header">

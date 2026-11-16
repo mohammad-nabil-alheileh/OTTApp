@@ -12,7 +12,7 @@ import { useFocusGroup } from '../../focus/useFocusGroup';
 import { useRailReveal } from '../../focus/useRailReveal';
 import { usePreferredFocus } from '../../focus/usePreferredFocus';
 import { withHomeRow } from '../../hooks/useHomeBack';
-import { formatDuration } from '../../utils/time';
+import { runtimeLabel } from '../../services/series';
 import { railLayout, styles } from '../VODList/VODList.styles';
 import { FavoritesRailProps } from './FavoritesRail.types';
 
@@ -39,9 +39,7 @@ export const FavoritesRail: React.FC<FavoritesRailProps> = ({
       hasTVPreferredFocus={index === preferredFocusIndex}
       onPress={() => onSelectVOD(item)}
       accessibilityRole="button"
-      accessibilityLabel={`${item.title}, favorite, rated ${item.rating} out of 5, ${formatDuration(
-        item.duration,
-      )}`}
+      accessibilityLabel={`${item.title}, favorite, rated ${item.rating} out of 5, ${runtimeLabel(item)}`}
       accessibilityHint="Opens details"
       style={({ focused }) => [
         styles.vodItem,
@@ -60,7 +58,7 @@ export const FavoritesRail: React.FC<FavoritesRailProps> = ({
         </Text>
         <View style={styles.metaRow}>
           <Text style={styles.rating}>★ {item.rating}</Text>
-          <Text style={styles.duration}>{formatDuration(item.duration)}</Text>
+          <Text style={styles.duration}>{runtimeLabel(item)}</Text>
         </View>
       </View>
     </Pressable>

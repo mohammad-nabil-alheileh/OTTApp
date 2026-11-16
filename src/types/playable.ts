@@ -11,3 +11,6 @@ export interface Playable {
   // Mid-roll ad breaks (VOD only; ignored for live).
   adBreaks?: AdBreak[];
 }
+
+// Content whose progress is saved, so it always carries an id.
+export type SavedPlayable = Playable & { id: string };

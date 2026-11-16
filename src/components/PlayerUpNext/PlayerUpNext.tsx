@@ -4,7 +4,7 @@ import { AppPressable as Pressable } from '../AppPressable/AppPressable';
 import { AppText as Text } from '../AppText/AppText';
 import { useFocusGroup } from '../../focus/useFocusGroup';
 import { VODItem } from '../../types/vod';
-import { formatDuration } from '../../utils/time';
+import { runtimeLabel } from '../../services/series';
 import { PlayerUpNextProps } from './PlayerUpNext.types';
 import { styles } from './PlayerUpNext.styles';
 
@@ -43,7 +43,7 @@ export const PlayerUpNext: React.FC<PlayerUpNextProps> = ({
       accessibilityRole="button"
       accessibilityLabel={`Play ${item.title}, rated ${
         item.rating
-      } out of 5, ${formatDuration(item.duration)}`}
+      } out of 5, ${runtimeLabel(item)}`}
       accessibilityHint="Starts playback"
       style={({ focused }) => [
         styles.card,
@@ -63,7 +63,7 @@ export const PlayerUpNext: React.FC<PlayerUpNextProps> = ({
         </Text>
         <Text style={styles.meta} numberOfLines={1}>
           <Text style={styles.star}>★</Text> {item.rating} ·{' '}
-          {formatDuration(item.duration)}
+          {runtimeLabel(item)}
         </Text>
       </View>
     </Pressable>

@@ -1,5 +1,5 @@
-import { VODItem } from '../types/vod';
-import { LiveChannel } from '../types/live';
+import { VODEpisode, VODItem } from '../types/vod';
+import { ArchiveProgramme, LiveChannel } from '../types/live';
 import { Ad } from '../types/ads';
 import { Podcast } from '../types/podcast';
 
@@ -75,6 +75,34 @@ const ads: Record<'stock' | 'android' | 'flower', Ad> = {
     url: 'https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4',
   },
 };
+
+const STREAMS = {
+  bunny: 'https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8',
+  steel:
+    'https://demo.unified-streaming.com/k8s/features/stable/video/tears-of-steel/tears-of-steel.ism/.m3u8',
+  sintel: 'https://bitdash-a.akamaihd.net/content/sintel/hls/playlist.m3u8',
+  bipbop:
+    'https://devstreaming-cdn.apple.com/videos/streaming/examples/img_bipbop_adv_example_fmp4/master.m3u8',
+  dark: 'https://storage.googleapis.com/shaka-demo-assets/bbb-dark-truths-hls/hls.m3u8',
+};
+
+// Series episodes are fictional and reuse the public streams above.
+const vodEpisode = (
+  id: string,
+  episodeNumber: number,
+  title: string,
+  description: string,
+  duration: number,
+  url: string,
+): VODEpisode => ({
+  id,
+  episodeNumber,
+  title,
+  description,
+  thumbnail: image(id, 640, 360),
+  duration,
+  url,
+});
 
 // Public HLS test streams with several resolutions each. There are no public
 // trailer streams for these titles, so trailers reuse a short test clip.
@@ -334,6 +362,128 @@ export const mockVODData: VODItem[] = [
     url: 'https://devstreaming-cdn.apple.com/videos/streaming/examples/img_bipbop_adv_example_fmp4/master.m3u8',
     adBreaks: [{ id: 'vod-16-mid-1', time: 600, ads: [ads.flower] }],
   },
+  {
+    id: 'vod-17',
+    title: 'Harbour Lights',
+    description:
+      'A coastal town keeps its secrets until a new harbourmaster starts asking questions.',
+    thumbnail: image('harbour', 640, 360),
+    poster: image('harbour', 600, 900),
+    duration: 2700,
+    releaseDate: '2024-02-09',
+    rating: 7.9,
+    url: STREAMS.sintel,
+    seasons: [
+      {
+        seasonNumber: 1,
+        episodes: [
+          vodEpisode(
+            'vod-17-s1e1',
+            1,
+            'Low Tide',
+            'Nell arrives as a boat goes missing.',
+            2640,
+            STREAMS.sintel,
+          ),
+          vodEpisode(
+            'vod-17-s1e2',
+            2,
+            'The Ledger',
+            'An old logbook names a family nobody mentions.',
+            2580,
+            STREAMS.steel,
+          ),
+          vodEpisode(
+            'vod-17-s1e3',
+            3,
+            'Fog Bank',
+            'A storm traps half the town on the pier.',
+            2760,
+            STREAMS.bunny,
+          ),
+        ],
+      },
+      {
+        seasonNumber: 2,
+        episodes: [
+          vodEpisode(
+            'vod-17-s2e1',
+            1,
+            'New Moorings',
+            'A year on, a stranger buys the lighthouse.',
+            2700,
+            STREAMS.dark,
+          ),
+          vodEpisode(
+            'vod-17-s2e2',
+            2,
+            'Salt',
+            'Nell finds the missing boat in a dry dock.',
+            2610,
+            STREAMS.bipbop,
+          ),
+          vodEpisode(
+            'vod-17-s2e3',
+            3,
+            'Beacon',
+            'The lighthouse goes dark for the first time in fifty years.',
+            2820,
+            STREAMS.sintel,
+          ),
+          vodEpisode(
+            'vod-17-s2e4',
+            4,
+            'High Water',
+            'The town votes on whether to tell the truth.',
+            2940,
+            STREAMS.steel,
+          ),
+        ],
+      },
+    ],
+  },
+  {
+    id: 'vod-18',
+    title: 'Night Shift Kitchen',
+    description: 'Four cooks run a diner that only opens after midnight.',
+    thumbnail: image('kitchen', 640, 360),
+    poster: image('kitchen', 600, 900),
+    duration: 1500,
+    releaseDate: '2025-10-03',
+    rating: 7.2,
+    url: STREAMS.bunny,
+    seasons: [
+      {
+        seasonNumber: 1,
+        episodes: [
+          vodEpisode(
+            'vod-18-s1e1',
+            1,
+            'Opening Night',
+            'The fryer breaks before the first order.',
+            1500,
+            STREAMS.bunny,
+          ),
+          vodEpisode(
+            'vod-18-s1e2',
+            2,
+            'Regulars',
+            'A critic keeps coming back and never eats.',
+            1440,
+            STREAMS.bipbop,
+          ),
+          vodEpisode(
+            'vod-18-s1e3',
+            3,
+            'Power Cut',
+            'Service by candlelight on the busiest night.',
+            1560,
+            STREAMS.dark,
+          ),
+        ],
+      },
+    ],
+  },
 ];
 
 // Real live streams with a 10 minute DVR window, so pause/timeshift works.
@@ -371,6 +521,83 @@ export const mockLiveChannels: LiveChannel[] = [
     isLive: true,
     category: 'Sports',
   },
+];
+
+// Catch-up recordings of past live shows. Times are relative to app start so
+// the mock always has something on offer; they reuse the public VOD streams.
+const HOUR_MS = 60 * 60 * 1000;
+const hoursFromNow = (hours: number) =>
+  new Date(Date.now() + hours * HOUR_MS).toISOString();
+
+const archived = (
+  id: string,
+  channelId: string,
+  title: string,
+  description: string,
+  airedHoursAgo: number,
+  duration: number,
+  url: string,
+  // Catch-up window length; 7 days unless the rights are shorter.
+  windowHours = 7 * 24,
+): ArchiveProgramme => ({
+  id,
+  channelId,
+  title,
+  description,
+  thumbnail: image(id, 640, 360),
+  airedAt: hoursFromNow(-airedHoursAgo),
+  duration,
+  url,
+  availableUntil: hoursFromNow(windowHours - airedHoursAgo),
+});
+
+export const mockArchive: ArchiveProgramme[] = [
+  archived(
+    'arc-1',
+    'live-1',
+    'Morning Briefing',
+    "The day's headlines in half an hour.",
+    4,
+    1800,
+    STREAMS.steel,
+  ),
+  archived(
+    'arc-2',
+    'live-3',
+    'Match of the Week',
+    "Full replay of Saturday's derby.",
+    20,
+    5400,
+    STREAMS.sintel,
+  ),
+  archived(
+    'arc-3',
+    'live-2',
+    'Studio Sessions',
+    'Three bands play live in the studio.',
+    30,
+    3600,
+    STREAMS.dark,
+  ),
+  archived(
+    'arc-4',
+    'live-1',
+    'Evening Report',
+    'Analysis of the week in politics.',
+    52,
+    2700,
+    STREAMS.bipbop,
+  ),
+  archived(
+    'arc-5',
+    'live-3',
+    'Highlights Hour',
+    'Goals and saves from every match.',
+    150,
+    3600,
+    STREAMS.bunny,
+    160,
+  ),
 ];
 
 // Public sample MP3s (SoundHelix). The podcasts and episodes are fictional and

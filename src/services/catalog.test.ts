@@ -1,5 +1,12 @@
 import { ensureNetworkKnown, getNetworkStatus, probeNetwork } from './network';
-import { LoadError, loadLiveChannels, loadPodcasts, loadVods, toLoadFailure } from './catalog';
+import {
+  LoadError,
+  loadArchive,
+  loadLiveChannels,
+  loadPodcasts,
+  loadVods,
+  toLoadFailure,
+} from './catalog';
 
 jest.mock('./network', () => ({
   getNetworkStatus: jest.fn(),
@@ -34,8 +41,11 @@ describe('catalog', () => {
     const vodRequest = loadVods();
     const liveRequest = loadLiveChannels();
     const podcastRequest = loadPodcasts();
+    const archiveRequest = loadArchive();
 
     await jest.advanceTimersByTimeAsync(500);
+
+    await expect(archiveRequest).resolves.toBeDefined();
 
     await expect(vodRequest).resolves.toBeDefined();
     await expect(liveRequest).resolves.toBeDefined();

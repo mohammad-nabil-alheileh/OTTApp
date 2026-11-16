@@ -7,7 +7,7 @@ import { useFocusGroup } from '../../focus/useFocusGroup';
 import { useRailReveal } from '../../focus/useRailReveal';
 import { usePreferredFocus } from '../../focus/usePreferredFocus';
 import { withHomeRow } from '../../hooks/useHomeBack';
-import { formatDuration } from '../../utils/time';
+import { runtimeLabel } from '../../services/series';
 import { railLayout, styles } from './VODList.styles';
 import { VODListProps } from './VODList.types';
 import { RailStatus } from '../RailStatus/RailStatus';
@@ -97,7 +97,7 @@ export const VODList: React.FC<VODListProps> = ({
         accessibilityRole="button"
         accessibilityLabel={`${item.title}, rated ${
           item.rating
-        } out of 5, ${formatDuration(item.duration)}`}
+        } out of 5, ${runtimeLabel(item)}`}
         accessibilityHint="Opens details"
         style={({ focused }) => [
           styles.vodItem,
@@ -116,7 +116,7 @@ export const VODList: React.FC<VODListProps> = ({
           </Text>
           <View style={styles.metaRow}>
             <Text style={styles.rating}>★ {item.rating}</Text>
-            <Text style={styles.duration}>{formatDuration(item.duration)}</Text>
+            <Text style={styles.duration}>{runtimeLabel(item)}</Text>
           </View>
         </View>
       </Pressable>

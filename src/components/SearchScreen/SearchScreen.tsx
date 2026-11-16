@@ -26,7 +26,7 @@ import {
   rememberSearch,
 } from '../../services/searchHistory';
 import { VODItem } from '../../types/vod';
-import { formatDuration } from '../../utils/time';
+import { runtimeLabel } from '../../services/series';
 import { PageStatus } from '../PageStatus/PageStatus';
 import { SearchHistory } from '../SearchHistory/SearchHistory';
 import { SearchKeyboard } from '../SearchKeyboard/SearchKeyboard';
@@ -268,9 +268,7 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({
           onSelectVOD(item);
         }}
         accessibilityRole="button"
-        accessibilityLabel={`${item.title}, rated ${item.rating} out of 5, ${formatDuration(
-          item.duration,
-        )}`}
+        accessibilityLabel={`${item.title}, rated ${item.rating} out of 5, ${runtimeLabel(item)}`}
         accessibilityHint="Opens details"
         style={({ focused }) => [
           styles.resultCard,
@@ -288,7 +286,7 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({
             {item.title}
           </Text>
           <Text style={styles.resultMeta} numberOfLines={1}>
-            ★ {item.rating} · {formatDuration(item.duration)}
+            ★ {item.rating} · {runtimeLabel(item)}
           </Text>
         </View>
       </Pressable>

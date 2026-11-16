@@ -14,7 +14,6 @@ import { VODList } from './components/VODList/VODList';
 import { AccountScreen } from './components/AccountScreen/AccountScreen';
 import { MOCK_ACCOUNT, initialsOf } from './services/account';
 import { ContinueWatchingRail } from './components/ContinueWatchingRail/ContinueWatchingRail';
-import { ContinueWatchingItem } from './components/ContinueWatchingRail/ContinueWatchingRail.types';
 import { FavoritesRail } from './components/FavoritesRail/FavoritesRail';
 import {
   getWatchHistory,
@@ -36,10 +35,27 @@ import { AudioPlayer } from './components/AudioPlayer/AudioPlayer';
 import { PageStatus } from './components/PageStatus/PageStatus';
 import { getListenHistory, loadListenHistory } from './services/listenHistory';
 import { getContinueListening, toAudioPlayable } from './services/podcasts';
-import { loadLiveChannels, loadPodcasts, loadVods } from './services/catalog';
+import {
+  loadArchive,
+  loadLiveChannels,
+  loadPodcasts,
+  loadVods,
+} from './services/catalog';
+import { getAvailableArchive, toArchivePlayable } from './services/archive';
+import { ArchiveRail } from './components/ArchiveRail/ArchiveRail';
 import { useRemoteData } from './hooks/useRemoteData';
+import { buildContinueWatching } from './services/continueWatching';
+import {
+  EpisodeRef,
+  findSeriesEpisode,
+  isSeries,
+  Series,
+  toEpisodePlayable,
+  toPlayable,
+} from './services/series';
 import { VODItem } from './types/vod';
-import { LiveChannel } from './types/live';
+import { ArchiveProgramme, LiveChannel } from './types/live';
+import { SavedPlayable } from './types/playable';
 import { LoadFailure } from './types/load';
 import { AudioPlayable, Podcast, PodcastEpisode } from './types/podcast';
 import { SelectedContent } from './App.types';
@@ -49,6 +65,7 @@ import { styles } from './App.styles';
 const NO_VODS: VODItem[] = [];
 const NO_CHANNELS: LiveChannel[] = [];
 const NO_PODCASTS: Podcast[] = [];
+const NO_ARCHIVE: ArchiveProgramme[] = [];
 
 export default function App() {
   return (
@@ -64,6 +81,7 @@ const AppContent = () => {
   const vods = useRemoteData(loadVods, NO_VODS);
   const live = useRemoteData(loadLiveChannels, NO_CHANNELS);
   const podcastCatalog = useRemoteData(loadPodcasts, NO_PODCASTS);
+  const archive = useRemoteData(loadArchive, NO_ARCHIVE);
   const vodList = vods.data;
   const channels = live.data;
   // VOD whose details screen is open; it stays set while playing, so Back
@@ -129,15 +147,7 @@ const AppContent = () => {
   }, [selected]);
 
   const continueWatchingItems = useMemo(
-    () =>
-      watchHistory
-        .map(entry => {
-          const vod = vodList.find(item => item.id === entry.id);
-          return vod
-            ? { vod, position: entry.position, duration: entry.duration }
-            : null;
-        })
-        .filter((item): item is ContinueWatchingItem => item !== null),
+    () => buildContinueWatching(watchHistory, vodList),
     [watchHistory, vodList],
   );
 
@@ -201,24 +211,61 @@ const AppContent = () => {
     retryLive();
   }, [retryVods, retryLive]);
 
-  const playVOD = useCallback((vod: VODItem) => {
-    const saved = getWatchHistory().find(entry => entry.id === vod.id);
-    setWatchHistory(
-      saveProgress(
-        vod.id,
-        saved?.position ?? 0,
-        saved?.duration ?? vod.duration,
-      ),
-    );
-    setSelected({
-      title: vod.title,
-      url: vod.url,
-      isLive: false,
-      adBreaks: vod.adBreaks,
-      id: vod.id,
-      startPosition: saved && saved.position > 0 ? saved.position : undefined,
-    });
-  }, []);
+  // Saving first moves the title (or episode) to the front of the history.
+  const startPlayable = useCallback(
+    (playable: SavedPlayable, duration: number) => {
+      const { id } = playable;
+      const saved = getWatchHistory().find(entry => entry.id === id);
+      setWatchHistory(
+        saveProgress(id, saved?.position ?? 0, saved?.duration ?? duration),
+      );
+      setSelected(playable);
+    },
+    [],
+  );
+
+  // A series resumes its current episode rather than playing the series url.
+  const playVOD = useCallback(
+    (vod: VODItem) => {
+      const playable = toPlayable(vod, getWatchHistory());
+      const episode = isSeries(vod)
+        ? findSeriesEpisode([vod], playable.id)?.episode
+        : undefined;
+      startPlayable(playable, episode?.duration ?? vod.duration);
+    },
+    [startPlayable],
+  );
+
+  const playArchive = useCallback(
+    (programme: ArchiveProgramme, channelName: string) => {
+      setHomeFocusTarget(null);
+      const saved = getWatchHistory().find(e => e.id === programme.id);
+      startPlayable(
+        toArchivePlayable(programme, channelName, saved?.position),
+        programme.duration,
+      );
+    },
+    [startPlayable],
+  );
+
+  const playVODEpisode = useCallback(
+    (series: Series, ref: EpisodeRef) => {
+      const saved = getWatchHistory().find(e => e.id === ref.episode.id);
+      startPlayable(
+        toEpisodePlayable(series, ref, saved?.position),
+        ref.episode.duration,
+      );
+    },
+    [startPlayable],
+  );
+
+  // Recomputed with the catalogue; expiry is checked again on the next load.
+  const archiveOnOffer = useMemo(
+    () => getAvailableArchive(archive.data),
+    [archive.data],
+  );
+  const showArchive =
+    archiveOnOffer.length > 0 || archive.isLoading || archive.failure !== null;
 
   // Back from any home row returns focus to the header before it exits.
   const homeScrollRef = useRef<ScrollView>(null);
@@ -303,6 +350,8 @@ const AppContent = () => {
         key={detailsItem.id}
         item={detailsItem}
         relatedItems={vodList.filter(vod => vod.id !== detailsItem.id)}
+        watchHistory={watchHistory}
+        onPlayEpisode={playVODEpisode}
         onSelectVOD={setDetailsItem}
         isFavorite={favoriteIds.includes(detailsItem.id)}
         onToggleFavorite={handleToggleFavorite}
@@ -507,7 +556,8 @@ const AppContent = () => {
               preferredFocusIndex={homeFocusIndex('vod') ?? null}
             />
           </FocusGroup>
-          <FocusGroup trapFocusDown>
+          {/* The last row traps Down so focus never leaves the page. */}
+          <FocusGroup trapFocusDown={!showArchive}>
             <LiveChannelList
               channels={channels}
               isLoading={live.isLoading}
@@ -524,6 +574,19 @@ const AppContent = () => {
               }}
             />
           </FocusGroup>
+          {showArchive && (
+            <FocusGroup trapFocusDown>
+              <ArchiveRail
+                programmes={archiveOnOffer}
+                channels={channels}
+                isLoading={archive.isLoading}
+                failure={archive.failure}
+                onRetry={archive.retry}
+                homeRow={getHomeRow('archive')}
+                onSelectProgramme={playArchive}
+              />
+            </FocusGroup>
+          )}
         </ScrollView>
       )}
     </View>

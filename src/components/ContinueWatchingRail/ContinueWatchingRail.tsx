@@ -7,6 +7,7 @@ import { useFocusGroup } from '../../focus/useFocusGroup';
 import { useRailReveal } from '../../focus/useRailReveal';
 import { usePreferredFocus } from '../../focus/usePreferredFocus';
 import { withHomeRow } from '../../hooks/useHomeBack';
+import { episodeCode, spokenEpisode } from '../../services/series';
 import { styles } from './ContinueWatchingRail.styles';
 import { railLayout } from '../VODList/VODList.styles';
 import {
@@ -32,7 +33,7 @@ export const ContinueWatchingRail: React.FC<ContinueWatchingRailProps> = ({
   }
 
   const renderItem: ListRenderItem<ContinueWatchingItem> = ({ item, index }) => {
-    const { vod, position, duration } = item;
+    const { vod, position, duration, episode } = item;
     const percent = duration > 0 ? clamp((position / duration) * 100, 0, 100) : 0;
     // Whole seconds: a fractional position would leak a decimal into "sec".
     const remaining = Math.round(Math.max(0, duration - position));
@@ -42,9 +43,9 @@ export const ContinueWatchingRail: React.FC<ContinueWatchingRailProps> = ({
         hasTVPreferredFocus={index === preferredFocusIndex}
         onPress={() => onSelectVOD(vod)}
         accessibilityRole="button"
-        accessibilityLabel={`${vod.title}, ${formatDuration(
-          remaining,
-        )} left, ${Math.round(percent)} percent watched`}
+        accessibilityLabel={`${vod.title}${
+          episode ? `, ${spokenEpisode(episode)}` : ''
+        }, ${formatDuration(remaining)} left, ${Math.round(percent)} percent watched`}
         accessibilityHint="Opens details"
         style={({ focused }) => [styles.vodItem, focused && styles.vodItemFocused]}
       >
@@ -60,7 +61,9 @@ export const ContinueWatchingRail: React.FC<ContinueWatchingRailProps> = ({
           </Text>
           <View style={styles.metaRow}>
             <Text style={styles.remaining}>
-              {formatDuration(remaining)} left
+              {`${episode ? `${episodeCode(episode)} · ` : ''}${formatDuration(
+                remaining,
+              )} left`}
             </Text>
           </View>
         </View>
