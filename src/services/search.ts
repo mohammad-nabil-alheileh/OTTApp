@@ -1,4 +1,5 @@
 import { VODItem } from '../types/vod';
+import { EpisodeRef, episodeRefs, isSeries, Series } from './series';
 
 // Lowercase and strip diacritics so "amelie" finds "Amélie".
 const normalize = (value: string) =>
@@ -54,3 +55,27 @@ export const getRecommendedVideos = (
   limit = 12,
 ): VODItem[] =>
   [...videos].sort((a, b) => b.rating - a.rating).slice(0, limit);
+
+export interface SearchedShow {
+  series: Series;
+  episodes: EpisodeRef[];
+}
+
+// The show the query names: the first series in the results whose title holds
+// every query word. A description-only hit is too loose to list episodes for.
+export const findSearchedShow = (
+  results: VODItem[],
+  query: string,
+): SearchedShow | null => {
+  const tokens = tokensOf(query);
+  if (tokens.length === 0) {
+    return null;
+  }
+  for (const video of results) {
+    const title = normalize(video.title);
+    if (isSeries(video) && tokens.every(token => title.includes(token))) {
+      return { series: video, episodes: episodeRefs(video) };
+    }
+  }
+  return null;
+};

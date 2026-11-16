@@ -93,3 +93,41 @@ describe('Focus after Player → Continue Watching (native TV)', () => {
     ]);
   });
 });
+
+describe('Series and catch-up (native TV)', () => {
+  beforeEach(() => {
+    mockStore.clear();
+  });
+
+  it('resumes an episode in progress from Continue Watching through Details', async () => {
+    mockStore.set(
+      'ott:watchHistory',
+      JSON.stringify([{ id: 'vod-17-s2e2', position: 630, duration: 2610 }]),
+    );
+    await renderHome();
+
+    await fireEvent.press(
+      await screen.findByRole('button', {
+        name: /^Harbour Lights, season 2, episode 2, Salt, 33 min left/,
+      }),
+    );
+    await fireEvent.press(
+      await screen.findByRole('button', { name: 'Resume season 2, episode 2, Salt, from 10:30' }),
+    );
+
+    expect(await screen.findByText('Harbour Lights · S2 E2 · Salt')).toBeTruthy();
+    await pressBack(); // player → details
+    expect(await screen.findByRole('tab', { name: 'Season 2, 4 episodes' })).toBeTruthy();
+  });
+
+  it('plays a catch-up recording from its Home rail', async () => {
+    await renderHome();
+
+    expect(screen.getByRole('header', { name: 'Catch-up' })).toBeTruthy();
+    await fireEvent.press(
+      await screen.findByRole('button', { name: /^Morning Briefing, Live Demo, aired / }),
+    );
+
+    expect(await screen.findByText('Morning Briefing · Live Demo')).toBeTruthy();
+  });
+});

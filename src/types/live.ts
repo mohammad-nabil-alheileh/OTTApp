@@ -18,3 +18,19 @@ export interface LiveState {
   // resuming from it would fail; the stream must be reloaded at live instead.
   hasLeftDvrWindow: boolean;
 }
+
+// A past broadcast from a live channel, offered on demand for a limited time.
+export interface ArchiveProgramme {
+  id: string;
+  channelId: string;
+  title: string;
+  description: string;
+  thumbnail: string;
+  // ISO start of the original broadcast.
+  airedAt: string;
+  // Length in seconds.
+  duration: number;
+  url: string;
+  // ISO time when catch-up stops being offered.
+  availableUntil: string;
+}

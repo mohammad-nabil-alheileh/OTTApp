@@ -1,4 +1,5 @@
 import { HomeRow } from '../../hooks/useHomeBack';
+import { EpisodeRef } from '../../services/series';
 import { VODItem } from '../../types/vod';
 
 export interface ContinueWatchingItem {
@@ -6,6 +7,8 @@ export interface ContinueWatchingItem {
   // Saved playback position and stream duration, in seconds.
   position: number;
   duration: number;
+  // Set when the saved position belongs to one episode of a series.
+  episode?: EpisodeRef;
 }
 
 export interface ContinueWatchingRailProps {

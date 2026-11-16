@@ -1,4 +1,4 @@
-import { getRecommendedVideos, searchVideos } from './search';
+import { findSearchedShow, getRecommendedVideos, searchVideos } from './search';
 import { VODItem } from '../types/vod';
 
 const video = (
@@ -110,5 +110,57 @@ describe('getRecommendedVideos', () => {
 
   it('returns nothing when there are no videos', () => {
     expect(getRecommendedVideos([])).toEqual([]);
+  });
+});
+
+describe('findSearchedShow', () => {
+  const show = (id: string, title: string, seasons: number[][]): VODItem => ({
+    ...video(id, title, 'A drama about the sea.'),
+    seasons: seasons.map((episodes, s) => ({
+      seasonNumber: s + 1,
+      episodes: episodes.map(n => ({
+        id: `${id}-s${s + 1}e${n}`,
+        episodeNumber: n,
+        title: `Ep ${n}`,
+        description: '',
+        thumbnail: '',
+        duration: 1500,
+        url: '',
+      })),
+    })),
+  });
+  const harbour = show('harbour', 'Harbour Lights', [[1, 2], [1, 2, 3]]);
+  const kitchen = show('kitchen', 'Night Kitchen', [[1]]);
+  const episodeIds = (found: ReturnType<typeof findSearchedShow>) =>
+    found?.episodes.map(ref => ref.episode.id);
+
+  it('lists every episode of every season, in order', () => {
+    const found = findSearchedShow([harbour], 'harbour');
+    expect(found?.series.id).toBe('harbour');
+    expect(episodeIds(found)).toEqual([
+      'harbour-s1e1',
+      'harbour-s1e2',
+      'harbour-s2e1',
+      'harbour-s2e2',
+      'harbour-s2e3',
+    ]);
+    expect(found?.episodes[2].season.seasonNumber).toBe(2);
+  });
+
+  it('picks the first show in the results whose title matches every word', () => {
+    expect(findSearchedShow([videos[0], kitchen, harbour], 'harb lig')?.series.id).toBe(
+      'harbour',
+    );
+    expect(findSearchedShow([kitchen, harbour], 'NIGHT')?.series.id).toBe('kitchen');
+  });
+
+  it('ignores shows matched only by their description', () => {
+    expect(findSearchedShow([harbour], 'sea')).toBeNull();
+    expect(findSearchedShow([harbour], 'harbour sea')).toBeNull();
+  });
+
+  it('ignores films and an empty query', () => {
+    expect(findSearchedShow(videos, 'bunny')).toBeNull();
+    expect(findSearchedShow([harbour], '   ')).toBeNull();
   });
 });

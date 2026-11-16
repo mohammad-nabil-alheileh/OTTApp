@@ -11,7 +11,7 @@ import { AppText as Text } from '../AppText/AppText';
 import { useFocusGroup } from '../../focus/useFocusGroup';
 import { scaleSize } from '../../styles/theme';
 import { VODItem } from '../../types/vod';
-import { formatDuration } from '../../utils/time';
+import { runtimeLabel } from '../../services/series';
 import { SearchRecommendedRailProps } from './SearchRecommendedRail.types';
 import { styles } from './SearchRecommendedRail.styles';
 
@@ -115,9 +115,7 @@ export const SearchRecommendedRail: React.FC<SearchRecommendedRailProps> = ({
           }}
           onPress={() => onSelectVOD(item)}
           accessibilityRole="button"
-          accessibilityLabel={`${item.title}, rated ${item.rating} out of 5, ${formatDuration(
-            item.duration,
-          )}`}
+          accessibilityLabel={`${item.title}, rated ${item.rating} out of 5, ${runtimeLabel(item)}`}
           accessibilityHint="Opens details"
           style={({ focused }) => [styles.card, focused && styles.cardFocused]}
         >
@@ -132,7 +130,7 @@ export const SearchRecommendedRail: React.FC<SearchRecommendedRailProps> = ({
               {item.title}
             </Text>
             <Text style={styles.meta} numberOfLines={1}>
-              ★ {item.rating} · {formatDuration(item.duration)}
+              ★ {item.rating} · {runtimeLabel(item)}
             </Text>
           </View>
         </Pressable>
